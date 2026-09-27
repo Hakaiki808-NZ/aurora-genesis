@@ -7,7 +7,5 @@
   "lineage": "AURORA / Genesis",
   "status": "guardian-hardened implemented reference model baseline",
   "minimum_engine": "Aurora pre-v0.1",
-  "historical_predecessor": "AURORA-0 Genesis v0.2.1",
-  "development_branch_incorporated": "Praxis 1.3.0 constitutional cognition branch",
   "inheritance_rule": "Future Model major releases retain the Genesis lineage record while maintaining a separate model-specific record; an incompatible major release requires a new Model release name."
 }
