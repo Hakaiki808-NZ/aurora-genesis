@@ -6,13 +6,11 @@ The current public development line is **v0.1**.
 
 ## Reporting vulnerabilities
 
-Do not publish exploit details in a public issue.
-
-Before publication, the project must configure a private security-reporting channel (for example GitHub Private Vulnerability Reporting or a dedicated security address). That contact point should be inserted here before the repository becomes public.
+Please do **not** publish exploit details, credentials, or sensitive security findings in a public issue. Use GitHub's private vulnerability reporting/security-advisory channel for this repository when available. If that channel is unavailable, open a public issue containing only a request for a private security contact and no exploit details.
 
 ## Security boundary
 
-The public repository intentionally excludes security-critical AURORA implementation internals and secret material.
+The public repository intentionally excludes security-critical AURORA implementation internals, private signing material, protected recovery internals, containment internals, and deployment secrets.
 
 ## Status
 
