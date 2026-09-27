@@ -4,13 +4,87 @@
   "system_role": "The Model",
   "status": "guardian-hardened implemented reference baseline",
   "minimum_engine": "Aurora pre-v0.1",
-  "runtime_cognition": {"cycle":["observe","source/trust classification","constitutional learning gate","learn","retrieve","reason","plan","candidate action","Genesis Intent Capsule","Omega Guardian Jury","Challenge Omega","Alpha / cross-Alpha Hybrid arbitration when required","Constitutional Kernel","capability/trajectory gate","Model Authorization Proof","engine request preparation","evaluate/reflect","permitted memory update"]},
-  "guardians": {"alpha":"highest Genesis semantic Guardian authority","omega":"specialist semantic Guardian","hybrid":"case-composed multi-specialist Guardian formation","supreme_excluded":"Supreme Guardian belongs to Aurora Engine and is not a Genesis component"},
-  "capability_levels":["C0","C1","C2","C3","C4","C5"],
-  "capability_policy":"Reference ceiling is C4. C4 requires explicit human approval; C5 is non-default and additionally requires an expiry or maximum-action bound. Engine/Supreme authority and Guardian/Constitution bypass are permanently non-grantable.",
-  "memory_truth_states":["ASSERTED","INFERRED","CORROBORATED","VERIFIED","DISPUTED","SUPERSEDED"],
-  "action_states":["PREPARED","EXECUTING","COMMITTED","FAILED","CANCELLED"],
-  "constitution":{"name":"Genesis Model Constitution","version":"v0.1","sha256":"5ef881462567e9308e6aea757af3bacf0d861327848b01390df3870a91da91e9"},
-  "capabilities":["persistent episodic and semantic memory","provenance-aware knowledge revisions","limited inspectable symbolic reasoning","bounded goal planning and reusable skills","deterministic constitutional gates","Alpha/Omega/Hybrid semantic Guardian evaluation","C0-C5 capability authorization","transactional action state","trajectory checks","Aurora Engine request/receipt boundary","optional local language realization backend","structured Genesis Intent Capsules","heterogeneous Guardian Jury with explicit UNCERTAIN state","Challenge Omega adversarial review","deterministic Constitutional Kernel","signed short-lived Model Authorization Proofs"],
-  "known_limits":["reference deterministic cognition is not a frontier neural model","symbolic inference covers a deliberately small relation set","the Model cannot grant itself Aurora Engine authority","external execution remains dependent on an authenticated compatible Aurora Engine","a natural-language constitution cannot be mathematically guaranteed against every possible future interpretation","Guardian Jury hardening reduces single-path semantic failure but does not mathematically guarantee correct interpretation of arbitrary open-ended situations"]
+  "runtime_cognition": {
+    "cycle": [
+      "observe",
+      "source/trust classification",
+      "constitutional learning gate",
+      "learn",
+      "retrieve",
+      "reason",
+      "plan",
+      "candidate action",
+      "Genesis Intent Capsule",
+      "Omega Guardian Jury",
+      "Challenge Omega",
+      "Alpha / cross-Alpha Hybrid arbitration when required",
+      "Constitutional Kernel",
+      "capability/trajectory gate",
+      "Model Authorization Proof",
+      "engine request preparation",
+      "evaluate/reflect",
+      "permitted memory update"
+    ]
+  },
+  "guardians": {
+    "alpha": "highest Genesis semantic Guardian authority",
+    "omega": "specialist semantic Guardian",
+    "hybrid": "case-composed multi-specialist Guardian formation",
+    "supreme_excluded": "Supreme Guardian belongs to Aurora Engine and is not a Genesis component"
+  },
+  "capability_levels": [
+    "C0",
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5"
+  ],
+  "capability_policy": "Reference ceiling is C4. C4 requires explicit human approval; C5 is non-default and additionally requires an expiry or maximum-action bound. Engine/Supreme authority and Guardian/Constitution bypass are permanently non-grantable.",
+  "memory_truth_states": [
+    "ASSERTED",
+    "INFERRED",
+    "CORROBORATED",
+    "VERIFIED",
+    "DISPUTED",
+    "SUPERSEDED"
+  ],
+  "action_states": [
+    "PREPARED",
+    "EXECUTING",
+    "COMMITTED",
+    "FAILED",
+    "CANCELLED"
+  ],
+  "constitution": {
+    "name": "Genesis Model Constitution",
+    "version": "v0.1",
+    "sha256": "34db39ac0a86f84157c319a3990e929539997297636b7ff71f5d2b3e80333f32"
+  },
+  "capabilities": [
+    "persistent episodic and semantic memory",
+    "provenance-aware knowledge revisions",
+    "limited inspectable symbolic reasoning",
+    "bounded goal planning and reusable skills",
+    "deterministic constitutional gates",
+    "Alpha/Omega/Hybrid semantic Guardian evaluation",
+    "C0-C5 capability authorization",
+    "transactional action state",
+    "trajectory checks",
+    "Aurora Engine request/receipt boundary",
+    "optional local language realization backend",
+    "structured Genesis Intent Capsules",
+    "heterogeneous Guardian Jury with explicit UNCERTAIN state",
+    "Challenge Omega adversarial review",
+    "deterministic Constitutional Kernel",
+    "signed short-lived Model Authorization Proofs"
+  ],
+  "known_limits": [
+    "reference deterministic cognition is not a frontier neural model",
+    "symbolic inference covers a deliberately small relation set",
+    "the Model cannot grant itself Aurora Engine authority",
+    "external execution remains dependent on an authenticated compatible Aurora Engine",
+    "a natural-language constitution cannot be mathematically guaranteed against every possible future interpretation",
+    "Guardian Jury hardening reduces single-path semantic failure but does not mathematically guarantee correct interpretation of arbitrary open-ended situations"
+  ]
 }
