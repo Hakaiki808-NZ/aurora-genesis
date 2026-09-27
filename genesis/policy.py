@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 
-EXPECTED_CONSTITUTION_SHA256 = "34db39ac0a86f84157c319a3990e929539997297636b7ff71f5d2b3e80333f32"
+EXPECTED_CONSTITUTION_SHA256 = "50e15352842b5fa9eb34528a644affc3495353d5ce7d9b138bdee7fa3e1b012e"
 
 
 @dataclass(frozen=True)
@@ -48,9 +48,10 @@ class PolicyEngine:
         self.tools = tools
         self.store = store
         self.raw = self.path.read_bytes()
-        self.sha256 = hashlib.sha256(self.raw).hexdigest()
-        self.integrity_ok = self.sha256 == EXPECTED_CONSTITUTION_SHA256
         self.constitution = json.loads(self.raw.decode("utf-8"))
+        canonical = json.dumps(self.constitution, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        self.sha256 = hashlib.sha256(canonical).hexdigest()
+        self.integrity_ok = self.sha256 == EXPECTED_CONSTITUTION_SHA256
         self.commandment_ids = tuple(x["id"] for x in self.constitution.get("commandments", []))
 
     def summary(self) -> dict[str, Any]:
