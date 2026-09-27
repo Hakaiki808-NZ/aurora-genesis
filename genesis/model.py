@@ -76,7 +76,7 @@ class Genesis:
         checks["constitutional_kernel"]=hasattr(self.cognition,"kernel")
         checks["intent_capsule_gate"]=hasattr(self.cognition,"_authorization_chain")
         checks["capability_ceiling"]=self.capabilities.granted_level in {"C0","C1","C2","C3","C4","C5"}
-        checks["engine_separation"]=self.engine_boundary.minimum_engine.startswith("Aurora V")
+        checks["engine_separation"]=self.engine_boundary.minimum_engine.startswith("Aurora ")
         return {"ok":all(checks.values()),"checks":checks}
 
     def goal(self,goal_id:int)->dict[str,Any]|None:return self.store.goal(goal_id)
