@@ -2,7 +2,7 @@ name: ARC-AGI-3 exploratory probe
 
 on:
   push:
-    branches: [experiment/arc-agi3-readiness]
+    branches: [experiment/arc-agi3-readiness, experiment/ls20-search-optimisation]
   workflow_dispatch:
 
 jobs:
@@ -78,7 +78,7 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install -r requirements.txt arc-agi
       - name: Run public LS20 observation-driven planner and capture modifier traces
-        run: python -m tests.arc_agi3_visual_run --max-actions 420 --out ls20-visual-result.json
+        run: python -m tests.arc_agi3_visual_run --max-actions 500 --out ls20-visual-result.json
       - name: Persist exact gameplay result and action trace
         if: always()
         uses: actions/upload-artifact@v4
