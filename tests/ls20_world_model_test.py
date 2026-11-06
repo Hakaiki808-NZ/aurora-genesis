@@ -26,6 +26,12 @@ def run():
         moving={"shape":[(15,0),(15,0),(15,0)]}
     )
     assert missing is None, missing
+    # A periodic modifier can be reasoned about beyond a fixed 40-action
+    # horizon: a long, resource-sufficient path remains discoverable.
+    observed=[(5,0),(10,0),(15,0)]*3
+    phase=LS20SearchPlanner._detect_period(observed)
+    assert phase==[(15,0),(5,0),(10,0)], phase
+    assert LS20SearchPlanner._detect_period([(5,0),(10,0),(15,0)]) is None
     print("LS20_TIME_INDEXED_SEARCH=PASS")
 
 
