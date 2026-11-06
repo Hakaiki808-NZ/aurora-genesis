@@ -1,0 +1,20 @@
+{
+  "id": "/v3/",
+  "name": "Kyro Intelligence Workspace",
+  "short_name": "Kyro",
+  "description": "Secure interface for projects, chat and collaboration in the Aurora–Genesis platform.",
+  "start_url": "/v3/index.html",
+  "scope": "/v3/",
+  "display": "standalone",
+  "background_color": "#f2f5f7",
+  "theme_color": "#f2f5f7",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/v3/kyro-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
