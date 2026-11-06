@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter, deque
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from .temporal_world import TemporalWorldModel
@@ -64,6 +64,7 @@ class LS20SearchPlanner:
         self.modifier_history:dict[tuple[int,str],deque[tuple[int,int]]] = {}
         self.temporal_model = TemporalWorldModel(min_period=2, max_period=16)
         self.fog_explorer = FogExplorer()
+        self.fog_landmarks:dict[int,dict[str,dict[tuple[int,int],Any]]] = {}
         self.last_world_feedback:dict[str,Any] = {}
 
     @staticmethod
@@ -413,6 +414,55 @@ class LS20SearchPlanner:
                 q.append(next_state)
         return None
 
+    def _remember_fog_world(self, world:SearchWorld, level:int) -> SearchWorld:
+        """Merge fully observed landmarks with previously observed fog cells.
+
+        Preserve identities only within the same level. When a previously
+        observed object is in the currently visible inner radius and no longer
+        observed, invalidate it; do not infer unseen geometry.
+        """
+        cache=self.fog_landmarks.setdefault(
+            level,{"door":{},"shape":{},"color":{},"rotation":{}}
+        )
+        for obj in world.door:
+            cache["door"][(obj.x,obj.y)]=obj
+        for kind,observed in (("shape",world.shape),
+                              ("color",world.color),
+                              ("rotation",world.rotation)):
+            seen=set(observed)
+            entries=cache[kind]
+            # A uniquely detected moving modifier supersedes its last
+            # position. Cached far objects are otherwise preserved.
+            if len(seen)==1 and len(entries)==1:
+                old_point=next(iter(entries))
+                if old_point not in seen:
+                    entries.clear()
+            for point in seen:
+                entries[point]=True
+        seen_doors={(obj.x,obj.y) for obj in world.door}
+        for point in list(cache["door"]):
+            near=(abs(point[0]-world.player[0])<=10
+                  and abs(point[1]-world.player[1])<=10)
+            if near and point not in seen_doors and point!=world.player:
+                del cache["door"][point]
+        # All retained map floor cells were actually exposed in an earlier
+        # frame; do not treat the black/fog background as walkable.
+        walkable=set(world.walkable)
+        walkable.update(p for p,kind in self.fog_explorer.grid.items()
+                        if kind=="floor")
+        walkable.add(world.player)
+        for kind in ("shape","color","rotation"):
+            walkable.update(cache[kind])
+        walkable.update(cache["door"])
+        return replace(
+            world, walkable=frozenset(walkable),
+            door=tuple(cache["door"][p] for p in sorted(cache["door"])),
+            shape=frozenset(cache["shape"]),
+            color=frozenset(cache["color"]),
+            rotation=frozenset(cache["rotation"]),
+            energy=tuple(sorted(self.fog_explorer.known_energy)),
+        )
+
     def decide(self, serialized: str, level: int, allowed: set[str]) -> dict[str,Any]:
         self.searches+=1
         world=self.perceive(serialized,level)
@@ -423,6 +473,8 @@ class LS20SearchPlanner:
         # including turns where a previously unseen door becomes visible.
         self.fog_explorer.update(serialized,level,world.player,
                                 world.meter_units,world.energy)
+        if level >= 6:
+            world=self._remember_fog_world(world,level)
         # Do not assume that the entire board (including the door) is
         # visible. If it is hidden, explicitly explore the observed frontier
         # and preserve the discovered map across actions and camera motion.
@@ -475,6 +527,8 @@ class LS20SearchPlanner:
                     self.global_shape_edges[last_shape]=world.key_shape
             self.last_action=None
         overrides=self.observed_transitions.setdefault(level,{})
+        if level >= 6:
+            overrides.update(self.fog_explorer.observed_edges)
         learned=self.learned_shapes.setdefault(level,{})
         learned.update(self.global_shape_edges)
         recent=self.recent_positions.setdefault(level,deque(maxlen=16))
