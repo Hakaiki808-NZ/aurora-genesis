@@ -85,6 +85,8 @@ def record(pk, sk):
 
 def write(pk, sk, item, old=None):
     item = {k: v for k, v in item.items() if not k.startswith("_")}
+    if old is None and len(listing(pk)) >= MAX_ITEMS:
+        raise BadInput("Beta record quota reached; export or erase old records", 429)
     rev = 1 if old is None else int(old["_revision"]) + 1
     args = {"TableName": TABLE,
             "Item": {"pk": {"S": pk}, "sk": {"S": sk},
@@ -105,7 +107,7 @@ def write(pk, sk, item, old=None):
     return item
 
 
-def listing(pk, prefix=""):
+def listing(pk, prefix="", max_items=MAX_ITEMS):
     out = []
     args = {"TableName": TABLE, "KeyConditionExpression": "pk = :pk",
             "ExpressionAttributeValues": {":pk": {"S": pk}},
@@ -117,7 +119,7 @@ def listing(pk, prefix=""):
         resp = db.query(**args)
         out += [{"sk": row["sk"]["S"], **json.loads(row["v"]["S"]),
                  "_revision": int(row["revision"]["N"])} for row in resp.get("Items", [])]
-        if len(out) > MAX_ITEMS:
+        if max_items is not None and len(out) > max_items:
             raise BadInput("Beta record limit reached; export or remove old records", 429)
         if not resp.get("LastEvaluatedKey"):
             break
@@ -217,7 +219,7 @@ def dispatch(event, pk, route, method):
         old = record(pk, sk)
         write(pk, sk, {"scope": scope, "enabled": enabled, "changed_at": now()}, old)
         if not enabled:
-            for item in listing(pk, SCOPES[scope]):
+            for item in listing(pk, SCOPES[scope], max_items=None):
                 remove(pk, item["sk"])
         return {"scope": scope, "enabled": enabled,
                 "deleted_scope": "capabilities_beta_only"}
@@ -397,7 +399,7 @@ def dispatch(event, pk, route, method):
     if method == "POST" and route == "/erase":
         if data.get("confirm") != "ERASE_MY_BETA_DATA":
             raise BadInput("Explicit beta-data deletion confirmation required", 409)
-        items = listing(pk)
+        items = listing(pk, max_items=None)
         for item in items:
             remove(pk, item["sk"])
         return {"deleted_items": len(items), "scope": "capabilities_beta_table_only",
