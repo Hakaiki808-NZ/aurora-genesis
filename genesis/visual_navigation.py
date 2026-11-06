@@ -101,8 +101,10 @@ class LS20VisualPlanner:
                                if c not in _BG and c not in (0, 1, 12))
                 # A door tile is a dark panel with a small colored glyph.
                 is_door = cnt[5] >= 10 and colorful >= 2 and cnt[12] == 0
+                # White launch-pad bars may be drawn ON a solid wall.
+                # Their 1-colour pixels do not make that tile walkable.
                 if (center == 3 or cnt[3] >= 8 or (x, y) == player
-                    or is_door or special):
+                    or is_door):
                     walkable.add((x, y))
                 if is_door:
                     small = [frame[y+j][x+1:x+4] for j in range(1,4)]
