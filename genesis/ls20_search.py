@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from collections import Counter, deque
 from dataclasses import dataclass
+from math import lcm
 from typing import Any
 
 from .visual_navigation import (
@@ -195,13 +196,13 @@ class LS20SearchPlanner:
         shape_edges = shape_edges or {}
         moving = moving or {}
         dynamic = bool(moving)
-        horizon = min(40, max((len(p)-1 for p in moving.values()),default=0)) if dynamic else 0
+        phase_period = lcm(*(len(path) for path in moving.values())) if dynamic else 1
+        if phase_period > 120:
+            return None, {"reason":"unbounded_modifier_phase","period":phase_period}
         def tile_at(kind:str, t:int):
             trajectory=moving.get(kind)
             if trajectory:
-                if t>=len(trajectory):
-                    return frozenset()
-                return frozenset((trajectory[t],))
+                return frozenset((trajectory[t % len(trajectory)],))
             return getattr(world, kind)
         start=(world.player, world.key_shape, COLOR_CYCLE.index(world.key_color),
                0, world.meter_units, 0, 0)
@@ -226,8 +227,6 @@ class LS20SearchPlanner:
             state=queue.popleft()
             expanded+=1
             (x,y),pattern,ci,mask,meter,door_mask,t=state
-            if dynamic and t>=horizon:
-                continue
             if meter < best_meter.get(abstract(state), -1):
                 dominated += 1
                 continue
@@ -249,7 +248,7 @@ class LS20SearchPlanner:
                     continue
                 # A moving operator applies on ENTER at the observed future
                 # timestep, not at its position when planning began.
-                tick=t+1
+                tick=(t+1)%phase_period
                 newpattern = _rotate_clockwise(pattern) if nxt in tile_at("rotation",tick) else pattern
                 if nxt in tile_at("shape",tick):
                     if newpattern not in shape_edges:
@@ -290,7 +289,7 @@ class LS20SearchPlanner:
                                    "known_shape_transitions":len(shape_edges),
                                    "pruned_dominated":dominated,
                                    "temporal_model":dynamic,
-                                   "forecast_horizon":horizon}
+                                   "modifier_phase_period":phase_period}
                 queue.append(end)
         return None, {"reason":"no_goal_path_found",
                       "expanded":expanded,"visited":len(visited),
@@ -299,7 +298,7 @@ class LS20SearchPlanner:
                       "pruned_dominated":dominated,
                       "abstract_states":len(best_meter),
                       "temporal_model":dynamic,
-                      "forecast_horizon":horizon}
+                      "modifier_phase_period":phase_period}
 
     @staticmethod
     def _route_with_observed_transitions(
@@ -374,6 +373,29 @@ class LS20SearchPlanner:
             forecast.append(nxt)
             seq.append(nxt)
         return forecast
+
+    @staticmethod
+    def _detect_period(history: list[tuple[int,int]], maximum:int=20
+    ) -> list[tuple[int,int]] | None:
+        """Detect repeated modifier patrol states using observed positions only.
+
+        Returns a phase array indexed t=0 (NOW), t=1, ... t=period-1.
+        Rejects insufficient/inconsistent observations, rather than guessing
+        dynamics. A verified period can be reused for arbitrary plan lengths.
+        """
+        if len(history)<6:
+            return None
+        candidates=[]
+        for period in range(2,min(maximum,len(history)//2)+1):
+            recent=history[-period:]
+            if (history[-2*period:-period] == recent and
+                len(set(recent)) >= 2):
+                candidates.append(period)
+        if not candidates:
+            return None
+        period=min(candidates)
+        latest=history[-period:]
+        return [latest[-1]] + latest[:-1]
 
     @staticmethod
     def _moving_intercept(
@@ -469,13 +491,14 @@ class LS20SearchPlanner:
         learned.update(self.global_shape_edges)
         recent=self.recent_positions.setdefault(level,deque(maxlen=16))
         recent.append(world.player)
-        forecasts={}
+        repeating={}
         if level>=4:
             for kind in ("shape","rotation","color"):
                 trace=list(self.modifier_history.get((level,kind),()))
-                if len(trace)>=3 and len(set(trace[-3:]))>=2:
-                    forecasts[kind]=self._forecast_mover(trace,40)
-        route,stats=self.search(world,overrides,learned,moving=forecasts)
+                period=self._detect_period(trace)
+                if period:
+                    repeating[kind]=period
+        route,stats=self.search(world,overrides,learned,moving=repeating)
         self.last_stats=stats
         if route:
             action=route[0]
