@@ -14,7 +14,7 @@ from pathlib import Path
 import arc_agi
 from arcengine import GameAction, GameState
 
-from genesis.visual_navigation import LS20VisualPlanner
+from genesis.ls20_search import LS20SearchPlanner
 from tests.arc_agi3_probe import observed_frame, parse_action
 
 
@@ -24,12 +24,12 @@ def run(max_actions: int) -> dict:
     if env is None:
         raise RuntimeError("Public LS20 environment could not be opened")
     obs = env.reset()
-    planner = LS20VisualPlanner()
+    planner = LS20SearchPlanner()
     allowed = {item.name for item in env.action_space}
     results: dict = {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "game": "ls20",
-        "policy": "ls20-vision-v1",
+        "policy": "ls20-search-v1",
         "evaluation": "public exploratory, game-aware; not a verified or blind AGI benchmark",
         "result": "not_started",
         "allowed_actions": sorted(allowed),
@@ -77,7 +77,7 @@ def run(max_actions: int) -> dict:
             "position":decision.get("position"),
             "target":decision.get("objective"),
             "route_length":decision.get("route_len"),
-            "key_and_target":(planner.trace[-1] if planner.trace else None),
+            "search_info": decision.get("search_stats"),
             "levels_completed":level,
         })
         if obs.state == GameState.WIN:
