@@ -84,12 +84,23 @@ class LS20SearchPlanner:
                 if len(present) >= 3:
                     color.add(point)
         seen = self.cache.setdefault(level,{"rotation":set(),"color":set(),"shape":set()})
-        seen["rotation"].update(rotation)
-        seen["color"].update(color)
-        seen["shape"].update(shape)
-        rotation |= seen["rotation"]
-        color |= seen["color"]
-        shape |= seen["shape"]
+        if level < 4:
+            seen["rotation"].update(rotation)
+            seen["color"].update(color)
+            seen["shape"].update(shape)
+            rotation |= seen["rotation"]
+            color |= seen["color"]
+            shape |= seen["shape"]
+        else:
+            # Moving modifiers start at level five. Treat the CURRENT
+            # observation as authoritative; remembered old locations are not
+            # active tiles. Retain only an occluded known tile under the player.
+            for name,visible in (("rotation",rotation),("color",color),("shape",shape)):
+                remembered = seen[name]
+                if world_pos := (pos in remembered):
+                    visible.add(pos)
+                remembered.clear()
+                remembered.update(visible)
         # A sprite hides the underlying modifier when standing on it.
         walkable |= rotation | color | shape | {pos}
         meter_units = sum(p == 11 for p in f[61][14:56])
