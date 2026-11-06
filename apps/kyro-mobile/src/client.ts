@@ -6,7 +6,8 @@ export const API_ORIGIN=(process.env.EXPO_PUBLIC_API_ORIGIN ||
  'https://ces52hcf3e.execute-api.ap-southeast-2.amazonaws.com').replace(/\/$/,'');
 export const COGNITO_HOST=(process.env.EXPO_PUBLIC_COGNITO_HOST ||
  'https://kyro-v4-private-179502447662.auth.ap-southeast-2.amazoncognito.com').replace(/\/$/,'');
-export const COGNITO_CLIENT_ID=process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID || '';
+/* Pre-alpha uses the existing public PKCE client so its ID-token audience matches the live API. */
+export const COGNITO_CLIENT_ID=process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID || '68i1h2nqhvsjruneo12k0u3ahm';
 export const isConfigured=Boolean(COGNITO_CLIENT_ID &&
  COGNITO_CLIENT_ID!=='REPLACE_WITH_MOBILE_PUBLIC_APP_CLIENT_ID');
 
