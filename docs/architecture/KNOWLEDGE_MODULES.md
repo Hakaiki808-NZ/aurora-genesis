@@ -22,6 +22,17 @@ Unknown executable fields are rejected. A normalized SHA-256 fingerprint is calc
 
 The SHA-256 is a change detector, not a publisher signature. License and publisher metadata are self-declared and NOT verified. Do not distribute third-party copyrighted materials without rights.
 
+## Free language packs
+
+Free modules are a permanent first-class catalogue tier; their metadata reports distribution=open and is_free=true. Genesis supports category=language and a language_tag (a supported BCP 47 language code, such as es or mi). Free starter packs supplied here:
+
+- examples/modules/spanish-basics.json — Spanish beginner vocabulary, greetings, and simple grammar.
+- examples/modules/te-reo-maori-basics.json — te reo Māori beginner greetings, directional farewells, and macron awareness.
+
+Language-pack passages are searchable as source-attributed reference data. They are not model weights, guaranteed translation engines, fluency certifications, or synthetic voices. Free learning content should have clear reuse rights; te reo Māori teaching content should undergo appropriate fluent-speaker review before a commercial or public learning release. Full bilingual translation, speech recognition, voice synthesis, signed distribution and marketplace UI are later milestones.
+
+The store's Unicode-aware tokenizer preserves accented Spanish letters and Māori macrons in language search. Category and language tag are optional for older knowledge packs; existing pack fingerprints remain compatible.
+
 ## Python example
 
     import json
