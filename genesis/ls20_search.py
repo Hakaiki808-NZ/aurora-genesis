@@ -174,8 +174,14 @@ class LS20SearchPlanner:
         world: SearchWorld,
         overrides: dict[tuple[tuple[int,int],str],tuple[int,int]] | None = None,
         shape_edges: dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]] | None = None,
+        moving: dict[str,list[tuple[int,int]]] | None = None,
     ) -> tuple[list[str] | None, dict[str,Any]]:
-        """Breadth-first search with exact move cost and consumable refills."""
+        """BFS over key, energy, doors and optional observed modifier phases.
+
+        In moving mode, the state contains an action clock: a cell can be a
+        different operator after each step. Horizon is bounded; an incomplete
+        forecast causes an explicit fallback, not a fabricated solved route.
+        """
         if world.key_color not in COLOR_CYCLE:
             return None, {"reason":"unknown_color"}
         if not world.door:
@@ -187,8 +193,18 @@ class LS20SearchPlanner:
 
         redirects = overrides or {}
         shape_edges = shape_edges or {}
+        moving = moving or {}
+        dynamic = bool(moving)
+        horizon = min(40, max((len(p)-1 for p in moving.values()),default=0)) if dynamic else 0
+        def tile_at(kind:str, t:int):
+            trajectory=moving.get(kind)
+            if trajectory:
+                if t>=len(trajectory):
+                    return frozenset()
+                return frozenset((trajectory[t],))
+            return getattr(world, kind)
         start=(world.player, world.key_shape, COLOR_CYCLE.index(world.key_color),
-               0, world.meter_units, 0)
+               0, world.meter_units, 0, 0)
         queue=deque([start])
         visited={start}
         # Dominance: for identical map/key/door/pickup state, extra energy
@@ -196,8 +212,8 @@ class LS20SearchPlanner:
         # meter reached for that abstract state, avoiding 42 near-identical
         # copies of many branches.
         def abstract(state):
-            pos, pattern, ci, pickups, meter, doors = state
-            return (pos, pattern, ci, pickups, doors)
+            pos, pattern, ci, pickups, meter, doors, t = state
+            return (pos, pattern, ci, pickups, doors, t if dynamic else 0)
         best_meter = {abstract(start):start[4]}
         dominated = 0
         parents:dict[tuple,tuple[tuple,str]]={}
@@ -209,7 +225,9 @@ class LS20SearchPlanner:
         while queue and expanded < MAX_NODES:
             state=queue.popleft()
             expanded+=1
-            (x,y),pattern,ci,mask,meter,door_mask=state
+            (x,y),pattern,ci,mask,meter,door_mask,t=state
+            if dynamic and t>=horizon:
+                continue
             if meter < best_meter.get(abstract(state), -1):
                 dominated += 1
                 continue
@@ -229,12 +247,15 @@ class LS20SearchPlanner:
                     after_meter=42
                 if after_meter < 0:
                     continue
-                newpattern = _rotate_clockwise(pattern) if nxt in world.rotation else pattern
-                if nxt in world.shape:
+                # A moving operator applies on ENTER at the observed future
+                # timestep, not at its position when planning began.
+                tick=t+1
+                newpattern = _rotate_clockwise(pattern) if nxt in tile_at("rotation",tick) else pattern
+                if nxt in tile_at("shape",tick):
                     if newpattern not in shape_edges:
-                        continue  # unknown transition: learn it through real exploration
+                        continue  # unknown effect must be learned by probing
                     newpattern = shape_edges[newpattern]
-                newcolor = (ci+1)%len(COLOR_CYCLE) if nxt in world.color else ci
+                newcolor = (ci+1)%len(COLOR_CYCLE) if nxt in tile_at("color",tick) else ci
                 lock=goal_locations.get(nxt)
                 new_door_mask=door_mask
                 if lock:
@@ -244,7 +265,7 @@ class LS20SearchPlanner:
                             COLOR_CYCLE[newcolor] != door.color):
                             continue
                         new_door_mask |= 1<<door_id
-                end=(nxt,newpattern,newcolor,newmask,after_meter,new_door_mask)
+                end=(nxt,newpattern,newcolor,newmask,after_meter,new_door_mask,tick)
                 if end in visited:
                     continue
                 key=abstract(end)
@@ -267,14 +288,18 @@ class LS20SearchPlanner:
                                    "length":len(route),"refills_modelled":len(world.energy),
                                    "doors_modelled":len(world.door),
                                    "known_shape_transitions":len(shape_edges),
-                                   "pruned_dominated":dominated}
+                                   "pruned_dominated":dominated,
+                                   "temporal_model":dynamic,
+                                   "forecast_horizon":horizon}
                 queue.append(end)
         return None, {"reason":"no_goal_path_found",
                       "expanded":expanded,"visited":len(visited),
                       "reached_cap":expanded>=MAX_NODES,
                       "refills_modelled":len(world.energy),
                       "pruned_dominated":dominated,
-                      "abstract_states":len(best_meter)}
+                      "abstract_states":len(best_meter),
+                      "temporal_model":dynamic,
+                      "forecast_horizon":horizon}
 
     @staticmethod
     def _route_with_observed_transitions(
@@ -444,7 +469,13 @@ class LS20SearchPlanner:
         learned.update(self.global_shape_edges)
         recent=self.recent_positions.setdefault(level,deque(maxlen=16))
         recent.append(world.player)
-        route,stats=self.search(world,overrides,learned)
+        forecasts={}
+        if level>=4:
+            for kind in ("shape","rotation","color"):
+                trace=list(self.modifier_history.get((level,kind),()))
+                if len(trace)>=3 and len(set(trace[-3:]))>=2:
+                    forecasts[kind]=self._forecast_mover(trace,40)
+        route,stats=self.search(world,overrides,learned,moving=forecasts)
         self.last_stats=stats
         if route:
             action=route[0]
