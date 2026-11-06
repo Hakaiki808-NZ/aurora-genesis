@@ -2,7 +2,7 @@ name: ARC-AGI-3 exploratory probe
 
 on:
   push:
-    branches: [experiment/arc-agi3-readiness, experiment/ls20-search-optimisation, experiment/genesis-temporal-world-v2]
+    branches: [experiment/arc-agi3-readiness, experiment/ls20-search-optimisation, experiment/genesis-temporal-world-v2, experiment/genesis-fog-navigation]
   workflow_dispatch:
 
 jobs:
