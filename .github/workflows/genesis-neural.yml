@@ -26,6 +26,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install API test dependencies
+        run: python -m pip install -r requirements.txt
       - name: Python syntax and compile
         run: python -m compileall -q genesis tests/neural_backend.py
       - name: Bounded neural backend tests (stubbed, no external calls)
