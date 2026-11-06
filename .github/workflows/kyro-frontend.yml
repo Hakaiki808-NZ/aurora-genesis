@@ -1,0 +1,29 @@
+name: Kyro frontend checks
+on:
+  push:
+    paths:
+      - 'cloud/workspace-v5/**'
+      - 'tests/kyro-frontend-static.cjs'
+      - '.github/workflows/kyro-frontend.yml'
+  pull_request:
+    paths:
+      - 'cloud/workspace-v5/**'
+      - 'tests/kyro-frontend-static.cjs'
+      - '.github/workflows/kyro-frontend.yml'
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate browser JavaScript
+        run: |
+          node --check cloud/workspace-v5/app.js
+          node --check cloud/workspace-v5/ux.js
+          node --check cloud/workspace-v5/preview.js
+      - name: Validate frontend contract
+        run: node tests/kyro-frontend-static.cjs
