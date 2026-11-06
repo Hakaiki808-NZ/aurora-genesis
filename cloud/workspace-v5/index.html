@@ -8,6 +8,7 @@
 <title>Kyro V5 — Intelligence Workspace</title>
 <link rel="stylesheet" href="/v3/styles.css"/>
 <script defer src="/v3/app.js"></script>
+<script defer src="/v3/ux.js"></script>
 </head>
 <body>
 <a class="skip-link" href="#signin">Skip to workspace access</a>
@@ -16,7 +17,8 @@
  <div class="logo"><div class="mark">K<span>·</span></div><div><strong>KYRO</strong><small>INTELLIGENCE WORKSPACE</small></div></div>
  <div class="section">WORKSPACE</div>
  <nav aria-label="Kyro modes">
-  <button class="nav active" data-mode="code">⌘ <span>Code</span></button>
+  <button class="nav active" data-mode="overview">◈ <span>Overview</span></button>
+  <button class="nav" data-mode="code">⌘ <span>Code</span></button>
   <button class="nav" data-mode="collab">◎ <span>Collaborate</span></button>
   <button class="nav" data-mode="chat">◫ <span>Chat archive</span></button>
   <button class="nav" data-mode="connectors">◇ <span>Plugins &amp; integrations</span></button>
@@ -28,19 +30,25 @@
  <button id="account-btn" class="account-btn">◉ <span id="account-name">Sign in</span></button>
 </aside>
 <main class="main">
- <header class="bar"><div class="breadcrumb">KYRO <span>/</span> <strong id="mode-title">CODE</strong></div><div class="chips"><span class="chip">AURORA · PENDING</span><span class="chip accent">V5 PRIVATE ALPHA</span></div></header>
+ <header class="bar"><div class="breadcrumb">KYRO <span>/</span> <strong id="mode-title">CODE</strong></div><div class="chips"><button type="button" class="top-action" id="quick-search" title="Open navigation search (Ctrl+K)">⌕ <span>Search</span> <kbd>⌘ K</kbd></button><button type="button" class="top-action" id="prefs-button" title="Display preferences">⚙ <span>Settings</span></button><span class="chip">AURORA · PENDING</span><span class="chip accent">V5 PRIVATE ALPHA</span></div></header>
  <div id="signin" class="signin"><div class="hero-icon" aria-hidden="true">✳</div><div class="eyebrow">YOUR CLOUD WORKSPACE</div><h1>Built for thinking.<br/><em>Ready for building.</em></h1><p>One secure place for your projects, code, conversations and collaborators. This private AWS preview requires an administrator-created account.</p>
 <div class="platform-status" aria-label="Three-system integration status">
  <div class="platform-card"><span class="platform-orb orb-ready" aria-hidden="true"></span><span class="platform-name">KYRO · INTERFACE</span><strong>Cloud workspace</strong><span class="platform-detail">Deployed to AWS Sydney</span><span class="platform-state state-ready">LIVE PREVIEW</span></div>
  <div class="platform-card"><span class="platform-orb orb-lab" aria-hidden="true"></span><span class="platform-name">GENESIS · MODEL</span><strong>Research reference</strong><span class="platform-detail">Experimental responses only</span><span class="platform-state state-lab">RESEARCH MODE</span></div>
  <div class="platform-card"><span class="platform-orb orb-pending" aria-hidden="true"></span><span class="platform-name">AURORA · ENGINE</span><strong>Execution restricted</strong><span class="platform-detail">Protected engine not attached</span><span class="platform-state state-pending">NOT CONNECTED</span></div>
 </div>
-<div class="auth-cta"><button class="primary" id="login">Continue with secure sign-in</button><span>Administrator invitation required · no public self-registration</span></div><p id="signin-error" class="signin-error hidden" role="alert" aria-live="assertive"></p><p class="micro">Development preview only. No autonomous engine execution or production AGI claim. <a href="https://github.com/Hakaiki808-NZ/aurora-genesis" rel="noreferrer noopener" target="_blank">Explore the public research project</a>.</p></div>
+<div class="auth-cta"><button class="primary" id="login">Continue with secure sign-in</button><a class="ghost-link" href="/v3/preview.html">Preview workspace without an account</a><span>Administrator invitation required · no public self-registration</span></div><p id="signin-error" class="signin-error hidden" role="alert" aria-live="assertive"></p><p class="micro">Development preview only. No autonomous engine execution or production AGI claim. <a href="https://github.com/Hakaiki808-NZ/aurora-genesis" rel="noreferrer noopener" target="_blank">Explore the public research project</a>.</p></div>
  <section id="workspace" class="workspace hidden" aria-live="polite">
   <div class="header"><div><div class="eyebrow">KYRO / <span id="section-label">CODE WORKSPACE</span></div><h1 id="section-title">Build with intelligence.</h1><p id="section-blurb">Safe editing and collaborative projects, backed by AWS.</p></div><div id="section-actions"></div></div>
-  <div id="code-panel" class="panel code-layout">
-   <div class="files pane"><div class="pane-head">PROJECT FILES <button id="new-file">＋</button></div><div id="file-list"></div></div>
-   <div class="editor pane"><div class="editor-head"><span id="file-name">No file selected</span><span id="file-etag" class="etag"></span></div><textarea id="file-content" spellcheck="false" aria-label="Code editor" placeholder="Choose a file or create a new one…"></textarea><div class="editor-actions"><span id="file-notice">Every save is version checked.</span><button class="primary small" id="save-file" disabled>Save changes</button></div></div>
+  <div id="overview-panel" class="overview-panel hidden">
+  <div class="overview-hero"><div><div class="eyebrow">YOUR WORKSPACE</div><h2>One place to make progress.</h2><p>Manage projects, write code, collaborate and explore Genesis experiments — all from a single private workspace.</p></div><div class="overview-orb" aria-hidden="true">✳</div></div>
+  <div class="overview-metrics"><div class="metric"><span>YOUR PROJECTS</span><strong id="metric-projects">—</strong><small>Accessible workspaces</small></div><div class="metric"><span>ACTIVE PROJECT</span><strong id="metric-active">None selected</strong><small>Choose from the sidebar</small></div><div class="metric"><span>ENGINE AUTHORITY</span><strong class="metric-pending">Restricted</strong><small>Aurora execution not attached</small></div></div>
+  <div class="overview-cards"><button type="button" class="action-card" data-go="code"><span class="action-symbol">⌘</span><strong>Open Code</strong><small>Create and edit versioned files</small><span class="action-arrow">→</span></button><button type="button" class="action-card" data-go="collab"><span class="action-symbol">◎</span><strong>Collaborate</strong><small>Messages and project roles</small><span class="action-arrow">→</span></button><button type="button" class="action-card" data-go="chat"><span class="action-symbol">◫</span><strong>Chat history</strong><small>Experimental Genesis reference</small><span class="action-arrow">→</span></button><button type="button" class="action-card" data-go="connectors"><span class="action-symbol">◇</span><strong>Integrations</strong><small>Explore available contracts</small><span class="action-arrow">→</span></button></div>
+  <div class="overview-footnote"><span class="status-point"></span><span>Kyro on AWS Sydney · Private research alpha</span><a href="https://github.com/Hakaiki808-NZ/aurora-genesis" target="_blank" rel="noopener noreferrer">Research repository ↗</a></div>
+ </div>
+ <div id="code-panel" class="panel code-layout">
+   <div class="files pane"><div class="pane-head">PROJECT FILES <button id="new-file" aria-label="Create file">＋</button></div><label for="file-filter" class="sr-only">Filter files</label><input id="file-filter" type="search" placeholder="Filter files…" autocomplete="off"/><div id="file-list"></div></div>
+   <div class="editor pane"><div class="editor-head"><span id="file-name">No file selected</span><span class="editor-badges"><span id="dirty-indicator" class="dirty-indicator hidden" aria-label="Unsaved changes">● Unsaved</span><span id="file-etag" class="etag"></span></span></div><textarea id="file-content" spellcheck="false" aria-label="Code editor" placeholder="Choose a file or create a new one…"></textarea><div class="editor-actions"><span id="file-notice">Every save is version checked.</span><button class="primary small" id="save-file" disabled>Save changes</button></div></div>
    <div class="agent pane"><div class="pane-head">KYRO CODE AGENT <span>✳</span></div><div class="agent-content"><h3>Execution stays controlled.</h3><p>Cloud files and workspace storage are live. Autonomous test runs, shells and agent-generated changes remain pending Aurora approval.</p><button id="draft-job" class="secondary">Create pending lint job</button><div class="divider"></div><div id="jobs"></div></div></div>
   </div>
   <div id="collab-panel" class="panel split hidden"><div class="pane"><div class="pane-head">TEAM ROOM <span>◎</span></div><div id="posts" class="posts"></div><form id="post-form" class="send-form"><textarea id="post-input" placeholder="Message your collaborators…" maxlength="2400" rows="2" aria-label="Team message"></textarea><button class="primary small" type="submit">Send</button></form></div><div class="pane"><div class="pane-head">TEAM &amp; INVITATIONS</div><div class="pad"><p>Project roles are checked by the server. Only an owner can invite someone.</p><div class="join"><button class="secondary" id="invite-viewer">Invite viewer</button><button class="secondary" id="invite-editor">Invite editor</button><button class="secondary" id="join-invite">Join invitation</button></div><textarea id="invite-output" readonly placeholder="Invitation token appears here once." rows="5" aria-label="Invitation token"></textarea><p class="micro">Invitation tokens expire after seven days and can be accepted once.</p></div></div></div>
@@ -50,5 +58,7 @@
  </section>
 </main>
 </div>
+<div class="command-overlay hidden" id="command-overlay" role="presentation"><section class="command-dialog" role="dialog" aria-modal="true" aria-labelledby="command-heading"><div class="command-head"><span aria-hidden="true">⌕</span><label id="command-heading" class="sr-only" for="command-input">Search workspace navigation</label><input id="command-input" type="search" placeholder="Go to workspace… (Code, Chat, Projects)" autocomplete="off"/><button type="button" id="command-close" aria-label="Close search">Esc</button></div><div id="command-results" class="command-results" role="listbox"></div><div class="command-hint">Enter to open · Escape to close</div></section></div>
+<div class="command-overlay hidden" id="prefs-overlay" role="presentation"><section class="prefs-dialog" role="dialog" aria-modal="true" aria-labelledby="prefs-heading"><div class="prefs-head"><div><div class="eyebrow">WORKSPACE PREFERENCES</div><h2 id="prefs-heading">Appearance</h2></div><button type="button" id="prefs-close" class="close-button" aria-label="Close preferences">×</button></div><label class="setting-line"><span><strong>Compact layout</strong><small>Reduce interface spacing</small></span><input type="checkbox" id="compact-toggle"/></label><label class="setting-line"><span><strong>Reduced motion</strong><small>Limit interface animations</small></span><input type="checkbox" id="motion-toggle"/></label><p class="micro">Display settings are stored in this browser only. No account or token data is saved.</p></section></div>
 </body>
 </html>
