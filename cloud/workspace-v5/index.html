@@ -8,8 +8,12 @@
 <title>Kyro V5 — Intelligence Workspace</title>
 <link rel="stylesheet" href="/v3/styles.css"/>
 <link rel="stylesheet" href="/v3/light.css"/>
+<link rel="stylesheet" href="/v3/mobile.css"/>
+<link rel="manifest" href="/v3/manifest.webmanifest"/>
+<link rel="icon" type="image/svg+xml" href="/v3/kyro-icon.svg"/>
 <script defer src="/v3/app.js"></script>
 <script defer src="/v3/ux.js"></script>
+<script defer src="/v3/mobile.js"></script>
 </head>
 <body>
 <a class="skip-link" href="#signin">Skip to workspace access</a>
@@ -31,7 +35,7 @@
  <button id="account-btn" class="account-btn">◉ <span id="account-name">Sign in</span></button>
 </aside>
 <main class="main">
- <header class="bar"><div class="breadcrumb">KYRO <span>/</span> <strong id="mode-title">CODE</strong></div><div class="chips"><button type="button" class="top-action" id="quick-search" title="Open navigation search (Ctrl+K)">⌕ <span>Search</span> <kbd>⌘ K</kbd></button><button type="button" class="top-action" id="prefs-button" title="Display preferences">⚙ <span>Settings</span></button><span class="chip">AURORA · PENDING</span><span class="chip accent">V5 PRIVATE ALPHA</span></div></header>
+ <header class="bar"><div class="breadcrumb">KYRO <span>/</span> <strong id="mode-title">CODE</strong></div><div class="chips"><button type="button" id="mobile-projects" class="mobile-projects-trigger" aria-controls="project-list" aria-expanded="false" type="button">Projects</button><button type="button" class="top-action" id="quick-search" title="Open navigation search (Ctrl+K)">⌕ <span>Search</span> <kbd>⌘ K</kbd></button><button type="button" class="top-action" id="prefs-button" title="Display preferences">⚙ <span>Settings</span></button><span class="chip">AURORA · PENDING</span><span class="chip accent">V5 PRIVATE ALPHA</span></div></header>
  <div id="signin" class="signin"><div class="hero-icon" aria-hidden="true">✳</div><div class="eyebrow">YOUR CLOUD WORKSPACE</div><h1>Built for thinking.<br/><em>Ready for building.</em></h1><p>One secure place for your projects, code, conversations and collaborators. This private AWS preview requires an administrator-created account.</p>
 <div class="platform-status" aria-label="Three-system integration status">
  <div class="platform-card"><span class="platform-orb orb-ready" aria-hidden="true"></span><span class="platform-name">KYRO · INTERFACE</span><strong>Cloud workspace</strong><span class="platform-detail">Deployed to AWS Sydney</span><span class="platform-state state-ready">LIVE PREVIEW</span></div>
