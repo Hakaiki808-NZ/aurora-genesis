@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Kyro",
+    "slug": "kyro-mobile",
+    "version": "0.1.0",
+    "orientation": "default",
+    "scheme": "kyro",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "nz.hakaiki808.kyro"
+    },
+    "android": {
+      "package": "nz.hakaiki808.kyro",
+      "adaptiveIcon": {
+        "backgroundColor": "#eaf0f4"
+      }
+    },
+    "plugins": [
+      "expo-web-browser"
+    ],
+    "extra": {
+      "environment": "private-alpha"
+    },
+    "experiments": {
+      "tsconfigPaths": true
+    }
+  }
+}
