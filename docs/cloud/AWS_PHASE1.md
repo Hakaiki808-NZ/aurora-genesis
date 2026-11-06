@@ -65,4 +65,12 @@ Additional products (developer API, community forum, administration and collabor
 
 ## Deployment status
 
-Foundation **template validated** by AWS CloudFormation in Sydney on 2026-11-06. Review the stack state independently before marking actual resource creation complete.
+**Deployed and verified 2026-11-06:** AWS CloudFormation stack `aurora-genesis-dev-foundation` in `ap-southeast-2` reached `CREATE_COMPLETE`. All four resources reached `CREATE_COMPLETE`.
+
+Verification:
+- Artifact S3 bucket: all four public-access-block settings enabled, SSE-S3 AES256 encryption, versioning enabled, zero objects.
+- Private Kyro ECR registry: AES256 encryption, immutable image tags, basic scan on push, zero images.
+- CloudWatch Kyro log group: retention seven days.
+- SSM Standard String deployment marker: `foundation-only-no-public-workloads`.
+
+No deployed chat service, public application endpoint, database, agent runtime or paid model inference was created. Billing data can lag; the existing AWS Budget alert **does not** enforce a hard cap.
