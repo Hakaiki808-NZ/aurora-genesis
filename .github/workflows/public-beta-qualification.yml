@@ -1,0 +1,50 @@
+name: Kyro public-beta qualification (non-privileged)
+on:
+  push:
+    paths:
+      - 'cloud/public-beta-web/**'
+      - 'tests/public_beta_snapshot.py'
+      - 'tools/aws_public_beta_smoke.py'
+      - '.github/workflows/public-beta-qualification.yml'
+  pull_request:
+    paths:
+      - 'cloud/public-beta-web/**'
+      - 'tests/public_beta_snapshot.py'
+      - 'tools/aws_public_beta_smoke.py'
+      - '.github/workflows/public-beta-qualification.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Python snapshot contract
+        run: python tests/public_beta_snapshot.py
+      - name: Check browser JavaScript syntax
+        run: |
+          node --check cloud/public-beta-web/app.js
+          node --check cloud/public-beta-web/v3/app.js
+          node --check cloud/public-beta-web/v3/ux.js
+          node --check cloud/public-beta-web/v3/preview.js
+          node --check cloud/public-beta-web/v3/school-voice.js
+  public-edge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Public beta anonymous security checks
+        run: python tools/aws_public_beta_smoke.py
+      - name: Private-alpha API security regression
+        run: python tools/aws_private_alpha_smoke.py
