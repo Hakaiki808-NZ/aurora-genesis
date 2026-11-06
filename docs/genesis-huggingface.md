@@ -34,10 +34,11 @@ only after quota, data, security and cost gates are satisfied.
    python -m pip install "transformers>=4.51" accelerate torch safetensors huggingface_hub
 2. Review the upstream revision and cache the pinned weight files in a separate,
    approved download step:
-   hf download Qwen/Qwen3-0.6B --revision REVIEWED_40_CHARACTER_COMMIT_SHA
-   Document the resolved SHA and provenance. Download requires internet/storage.
+   hf download Qwen/Qwen3-0.6B --revision c1899de289a04d12100db370d81485cdf75e47ca
+   This was the upstream model revision inspected on 2026-11-07; re-check
+   before use. Download requires internet/storage.
 3. Set GENESIS_GENERATOR=huggingface and GENESIS_HF_ENABLE=1 only in the
-   isolated runtime, together with GENESIS_HF_REVISION=REVIEWED_40_CHARACTER_COMMIT_SHA.
+   isolated runtime, together with GENESIS_HF_REVISION=c1899de289a04d12100db370d81485cdf75e47ca.
    Default model is Qwen/Qwen3-0.6B.
 4. Run python -m tests.huggingface_backend (offline mocks).
 5. For approved 1.7B evaluation, set GENESIS_HF_MODEL_ID=Qwen/Qwen3-1.7B,
@@ -55,7 +56,8 @@ Do not ingest private user data into training without consent and governance.
 
 Account observations from Sydney, 2026-11-07:
 - One running t3.small; not appropriate for this 0.6B+ inference or training.
-- EC2 G/VT on-demand GPU quota: **0 vCPU**.
+- EC2 G/VT on-demand GPU quota: **0 vCPU**; an existing increase
+  request for **4 vCPU** is at CASE_OPENED (not yet usable).
 - Existing US$1 Zero-Spend Budget is an **alert**, not a hard cap.
 - Earlier bounded 1,123-parameter Lambda training checkpoint is not an LLM.
 
