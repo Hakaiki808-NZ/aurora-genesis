@@ -24,6 +24,7 @@ def run():
         tid = task["task_id"]
         assert task["status"] == "DRAFT"
         assert [x["task_id"] for x in ledger.due()] == [tid]
+        assert ledger.attention()[0]["reason"] == "overdue"
         rejects(lambda: ledger.complete(tid, "owner", human_confirmed=True), "unreviewed task completed")
         rejects(lambda: ledger.submit_evidence(tid, 0, "ok", "local"), "draft accepted evidence")
         ledger.transition(tid, "approve")
@@ -49,6 +50,7 @@ def run():
         assert result["completion_basis"] == "human_attestation"
         assert len(result["accepted_criteria"]) == 2
         assert ledger.due() == []
+        assert all(x["task"]["task_id"] != tid for x in ledger.attention())
         assert ledger.events(tid)[-1]["event_type"] == "HUMAN_ATTESTED_COMPLETION"
         rejects(lambda: ledger.transition(tid, "start"), "terminal task restarted")
         # Same SQLite storage survives module restarts.
