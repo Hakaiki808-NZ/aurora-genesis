@@ -25,6 +25,7 @@ class FogExplorer:
         self.grid:dict[Point,str]={}
         self.visits:Counter=Counter()
         self.blocked:set[tuple[Point,str]]=set()
+        self.observed_edges:dict[tuple[Point,str],Point]={}
         self.attempts:Counter=Counter()
         self.previous_tiles:dict[Point,str]|None=None
         self.previous_world_pos:Point|None=None
@@ -115,10 +116,13 @@ class FogExplorer:
                 # a launcher may shift farther than one cell. Record only
                 # the observed landing rather than inventing intermediate map.
                 if player!=(previous[0]+dx,previous[1]+dy):
+                    self.observed_edges[(previous,self.previous_action)]=player
                     self.last_diagnostics["nonlocal_movement"]={
                         "from":previous,"to":player,
                         "action":self.previous_action
                     }
+        self.previous_action=None
+        self.previous_world_pos=None
         self.visits[player]+=1
         self.current_position=player
         self.previous_tiles=current
@@ -131,7 +135,8 @@ class FogExplorer:
         while q:
             here=q.popleft()
             for dx,dy,act in _MOVES:
-                nxt=(here[0]+dx,here[1]+dy)
+                nxt=self.observed_edges.get(
+                    (here,act),(here[0]+dx,here[1]+dy))
                 if (act not in allowed or nxt in seen or
                     self.grid.get(nxt)!="floor" or (here,act) in self.blocked):
                     continue
@@ -151,8 +156,12 @@ class FogExplorer:
         self,frame_json:str,level:int,screen_player:Point,
         allowed:Iterable[str],meter_units:int,
         energy:Iterable[Point]=(),
+        already_observed:bool=False,
     )->dict[str,Any]:
-        here=self.update(frame_json,level,screen_player)
+        here=(self.current_position if already_observed
+              else self.update(frame_json,level,screen_player))
+        if here is None:
+            raise ValueError("fog explorer has no player observation")
         options=set(allowed)&set(_DELTAS)
         if not options:
             return {"action":None,"reason":"no_navigation_actions"}
@@ -192,10 +201,28 @@ class FogExplorer:
             cost=len(route)*3+self.visits[pos]*2-unknown
             candidates.append((cost,len(route),pos,route,possible))
         if not candidates:
-            # Exhausted visible frontier. No simulated move is labelled as
-            # progress; explicit abstention records the model limitation.
+            # When all immediately visible frontiers are inaccessible, seek
+            # a reachable unvisited observation point. In a fog scene a
+            # previously visible corridor can expose new areas from another
+            # vantage even when its adjacent cells are already classified.
+            vantage=[]
+            for pos,kind in self.grid.items():
+                if kind!="floor" or pos==here:
+                    continue
+                route=self._route(here,pos,options)
+                if route:
+                    vantage.append((
+                        self.visits[pos],
+                        -len(route),
+                        pos,
+                        route
+                    ))
+            if vantage:
+                _,_,goal,path=min(vantage,key=lambda x:(x[0],x[1],x[2]))
+                return self._finish(here,path[0],
+                                    "relocate_to_unvisited_vantage",goal)
             return {
-                "action":None,"reason":"no_reachable_unexplored_frontier",
+                "action":None,"reason":"no_reachable_exploration_action",
                 "policy":"fog-explore-v1","mapped_tiles":len(self.grid),
             }
         _,_,goal,route,unknown_actions=min(candidates,key=lambda c:(c[0],c[1],c[2]))
@@ -231,6 +258,7 @@ class FogExplorer:
             "episode":self.episode,"mapped_cells":len(self.grid),
             "visited_cells":len(self.visits),
             "blocked_moves":len(self.blocked),
+            "observed_nonlocal_edges":len(self.observed_edges),
             "camera_origin":self.origin,
             "steps":self.steps,
             "diagnostics":dict(self.last_diagnostics),
