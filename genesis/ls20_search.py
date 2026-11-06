@@ -619,6 +619,27 @@ class LS20SearchPlanner:
         # Fallback is explicitly tagged; it cannot be claimed as a solved plan.
         self.fallbacks+=1
         out=self.visual.decide(serialized,level,allowed)
+        # A door may become visible before the key-changing mechanism is.
+        # Keep exploring the map in that case, rather than freezing on the
+        # first sighting of a currently unsatisfiable goal.
+        if out.get("action") is None and (
+            out.get("reason") in {
+                "door_not_detected","no_transform_detected",
+                "modifier_unreachable","no_reachable_door",
+                "no_route_to_objective"
+            }
+        ):
+            exploration=self.fog_explorer.decide(
+                serialized,level,world.player,allowed,
+                world.meter_units//max(1,world.unit_cost),world.energy
+            )
+            if exploration.get("action") is not None:
+                self.last_action=None
+                exploration["search_stats"]={
+                    **stats,"exploration_due_to":out.get("reason"),
+                    "fog":self.fog_explorer.summary()
+                }
+                return exploration
         objective=out.get("objective")
         if isinstance(objective, (tuple,list)) and len(objective)==2:
             path=self._route_with_observed_transitions(
