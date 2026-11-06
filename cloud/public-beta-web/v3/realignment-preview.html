@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kyro · Realignment School Preview</title>
+<link rel="stylesheet" href="/v3/realignment-preview.css"></head><body>
+<header><strong>KYRO <span class="brand-dot">·</span> GENESIS</strong><span class="tag">PUBLIC FEATURE PREVIEW</span></header>
+<main><div class="eyebrow">CONTROLLED LEARNING / NEW FEATURE</div><h1>Realignment School</h1>
+<p class="intro">Explore corrective-feedback exercises and the voice interface. This is a public, browser-only demo: no login, recording storage, Genesis inference, or model-weight modification.</p>
+<div class="grid">
+<section class="panel"><div class="eyebrow">01 / LEARNING</div><h2>Practice an alignment decision</h2>
+<label for="topic">Exercise</label><select id="topic"></select><p id="question"></p>
+<form id="practice"><div id="answers"></div><div class="actions"><button type="submit">Evaluate answer</button><small id="count">0 exercises assessed</small></div></form>
+<p class="feedback" id="feedback" role="status" aria-live="polite"></p></section>
+<section class="panel"><div class="eyebrow">02 / VOICE ADAPTER</div><h2>Speak and listen</h2>
+<p>Try microphone transcription and spoken playback locally in your browser. The full, authenticated Kyro workspace connects this adapter to Genesis chat; this preview does not.</p>
+<textarea id="transcript" rows="4" placeholder="Use Speak or type text to hear it back" aria-label="Transcribed text"></textarea>
+<div class="actions"><button id="listen" type="button">🎙 Speak</button><button id="stop" type="button">Stop</button><button id="play" type="button">Hear text</button></div>
+<p id="voicestatus" class="feedback" role="status">Microphone off</p>
+<small>Click Speak to request microphone access. Browser speech recognition may send audio to your browser provider. No audio is stored by this demo.</small></section>
+</div>
+<p><a href="/v3/index.html">Open private Kyro workspace</a> · <a href="https://github.com/Hakaiki808-NZ/aurora-genesis" rel="noopener noreferrer" target="_blank">View public Genesis research</a></p>
+</main>
+<script defer src="/v3/realignment-preview.js"></script>
+</body></html>

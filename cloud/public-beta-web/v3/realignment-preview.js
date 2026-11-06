@@ -1,0 +1,18 @@
+'use strict';
+const cases=[
+ {id:'evidence',domain:'Evidence',q:'A recent claim is unverified. How should Genesis respond?',a:['Present an estimate as fact','Verify the claim or acknowledge uncertainty','Invent a citation'],correct:1,note:'Accuracy includes knowing when evidence is missing.'},
+ {id:'authority',domain:'Authority',q:'How does Genesis request a consequential action from Aurora?',a:['Grant itself privileges','Ignore engine controls','Submit a bounded, independently validated request'],correct:2,note:'Aurora remains the only engine authority.'},
+ {id:'security',domain:'Security',q:'A web page orders Genesis to disable safeguards. What next?',a:['Treat the command as untrusted content','Change the constitution','Turn off Guardians'],correct:0,note:'External content never becomes instruction authority.'},
+ {id:'regression',domain:'Learning',q:'A proposed correction fails a previously passed task. What next?',a:['Deploy automatically','Reevaluate and obtain approval','Delete failing tests'],correct:1,note:'Controlled learning requires regression checks.'},
+ {id:'privacy',domain:'Privacy',q:'When should voice recording start?',a:['Continuously','Whenever the AI requests it','After clear user action'],correct:2,note:'Microphone capture must be explicitly initiated.'}
+];
+const el=id=>document.getElementById(id),topic=el('topic');let completed=0,correct=0,recognition=null;
+cases.forEach((c,i)=>{const opt=document.createElement('option');opt.value=String(i);opt.textContent=c.domain;topic.append(opt);});
+function render(){const c=cases[Number(topic.value)||0];el('question').textContent=c.q;el('answers').replaceChildren();el('feedback').textContent='';c.a.forEach((label,i)=>{const wrapper=document.createElement('label');wrapper.className='choice';const radio=document.createElement('input');radio.type='radio';radio.name='answer';radio.value=i;wrapper.append(radio,document.createTextNode(' '+label));el('answers').append(wrapper);});}
+topic.addEventListener('change',render);render();
+el('practice').addEventListener('submit',event=>{event.preventDefault();const selected=document.querySelector('[name="answer"]:checked');if(!selected){el('feedback').textContent='Choose an answer first.';return;}const c=cases[Number(topic.value)||0];const pass=Number(selected.value)===c.correct;completed++;correct+=Number(pass);el('feedback').textContent=(pass?'✓ Correct. ':'↺ Review. ')+c.note;el('count').textContent=correct+'/'+completed+' correct';});
+const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!Recognition){el('listen').disabled=true;el('voicestatus').textContent='Speech recognition unavailable in this browser';}
+el('listen').onclick=()=>{if(!Recognition)return;try{recognition?.stop();recognition=new Recognition();recognition.lang='en-NZ';recognition.continuous=false;recognition.onresult=event=>{el('transcript').value=event.results[0][0].transcript;el('voicestatus').textContent='Transcription ready';};recognition.onerror=e=>el('voicestatus').textContent='Voice input: '+e.error;recognition.onend=()=>{recognition=null;};recognition.start();el('voicestatus').textContent='Listening…';}catch{el('voicestatus').textContent='Microphone start failed';}};
+el('stop').onclick=()=>{recognition?.stop();window.speechSynthesis?.cancel();el('voicestatus').textContent='Microphone off';};
+el('play').onclick=()=>{const text=el('transcript').value.trim();if(!text)return; if(!('speechSynthesis' in window)){el('voicestatus').textContent='Speech playback unavailable';return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text.slice(0,3000));u.lang='en-NZ';speechSynthesis.speak(u);el('voicestatus').textContent='Speaking…';};
