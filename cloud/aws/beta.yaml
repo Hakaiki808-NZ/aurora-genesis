@@ -319,7 +319,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ApiFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub '${HttpApi.ExecutionArn}/*/*'
+      SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*/*'
 Outputs:
   SiteURL:
     Value: !Sub 'https://${KyroDistribution.DomainName}/'
