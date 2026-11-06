@@ -101,21 +101,28 @@ class LS20VisualPlanner:
                 special = (cnt[0] + cnt[1] > 0)
                 colorful = sum(n for c, n in cnt.items()
                                if c not in _BG and c not in (0, 1, 12))
-                # A door tile is a dark panel with a small colored glyph.
-                is_door = cnt[5] >= 10 and colorful >= 2 and cnt[12] == 0
-                # White launch-pad bars may be drawn ON a solid wall.
-                # Their 1-colour pixels do not make that tile walkable.
-                if (center == 3 or cnt[3] >= 8 or (x, y) == player
-                    or is_door):
-                    walkable.add((x, y))
-                if is_door:
+                # Fog can obscure part of a genuine door or make a yellow
+                # energy pickup resemble a small coloured glyph. Admit a
+                # door only when the observed foreground is complete and its
+                # palette is consistent with a key colour. Incomplete icons
+                # stay unknown, never fabricated goals.
+                detected_door = None
+                if cnt[5] >= 10 and colorful >= 2 and cnt[12] == 0:
                     small = [frame[y+j][x+1:x+4] for j in range(1,4)]
-                    fg = Counter(int(c) for row in small for c in row if c not in _BG)
+                    fg = Counter(int(c) for row in small if row for c in row if c not in _BG)
                     if fg:
                         color = fg.most_common(1)[0][0]
                         pattern = tuple(tuple(1 if c == color else 0 for c in row)
                                         for row in small)
-                        objects.append(VisualObject(x,y,"door",pattern,color))
+                        if color in {8,9,12,14} and sum(map(sum,pattern)) >= 5:
+                            detected_door = VisualObject(x,y,"door",pattern,color)
+                # White launch-pad bars may be drawn ON a solid wall.
+                # Their pixels do not make that tile walkable.
+                if (center == 3 or cnt[3] >= 8 or (x, y) == player
+                    or detected_door is not None):
+                    walkable.add((x, y))
+                if detected_door is not None:
+                    objects.append(detected_door)
                 elif cnt[11] >= 3 and cnt[3] >= 8:
                     objects.append(VisualObject(x,y,"energy"))
                 elif (len({c for c in tile if c in {8,9,12,14}}) >= 3
