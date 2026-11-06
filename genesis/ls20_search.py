@@ -419,6 +419,9 @@ class LS20SearchPlanner:
         if world is None:
             return {"action":None,"policy":"ls20-search-v1",
                     "reason":"visual_perception_failed"}
+        # Keep the observation-only map updated across all planner modes,
+        # including turns where a previously unseen door becomes visible.
+        self.fog_explorer.update(serialized,level,world.player)
         # Do not assume that the entire board (including the door) is
         # visible. If it is hidden, explicitly explore the observed frontier
         # and preserve the discovered map across actions and camera motion.
@@ -426,7 +429,8 @@ class LS20SearchPlanner:
             self.last_action=None
             exploratory=self.fog_explorer.decide(
                 serialized,level,world.player,allowed,
-                world.meter_units//max(1,world.unit_cost),world.energy
+                world.meter_units//max(1,world.unit_cost),world.energy,
+                already_observed=True
             )
             exploratory["search_stats"]={"fog":self.fog_explorer.summary()}
             return exploratory
@@ -631,7 +635,8 @@ class LS20SearchPlanner:
         ):
             exploration=self.fog_explorer.decide(
                 serialized,level,world.player,allowed,
-                world.meter_units//max(1,world.unit_cost),world.energy
+                world.meter_units//max(1,world.unit_cost),world.energy,
+                already_observed=True
             )
             if exploration.get("action") is not None:
                 self.last_action=None
