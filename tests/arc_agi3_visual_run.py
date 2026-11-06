@@ -66,6 +66,10 @@ def run(max_actions: int) -> dict:
         if level != previous_level:
             results["level_progress"].append(
                 {"action_number":index+1,"from":previous_level,"to":level})
+            snapshot = json.loads(observed_frame(obs))
+            palette = "0123456789abcdef"
+            print("LEVEL_FRAME_" + str(level) + " " + json.dumps(
+                ["".join(palette[int(pixel)] for pixel in row) for row in snapshot]))
             previous_level = level
         results["action_trace"].append({
             "step": index+1, "action": valid["action_type"],
@@ -73,6 +77,7 @@ def run(max_actions: int) -> dict:
             "position":decision.get("position"),
             "target":decision.get("objective"),
             "route_length":decision.get("route_len"),
+            "key_and_target":(planner.trace[-1] if planner.trace else None),
             "levels_completed":level,
         })
         if obs.state == GameState.WIN:
