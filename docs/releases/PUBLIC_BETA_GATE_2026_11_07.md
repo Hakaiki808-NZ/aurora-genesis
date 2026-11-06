@@ -20,6 +20,7 @@
 - Source snapshot includes 18 deployed public browser objects, with S3 ETags and sizes; GitHub and AWS copies matched after merge.
 - A CSP incompatibility in the Realignment preview was repaired in live S3 by externalizing JavaScript and CSS; the original HTML is backed up in S3.
 - Candidate GitHub public-beta qualification and existing test suites passed.
+- The existing 6 November cloud research-beta validation report records successful **real Cognito-issued JWT -> API Gateway -> Lambda -> Genesis** requests, per-user persistence and cross-account isolation using two subsequently deleted test accounts. Full human browser PKCE and V3 workflow verification are still pending.
 - GitHub CI for existing reference model previously passed; this branch adds static and anonymous public-edge checks.
 
 ## Mandatory user-facing acceptance before opening broadly
