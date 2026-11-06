@@ -331,10 +331,14 @@ class LS20SearchPlanner:
                        world.player!=expected)
                 if world.player!=expected and not reset:
                     transitions[(from_pos,last_move)]=world.player
-                if world.player in world.shape and world.player!=from_pos:
-                    if world.key_shape!=last_shape:
-                        self.learned_shapes.setdefault(level,{})[last_shape]=world.key_shape
-                        self.global_shape_edges[last_shape]=world.key_shape
+                # Moving modifiers can vacate the cell before the new frame
+                # is emitted.  Learn from the visible key transition itself.
+                # Reject pure quarter-turn rotation and life resets.
+                if (world.key_shape != last_shape and
+                    world.key_shape != _rotate_clockwise(last_shape) and
+                    not reset):
+                    self.learned_shapes.setdefault(level,{})[last_shape]=world.key_shape
+                    self.global_shape_edges[last_shape]=world.key_shape
             self.last_action=None
         overrides=self.observed_transitions.setdefault(level,{})
         learned=self.learned_shapes.setdefault(level,{})
