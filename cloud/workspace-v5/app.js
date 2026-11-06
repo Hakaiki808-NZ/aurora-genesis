@@ -102,10 +102,10 @@ async function api(path,method='GET',body=null){
 }
 const safe=async fn=>{try{return await fn();}catch(e){notice(e.message||String(e));return null;}};
 function show(mode){state.mode=mode;for(const el of document.querySelectorAll('[data-mode]'))el.classList.toggle('active',el.dataset.mode===mode);
- for(const name of ['code','collab','chat','connectors'])$(name+'-panel').classList.toggle('hidden',name!==mode);
- const info={code:['CODE','CODE WORKSPACE','Build with intelligence.','Versioned source files. Approved and auditable changes.'],collab:['COLLABORATE','SHARED WORKSPACE','Better work, together.','Discuss work and share access by project role.'],chat:['CHAT ARCHIVE','PRIVATE CONVERSATIONS','Keep your thinking.','Conversation history and deterministic Genesis reference responses (experimental).'],connectors:['PLUGINS','CONNECTORS & APIs','Connect with control.','Adapters are registered; integrations are disabled until authorized.']};
+ for(const name of ['overview','code','collab','chat','connectors'])$(name+'-panel').classList.toggle('hidden',name!==mode);
+ const info={overview:['OVERVIEW','YOUR WORKSPACE','Welcome to Kyro.','Everything in one focused workspace.'],code:['CODE','CODE WORKSPACE','Build with intelligence.','Versioned source files. Approved and auditable changes.'],collab:['COLLABORATE','SHARED WORKSPACE','Better work, together.','Discuss work and share access by project role.'],chat:['CHAT ARCHIVE','PRIVATE CONVERSATIONS','Keep your thinking.','Conversation history and deterministic Genesis reference responses (experimental).'],connectors:['PLUGINS','CONNECTORS & APIs','Connect with control.','Adapters are registered; integrations are disabled until authorized.']};
  const [name,label,title,blurb]=info[mode];$('mode-title').textContent=name;$('section-label').textContent=label;$('section-title').textContent=title;$('section-blurb').textContent=blurb;
- if(mode==='collab')safe(loadPosts);if(mode==='chat')safe(loadConversations);if(mode==='connectors')safe(loadConnectors);if(mode==='code')safe(loadFiles);
+ if(mode==='overview'){const m=$('metric-projects');if(m)m.textContent=String(state.projects.length);const p=state.projects.find(x=>x.id===state.project);const a=$('metric-active');if(a)a.textContent=p?p.name:'None selected';}if(mode==='collab')safe(loadPosts);if(mode==='chat')safe(loadConversations);if(mode==='connectors')safe(loadConnectors);if(mode==='code')safe(loadFiles);
 }
 async function boot(){
  $('login').onclick=()=>safe(beginLogin);
@@ -124,8 +124,8 @@ async function boot(){
  if(state.token){
   $('signin').classList.add('hidden');$('workspace').classList.remove('hidden');
   const me=await safe(()=>api('/me'));
-  $('account-name').textContent=me?'Account · '+me.subject.slice(0,10):'Account';
-  await safe(loadProjects);show('code');notice('Private workspace connected.');
+  if(!me){showSignedOut('Could not verify your workspace account. Sign in again.');return;}$('account-name').textContent='Account · '+String(me.subject||'member').slice(0,10);
+  await safe(loadProjects);show('overview');notice('Private workspace connected.');
  } else if(!params.has('error')&&!params.has('code')){$('signin-error').classList.add('hidden');}
 }
 async function loadProjects(){
@@ -155,16 +155,16 @@ function setProjectPermissions(){
 function loadProjectsUI(){const hosts=$('project-list').children;for(let i=0;i<hosts.length;i++)hosts[i].classList.toggle('active',state.projects[i]?.id===state.project);}
 async function loadFiles(){const host=$('file-list');host.replaceChildren();if(!state.project){host.append(node('p','Create a project to start.'));return;}
  const data=await api('/projects/'+state.project+'/files');
- for(const f of data.files||[]){const btn=node('button','⌘  '+f.path,'file-entry'+(state.file===f.path?' selected':''));btn.onclick=()=>safe(()=>openFile(f.path));host.append(btn);}
- if(!data.files?.length)host.append(node('p','No source files yet.','pad'));}
+ for(const f of (data.files||[]).filter(f=>f.path.toLowerCase().includes(($('file-filter')?.value||'').trim().toLowerCase()))){const btn=node('button','⌘  '+f.path,'file-entry'+(state.file===f.path?' selected':''));btn.onclick=()=>safe(()=>openFile(f.path));host.append(btn);}
+ if(!data.files?.length)host.append(node('p','No source files yet.','pad'));else if(!host.children.length)host.append(node('p','No matching files.','pad'));}
 async function newFile(){if(!state.project)throw new Error('Select a project first.');const path=prompt('File path, for example src/main.py');if(!path)return;
- state.file=path;state.etag=null;$('file-name').textContent=path;$('file-content').value='';$('save-file').disabled=false;setProjectPermissions();$('file-etag').textContent='New file';notice('Save to create the file.');}
+ state.file=path;state.etag=null;$('file-name').textContent=path;$('file-content').value='';window.kyroCleanContent='';document.getElementById('dirty-indicator')?.classList.add('hidden');$('save-file').disabled=false;setProjectPermissions();$('file-etag').textContent='New file';notice('Save to create the file.');}
 async function openFile(path){const data=await api('/projects/'+state.project+'/file?path='+encodeURIComponent(path));state.file=data.path;state.etag=data.etag;
- $('file-name').textContent=data.path;$('file-content').value=data.content;$('file-etag').textContent=data.etag.slice(0,9);$('save-file').disabled=false;setProjectPermissions();await loadFiles();}
+ $('file-name').textContent=data.path;$('file-content').value=data.content;window.kyroCleanContent=data.content;document.getElementById('dirty-indicator')?.classList.add('hidden');$('file-etag').textContent=data.etag.slice(0,9);$('save-file').disabled=false;setProjectPermissions();await loadFiles();}
 async function saveFile(){if(!state.project||!state.file)throw new Error('Select or create a file.');
  if(!['owner','editor'].includes(state.projects.find(p=>p.id===state.project)?.role))throw new Error('Viewer access is read-only.');
  const payload={path:state.file,content:$('file-content').value};if(state.etag)payload.if_match=state.etag;
- const data=await api('/projects/'+state.project+'/files','PUT',payload);state.etag=data.etag;$('file-etag').textContent=data.etag.slice(0,9);notice('File saved with integrity version '+data.etag.slice(0,12));await loadFiles();}
+ const data=await api('/projects/'+state.project+'/files','PUT',payload);state.etag=data.etag;window.kyroCleanContent=$('file-content').value;document.getElementById('dirty-indicator')?.classList.add('hidden');$('file-etag').textContent=data.etag.slice(0,9);notice('File saved with integrity version '+data.etag.slice(0,12));await loadFiles();}
 async function draftJob(){if(!state.project)throw new Error('Choose a project.');const data=await api('/projects/'+state.project+'/jobs','POST',{operation:'lint'});notice(data.reason);await loadJobs();}
 async function loadJobs(){const host=$('jobs');host.replaceChildren();if(!state.project)return;
  const data=await api('/projects/'+state.project+'/jobs');for(const j of data.jobs||[])host.append(node('div',j.operation+' · '+j.status,'job'));}

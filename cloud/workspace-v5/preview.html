@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Preview Kyro, the Aurora and Genesis research workspace. Explore Code, Chat, Collaboration, and Integrations without signing in.">
+<meta name="theme-color" content="#f2f5f7">
+<title>Kyro · Explore the Workspace</title>
+<link rel="stylesheet" href="/v3/styles.css">
+<link rel="stylesheet" href="/v3/preview.css">
+<link rel="stylesheet" href="/v3/light.css">
+<script src="/v3/preview.js" defer></script>
+</head>
+<body class="preview-page">
+<a class="skip-link" href="#preview-main">Skip to workspace</a>
+<div class="preview-shell">
+<aside class="preview-aside" aria-label="Preview navigation">
+ <a class="logo preview-logo" href="/v3/index.html" aria-label="Kyro home"><div class="mark">K<span>·</span></div><div><strong>KYRO</strong><small>INTELLIGENCE WORKSPACE</small></div></a>
+ <div class="preview-badge"><span class="status-point"></span> INTERACTIVE PREVIEW</div>
+ <div class="section">WORKSPACE</div>
+ <nav id="preview-nav" aria-label="Workspace modes">
+ <button type="button" class="nav active" data-preview="overview" aria-current="page">◈ <span>Overview</span></button>
+ <button type="button" class="nav" data-preview="code">⌘ <span>Code</span></button>
+ <button type="button" class="nav" data-preview="collab">◎ <span>Collaborate</span></button>
+ <button type="button" class="nav" data-preview="chat">◫ <span>Chat</span></button>
+ <button type="button" class="nav" data-preview="connectors">◇ <span>Plugins &amp; APIs</span></button>
+ </nav>
+ <div class="section preview-projects-title">SAMPLE PROJECTS</div>
+ <div class="preview-projects">
+ <button class="project active" type="button" data-preview-project="aurora">◇ Aurora Runtime</button>
+ <button class="project" type="button" data-preview-project="genesis">✳ Genesis Research</button>
+ <button class="project" type="button" data-preview-project="kyro">◫ Kyro Workspace</button>
+ </div>
+ <div class="spacer"></div>
+ <div class="preview-hint">Explore freely. The sample content is local to this page and is not stored or executed on AWS.</div>
+ <a class="preview-signin" href="/v3/index.html">Sign in to your workspace ↗</a>
+</aside>
+<main class="preview-main" id="preview-main">
+ <header class="bar preview-topbar"><div class="breadcrumb">KYRO <span>/</span> <strong id="preview-mode-label">OVERVIEW</strong></div><div class="chips"><span class="chip">AURORA · RESTRICTED</span><span class="chip accent">DEMO MODE</span><a class="preview-header-signin" href="/v3/index.html">Sign in ↗</a></div></header>
+ <section id="page-overview" class="preview-view">
+  <div class="preview-hero"><div><div class="eyebrow">WELCOME TO YOUR NEXT WORKSPACE</div><h1>Build what's <em>next.</em></h1><p>Kyro brings ideas, source code, discussions and research experiments into one intelligent environment. Explore the interface, then sign in to use real account-backed features.</p><button type="button" class="preview-primary" data-open="code">Explore the code workspace <span>→</span></button></div><div class="preview-hero-art" aria-hidden="true"><div class="art-ring art-ring-1"></div><div class="art-ring art-ring-2"></div><div class="art-center">K<span>✳</span></div></div></div>
+  <div class="preview-metrics"><article><span>INTERFACE</span><strong>Kyro</strong><small>Cloud preview available</small></article><article><span>MODEL</span><strong>Genesis</strong><small>Experimental research only</small></article><article><span>ENGINE</span><strong>Aurora</strong><small>Private execution disconnected</small></article></div>
+  <div class="preview-section-title"><div><div class="eyebrow">DISCOVER</div><h2>Everything in one workspace</h2></div><span>4 workspaces</span></div>
+  <div class="preview-feature-grid">
+   <button type="button" data-open="code"><span class="feature-icon">⌘</span><strong>Code workspace</strong><small>Organise projects, edit versioned files and prepare controlled operations.</small><span class="feature-cta">Explore Code →</span></button>
+   <button type="button" data-open="collab"><span class="feature-icon">◎</span><strong>Collaboration</strong><small>Share projects with roles, exchange messages and work together.</small><span class="feature-cta">Explore Teams →</span></button>
+   <button type="button" data-open="chat"><span class="feature-icon">◫</span><strong>Genesis chat</strong><small>Keep conversations organised while the research model develops.</small><span class="feature-cta">Explore Chat →</span></button>
+   <button type="button" data-open="connectors"><span class="feature-icon">◇</span><strong>Integrations</strong><small>Discover the future protocol and plugin interoperability layer.</small><span class="feature-cta">Explore Connectors →</span></button>
+  </div>
+ </section>
+ <section id="page-code" class="preview-view hidden">
+  <div class="preview-heading"><div class="eyebrow">DEVELOPER WORKSPACE</div><h1>Code, with context.</h1><p>Project files, a clean editor and controlled operations in one place.</p></div>
+  <div class="preview-code-grid">
+   <div class="preview-pane preview-file-pane"><div class="pane-head">EXPLORER <span>DEMO</span></div><div class="preview-tree"><span class="preview-tree-group">▾ <span id="demo-project-name">Aurora Runtime</span></span><button type="button" data-demo-file="main.py" class="preview-file-selected">◫ main.py</button><button type="button" data-demo-file="config.yaml">◫ config.yaml</button><button type="button" data-demo-file="README.md">◫ README.md</button></div><div class="preview-pane-footer">3 sample files · read-only</div></div>
+   <div class="preview-pane preview-editor"><div class="pane-head"><span id="demo-current-file">main.py</span><span>READ-ONLY PREVIEW</span></div><pre id="demo-code" tabindex="0"></pre><div class="preview-pane-footer">File contents are demonstration examples, not your account data.</div></div>
+   <div class="preview-pane preview-assistant"><div class="pane-head">KYRO CODE <span>✳</span></div><div class="preview-assistant-content"><div class="preview-spark">✳</div><h3>From idea to implementation.</h3><p>Review files, collaborate on changes and prepare approved development workflows.</p><div class="preview-disabled"><strong>Runtime disabled</strong><small>Autonomous tool execution requires the private Aurora Engine.</small></div><a href="/v3/index.html" class="preview-primary preview-primary-small">Sign in to edit ↗</a></div></div>
+  </div>
+ </section>
+ <section id="page-collab" class="preview-view hidden">
+  <div class="preview-heading"><div class="eyebrow">COLLABORATION</div><h1>Build better, together.</h1><p>Project discussions, clear roles and accountable access.</p></div>
+  <div class="preview-collab-grid"><div class="preview-pane"><div class="pane-head">PROJECT DISCUSSION <span>SAMPLE</span></div><div class="preview-messages"><article><div class="demo-avatar">K</div><div><div class="demo-byline">Kyro Team <span>Demo · Yesterday</span></div><p>Welcome to the project workspace. Keep design decisions and implementation notes in one shared place.</p></div></article><article><div class="demo-avatar alt">G</div><div><div class="demo-byline">Research Team <span>Demo · Today</span></div><p>Genesis and Aurora remain separate by design. Execution permissions are not granted by model responses.</p></div></article></div><div class="preview-pane-footer">Messages shown here are illustrative and cannot be sent.</div></div><div class="preview-pane"><div class="pane-head">TEAM ACCESS <span>ROLE-BASED</span></div><div class="preview-team"><div><div class="demo-avatar">O</div><span><strong>Project owner</strong><small>Manage members and roles</small></span><b>OWNER</b></div><div><div class="demo-avatar alt">E</div><span><strong>Contributor</strong><small>Edit authorised project files</small></span><b>EDITOR</b></div><div><div class="demo-avatar blue">V</div><span><strong>Reviewer</strong><small>Read-only project access</small></span><b>VIEWER</b></div><a class="preview-primary preview-primary-small" href="/v3/index.html">Sign in to collaborate ↗</a></div></div></div>
+ </section>
+ <section id="page-chat" class="preview-view hidden">
+ <div class="preview-heading"><div class="eyebrow">GENESIS · RESEARCH MODEL</div><h1>Ideas deserve continuity.</h1><p>An organised conversational space for experiments and exploration.</p></div>
+ <div class="preview-chat-grid"><div class="preview-pane"><div class="pane-head">HISTORY <span>DEMO</span></div><button type="button" class="demo-thread selected" data-chat-topic="architecture">◇ System architecture</button><button type="button" class="demo-thread" data-chat-topic="research">✳ Research notes</button><div class="preview-pane-footer">Private chat requires authentication.</div></div><div class="preview-pane preview-chat-body"><div class="pane-head">CONVERSATION <span>RESEARCH PREVIEW</span></div><div id="demo-chat-messages" class="preview-chat-messages"></div><div class="preview-chat-locked"><span>✳</span><p>Sign in to converse with the deployed Genesis research reference.</p><a href="/v3/index.html">Continue to sign-in →</a></div></div></div>
+ </section>
+ <section id="page-connectors" class="preview-view hidden">
+ <div class="preview-heading"><div class="eyebrow">INTEROPERABILITY</div><h1>Connect with control.</h1><p>Clear capability boundaries between external tools, research agents and execution.</p></div>
+ <div class="preview-connector-grid">
+ <article><span class="feature-icon">◇</span><div><h3>MCP tools</h3><p>Standardised external tool connectivity, subject to explicit authorisation.</p></div><small>ADAPTER CONTRACT</small></article>
+ <article><span class="feature-icon">◎</span><div><h3>A2A integration</h3><p>Agent-to-agent collaboration through defined protocol boundaries.</p></div><small>PLANNED INTEGRATION</small></article>
+ <article><span class="feature-icon">⌘</span><div><h3>Repository workflows</h3><p>Versioned code projects and collaboration with controlled release gates.</p></div><small>WORKSPACE FEATURE</small></article>
+ <article><span class="feature-icon">✳</span><div><h3>Protected execution</h3><p>Aurora will mediate operations when a separately validated Engine is attached.</p></div><small>NOT CONNECTED</small></article>
+ </div>
+ </section>
+ <footer class="preview-footer"><span>KYRO / INTERFACE + GENESIS / MODEL · PRIVATE ALPHA</span><span>Illustrative preview only · No live workspace data</span></footer>
+</main>
+</div>
+</body></html>
