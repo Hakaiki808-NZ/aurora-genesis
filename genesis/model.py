@@ -16,6 +16,7 @@ from .guardians import GuardianCouncil
 from .capabilities import CapabilityController
 from .engine_boundary import EngineBoundary, EngineReceipt
 from .realignment import RealignmentSchool
+from .task_assurance import TaskLedger
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -34,7 +35,7 @@ class Genesis:
         data_dir=_default_data_dir(); data_dir.mkdir(parents=True,exist_ok=True)
         state_path=state_path or os.environ.get("GENESIS_STATE_PATH") or data_dir/"genesis_state.sqlite3"
         workspace=workspace or os.environ.get("GENESIS_WORKSPACE") or data_dir/"workspace"
-        self.store=Store(state_path); self.tools=ToolRegistry(workspace)
+        self.store=Store(state_path); self.assurance=TaskLedger(self.store); self.tools=ToolRegistry(workspace)
         self.policy=PolicyEngine(cfg/"model_constitution.json",self.tools,self.store)
         self.guardians=GuardianCouncil()
         self.realignment_school=RealignmentSchool()
@@ -126,6 +127,24 @@ class Genesis:
             return {"accepted":False,"reason":f"request is not awaiting an Engine receipt: {tx['state']}"}
         self.store.set_action_state(tx["action_id"],receipt.status,{"result":receipt.result,"error":receipt.error},engine_receipt_id=receipt.receipt_id)
         return {"accepted":True,"idempotent":False,"state":receipt.status,"action_id":tx["action_id"],"request_id":receipt.request_id,"receipt_id":receipt.receipt_id}
+
+    # Outcome assurance is observational. These operations never dispatch tools or
+    # grant Aurora execution privileges. No task is complete without an explicit
+    # review of evidence against every declared acceptance criterion.
+    def create_task(self,title:str,criteria:list[str],priority:int=50,due_at:str|None=None)->dict[str,Any]:
+        return self.assurance.create(title,criteria,priority,due_at)
+
+    def tasks(self,limit:int=100)->list[dict[str,Any]]: return self.assurance.list(limit)
+    def task(self,task_id:str)->dict[str,Any]: return self.assurance.get(task_id)
+    def due_tasks(self,now:str|None=None,limit:int=100)->list[dict[str,Any]]: return self.assurance.due(now,limit)
+    def task_events(self,task_id:str)->list[dict[str,Any]]: return self.assurance.events(task_id)
+    def transition_task(self,task_id:str,action:str)->dict[str,Any]: return self.assurance.transition(task_id,action)
+    def add_task_evidence(self,task_id:str,criterion_index:int,observation:str,reference:str,source_type:str="user")->dict[str,Any]:
+        return self.assurance.submit_evidence(task_id,criterion_index,observation,reference,source_type)
+    def review_task_evidence(self,task_id:str,evidence_id:str,accepted:bool,reviewer:str)->dict[str,Any]:
+        return self.assurance.review_evidence(task_id,evidence_id,accepted,reviewer)
+    def complete_task(self,task_id:str,reviewer:str,human_confirmed:bool=False)->dict[str,Any]:
+        return self.assurance.complete(task_id,reviewer,human_confirmed)
 
     def close(self)->None:self.store.close()
     def __enter__(self):return self
