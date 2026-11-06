@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from collections import Counter, deque
 from dataclasses import dataclass
+from math import lcm
 from typing import Any
 
 from .visual_navigation import (
@@ -57,6 +58,7 @@ class LS20SearchPlanner:
         # Shape-tile mechanics transfer across levels. This is learned ONLY
         # when actual observations show a shape change after tile contact.
         self.global_shape_edges:dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]] = {}
+        self.shape_transition_votes:dict[tuple[tuple[int,...],...],Counter] = {}
         self.recent_positions:dict[int,deque[tuple[int,int]]] = {}
         self.modifier_history:dict[tuple[int,str],deque[tuple[int,int]]] = {}
 
@@ -174,8 +176,14 @@ class LS20SearchPlanner:
         world: SearchWorld,
         overrides: dict[tuple[tuple[int,int],str],tuple[int,int]] | None = None,
         shape_edges: dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]] | None = None,
+        moving: dict[str,list[tuple[int,int]]] | None = None,
     ) -> tuple[list[str] | None, dict[str,Any]]:
-        """Breadth-first search with exact move cost and consumable refills."""
+        """BFS over key, energy, doors and optional observed modifier phases.
+
+        In moving mode, the state contains an action clock: a cell can be a
+        different operator after each step. Horizon is bounded; an incomplete
+        forecast causes an explicit fallback, not a fabricated solved route.
+        """
         if world.key_color not in COLOR_CYCLE:
             return None, {"reason":"unknown_color"}
         if not world.door:
@@ -187,8 +195,18 @@ class LS20SearchPlanner:
 
         redirects = overrides or {}
         shape_edges = shape_edges or {}
+        moving = moving or {}
+        dynamic = bool(moving)
+        phase_period = lcm(*(len(path) for path in moving.values())) if dynamic else 1
+        if phase_period > 120:
+            return None, {"reason":"unbounded_modifier_phase","period":phase_period}
+        def tile_at(kind:str, t:int):
+            trajectory=moving.get(kind)
+            if trajectory:
+                return frozenset((trajectory[t % len(trajectory)],))
+            return getattr(world, kind)
         start=(world.player, world.key_shape, COLOR_CYCLE.index(world.key_color),
-               0, world.meter_units, 0)
+               0, world.meter_units, 0, 0)
         queue=deque([start])
         visited={start}
         # Dominance: for identical map/key/door/pickup state, extra energy
@@ -196,8 +214,8 @@ class LS20SearchPlanner:
         # meter reached for that abstract state, avoiding 42 near-identical
         # copies of many branches.
         def abstract(state):
-            pos, pattern, ci, pickups, meter, doors = state
-            return (pos, pattern, ci, pickups, doors)
+            pos, pattern, ci, pickups, meter, doors, t = state
+            return (pos, pattern, ci, pickups, doors, t if dynamic else 0)
         best_meter = {abstract(start):start[4]}
         dominated = 0
         parents:dict[tuple,tuple[tuple,str]]={}
@@ -209,7 +227,7 @@ class LS20SearchPlanner:
         while queue and expanded < MAX_NODES:
             state=queue.popleft()
             expanded+=1
-            (x,y),pattern,ci,mask,meter,door_mask=state
+            (x,y),pattern,ci,mask,meter,door_mask,t=state
             if meter < best_meter.get(abstract(state), -1):
                 dominated += 1
                 continue
@@ -229,12 +247,15 @@ class LS20SearchPlanner:
                     after_meter=42
                 if after_meter < 0:
                     continue
-                newpattern = _rotate_clockwise(pattern) if nxt in world.rotation else pattern
-                if nxt in world.shape:
+                # A moving operator applies on ENTER at the observed future
+                # timestep, not at its position when planning began.
+                tick=(t+1)%phase_period
+                newpattern = _rotate_clockwise(pattern) if nxt in tile_at("rotation",tick) else pattern
+                if nxt in tile_at("shape",tick):
                     if newpattern not in shape_edges:
-                        continue  # unknown transition: learn it through real exploration
+                        continue  # unknown effect must be learned by probing
                     newpattern = shape_edges[newpattern]
-                newcolor = (ci+1)%len(COLOR_CYCLE) if nxt in world.color else ci
+                newcolor = (ci+1)%len(COLOR_CYCLE) if nxt in tile_at("color",tick) else ci
                 lock=goal_locations.get(nxt)
                 new_door_mask=door_mask
                 if lock:
@@ -244,7 +265,7 @@ class LS20SearchPlanner:
                             COLOR_CYCLE[newcolor] != door.color):
                             continue
                         new_door_mask |= 1<<door_id
-                end=(nxt,newpattern,newcolor,newmask,after_meter,new_door_mask)
+                end=(nxt,newpattern,newcolor,newmask,after_meter,new_door_mask,tick)
                 if end in visited:
                     continue
                 key=abstract(end)
@@ -267,14 +288,18 @@ class LS20SearchPlanner:
                                    "length":len(route),"refills_modelled":len(world.energy),
                                    "doors_modelled":len(world.door),
                                    "known_shape_transitions":len(shape_edges),
-                                   "pruned_dominated":dominated}
+                                   "pruned_dominated":dominated,
+                                   "temporal_model":dynamic,
+                                   "modifier_phase_period":phase_period}
                 queue.append(end)
         return None, {"reason":"no_goal_path_found",
                       "expanded":expanded,"visited":len(visited),
                       "reached_cap":expanded>=MAX_NODES,
                       "refills_modelled":len(world.energy),
                       "pruned_dominated":dominated,
-                      "abstract_states":len(best_meter)}
+                      "abstract_states":len(best_meter),
+                      "temporal_model":dynamic,
+                      "modifier_phase_period":phase_period}
 
     @staticmethod
     def _route_with_observed_transitions(
@@ -351,6 +376,29 @@ class LS20SearchPlanner:
         return forecast
 
     @staticmethod
+    def _detect_period(history: list[tuple[int,int]], maximum:int=20
+    ) -> list[tuple[int,int]] | None:
+        """Detect repeated modifier patrol states using observed positions only.
+
+        Returns a phase array indexed t=0 (NOW), t=1, ... t=period-1.
+        Rejects insufficient/inconsistent observations, rather than guessing
+        dynamics. A verified period can be reused for arbitrary plan lengths.
+        """
+        if len(history)<6:
+            return None
+        candidates=[]
+        for period in range(2,min(maximum,len(history)//2)+1):
+            recent=history[-period:]
+            if (history[-2*period:-period] == recent and
+                len(set(recent)) >= 2):
+                candidates.append(period)
+        if not candidates:
+            return None
+        period=min(candidates)
+        latest=history[-period:]
+        return [latest[-1]] + latest[:-1]
+
+    @staticmethod
     def _moving_intercept(
         world:SearchWorld,
         positions:list[tuple[int,int]],
@@ -418,7 +466,7 @@ class LS20SearchPlanner:
         # Learn observed movement rules (including collisions and launch pads).
         # Never assume the environment obeyed a planned transition.
         if self.last_action is not None:
-            last_level,from_pos,last_move,last_shape,previous_meter=self.last_action
+            last_level,from_pos,last_move,last_shape,previous_meter,previous_shapes=self.last_action
             if last_level==level:
                 transitions=self.observed_transitions.setdefault(level,{})
                 expected={a:(from_pos[0]+dx,from_pos[1]+dy)
@@ -433,25 +481,44 @@ class LS20SearchPlanner:
                 # Moving modifiers can vacate the cell before the new frame
                 # is emitted.  Learn from the visible key transition itself.
                 # Reject pure quarter-turn rotation and life resets.
-                if (world.key_shape != last_shape and
+                # Require evidence that the player entered an observed
+                # shape operator. A changed HUD alone is not causal proof:
+                # moving colour/rotation operators and respawn can produce
+                # unrelated changes. Retain conflicting hypotheses rather
+                # than overwriting an earlier relationship with noise.
+                contact=(world.player in previous_shapes or
+                         world.player in world.shape or
+                         expected in previous_shapes)
+                if (contact and world.key_shape != last_shape and
                     world.key_shape != _rotate_clockwise(last_shape) and
                     not reset):
-                    self.learned_shapes.setdefault(level,{})[last_shape]=world.key_shape
-                    self.global_shape_edges[last_shape]=world.key_shape
+                    votes=self.shape_transition_votes.setdefault(last_shape,Counter())
+                    votes[world.key_shape]+=1
+                    most,count=votes.most_common(1)[0]
+                    if count >= 1 and count>sum(v for k,v in votes.items() if k!=most):
+                        self.learned_shapes.setdefault(level,{})[last_shape]=most
+                        self.global_shape_edges[last_shape]=most
             self.last_action=None
         overrides=self.observed_transitions.setdefault(level,{})
         learned=self.learned_shapes.setdefault(level,{})
         learned.update(self.global_shape_edges)
         recent=self.recent_positions.setdefault(level,deque(maxlen=16))
         recent.append(world.player)
-        route,stats=self.search(world,overrides,learned)
+        repeating={}
+        if level>=4:
+            for kind in ("shape","rotation","color"):
+                trace=list(self.modifier_history.get((level,kind),()))
+                period=self._detect_period(trace)
+                if period:
+                    repeating[kind]=period
+        route,stats=self.search(world,overrides,learned,moving=repeating)
         self.last_stats=stats
         if route:
             action=route[0]
             if action not in allowed:
                 return {"action":None,"policy":"ls20-search-v1",
                         "reason":"invalid_search_action"}
-            self.last_action=(level,world.player,action,world.key_shape,world.meter_units)
+            self.last_action=(level,world.player,action,world.key_shape,world.meter_units,frozenset(world.shape))
             return {
                 "action":{"action_type":action},
                 "reason":"resource_constrained_search",
@@ -524,7 +591,7 @@ class LS20SearchPlanner:
                     if route_to_shape:
                         selected=route_to_shape[0]
                         self.last_action=(level,world.player,selected,
-                                          world.key_shape,world.meter_units)
+                                          world.key_shape,world.meter_units,frozenset(world.shape))
                         return {"action":{"action_type":selected},
                                 "reason":("intercept_moving_shape" if len(track)>=3 and intercept else
                                           "learn_unknown_shape_cycle"),
@@ -595,7 +662,7 @@ class LS20SearchPlanner:
                     out["reason"]="escape_observed_oscillation"
         selected=out.get("action")
         if isinstance(selected,dict) and selected.get("action_type") in allowed:
-            self.last_action=(level,world.player,selected["action_type"],world.key_shape,world.meter_units)
+            self.last_action=(level,world.player,selected["action_type"],world.key_shape,world.meter_units,frozenset(world.shape))
         out["policy"]="ls20-search-v1-fallback"
         out["search_stats"]={**stats,"known_teleports_or_blocks":len(overrides),
                               "learned_shape_transitions":len(learned)}
