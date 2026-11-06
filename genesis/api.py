@@ -20,6 +20,8 @@ def state(): return model.state()
 def diagnostics(): return model.self_check()
 @app.get("/awareness")
 def awareness(): return model.awareness_state()
+@app.get("/perception/status")
+def perception_status(): return model.perception_state()
 @app.get("/goals")
 def goals(): return {"goals":model.store.goals()}
 @app.get("/goals/{goal_id}")
