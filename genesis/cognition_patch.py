@@ -107,7 +107,7 @@ def deliberate(self,text:str,learned:list[dict[str,Any]])->Decision:
     # Explicit observation queries only: keep untrusted sensor text outside
     # neural prompts, tools, general learned facts, and authorization inputs.
     # Values are read-only evidence; a chat response cannot change policy.
-    observed=re.fullmatch(r"(?is)\\s*(?:what is|show)\\s+(?:the\\s+)?observed\\s+([a-z0-9_.:-]{1,80})\\s+for\\s+([a-z0-9_.:-]{1,160})\\??\\s*",text)
+    observed=re.fullmatch(r"(?is)\s*(?:what is|show)\s+(?:the\s+)?observed\s+([a-z0-9_.:-]{1,80})\s+for\s+([a-z0-9_.:-]{1,160})\??\s*",text)
     if observed and getattr(self,"perception",None) is not None:
         attr,entity=observed.group(1),observed.group(2)
         state=self.perception.belief(entity,attr)
