@@ -7,6 +7,7 @@ before enabling this backend: from_pretrained uses local_files_only=True.
 from __future__ import annotations
 
 import importlib.util
+import re
 from dataclasses import dataclass, field
 from threading import RLock
 from typing import Any
@@ -19,6 +20,7 @@ ALLOWED_MODELS = frozenset({"Qwen/Qwen3-0.6B", "Qwen/Qwen3-1.7B"})
 @dataclass
 class HuggingFaceBackend(GeneratorBackend):
     model_id: str = "Qwen/Qwen3-0.6B"
+    revision: str | None = None  # Reviewed immutable Hugging Face commit SHA.
     enabled: bool = False
     max_output_tokens: int = 128
     max_calls: int = 8  # Per process only; NOT a billing or memory limit.
@@ -44,15 +46,18 @@ class HuggingFaceBackend(GeneratorBackend):
 
     def _generator(self) -> Any:
         if self.generator is None:
+            if not self.revision or not re.fullmatch(r"[0-9a-f]{40}", self.revision):
+                raise ValueError("a reviewed 40-character model revision SHA is required")
             from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
             # Deliberately offline: no implicit network fetch, custom remote code,
             # external inference API, or downloads during a Genesis user request.
             tokenizer = AutoTokenizer.from_pretrained(
-                self.model_id, local_files_only=True, trust_remote_code=False
+                self.model_id, revision=self.revision, local_files_only=True, trust_remote_code=False
             )
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_id,
+                revision=self.revision,
                 local_files_only=True,
                 trust_remote_code=False,
                 device_map="auto",
