@@ -16,11 +16,12 @@ from .storage import Store
 
 _ID = re.compile(r"^[a-z][a-z0-9_-]{2,63}$")
 _VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
-_WORD = re.compile(r"[a-z0-9][a-z0-9'-]*", re.I)
+_WORD = re.compile(r"[^\W_]+(?:['’\-][^\W_]+)*", re.UNICODE)
 _STOP = {"the", "a", "an", "and", "or", "is", "are", "was", "were",
          "can", "could", "do", "does", "did", "what", "why", "who", "how",
          "explain", "tell", "about", "with", "of", "on", "in", "at", "to",
          "for", "between", "relationship", "me", "you", "this", "that"}
+_LANGUAGE_TAG = re.compile(r"^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-[A-Z]{2}|-[0-9]{3})?$")
 _MAX_BYTES = 2_000_000
 _MAX_CHAPTERS = 250
 
@@ -44,7 +45,7 @@ def _validate(raw: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise KnowledgeModuleError("package must be a JSON object")
     allowed = {"schema_version", "id", "title", "version", "publisher",
-               "license", "distribution", "subject", "chapters"}
+               "license", "distribution", "subject", "chapters", "category", "language_tag"}
     if set(raw) - allowed:
         raise KnowledgeModuleError("unknown package fields (executable capabilities are not supported)")
     if raw.get("schema_version") != 1 or isinstance(raw.get("schema_version"), bool):
@@ -67,6 +68,20 @@ def _validate(raw: dict[str, Any]) -> dict[str, Any]:
         "distribution": distribution,
         "chapters": [],
     }
+    if "category" in raw or "language_tag" in raw:
+        category = raw.get("category", "knowledge")
+        if category not in {"knowledge", "language"}:
+            raise KnowledgeModuleError("unsupported category")
+        if category == "language":
+            language_tag = _required_string(raw, "language_tag", 35)
+            if not _LANGUAGE_TAG.fullmatch(language_tag):
+                raise KnowledgeModuleError("language_tag must be a supported BCP-47 language tag")
+            normalized["category"] = "language"
+            normalized["language_tag"] = language_tag
+        else:
+            if "language_tag" in raw:
+                raise KnowledgeModuleError("language_tag requires category=language")
+            normalized["category"] = "knowledge"
     chapters = raw.get("chapters")
     if not isinstance(chapters, list) or not 1 <= len(chapters) <= _MAX_CHAPTERS:
         raise KnowledgeModuleError(f"chapters must contain 1 to {_MAX_CHAPTERS} entries")
@@ -109,6 +124,8 @@ class KnowledgeModuleStore:
                     publisher TEXT NOT NULL,
                     license TEXT NOT NULL,
                     subject TEXT NOT NULL,
+                    category TEXT NOT NULL DEFAULT 'knowledge',
+                    language_tag TEXT,
                     sha256 TEXT NOT NULL,
                     enabled INTEGER NOT NULL DEFAULT 1,
                     installed_at TEXT NOT NULL
@@ -125,6 +142,12 @@ class KnowledgeModuleStore:
                 CREATE INDEX IF NOT EXISTS idx_module_chapter_parent
                     ON knowledge_module_chapters(module_id);
             """)
+            # Compatible with databases created before language-category metadata.
+            columns = {r[1] for r in db.execute("PRAGMA table_info(knowledge_modules)")}
+            if "category" not in columns:
+                db.execute("ALTER TABLE knowledge_modules ADD COLUMN category TEXT NOT NULL DEFAULT 'knowledge'")
+            if "language_tag" not in columns:
+                db.execute("ALTER TABLE knowledge_modules ADD COLUMN language_tag TEXT")
 
     def list(self) -> list[dict[str, Any]]:
         with self.store._lock:
@@ -152,14 +175,16 @@ class KnowledgeModuleStore:
             enabled = int(existing["enabled"]) if existing else 1
             # Replace metadata and chapters in one transaction; disabled stays disabled.
             db.execute("""INSERT INTO knowledge_modules
-                (module_id,title,version,publisher,license,subject,sha256,enabled,installed_at)
-                VALUES (?,?,?,?,?,?,?,?,?)
+                (module_id,title,version,publisher,license,subject,category,language_tag,sha256,enabled,installed_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)
                 ON CONFLICT(module_id) DO UPDATE SET
                 title=excluded.title,version=excluded.version,publisher=excluded.publisher,
-                license=excluded.license,subject=excluded.subject,sha256=excluded.sha256,
+                license=excluded.license,subject=excluded.subject,category=excluded.category,
+                language_tag=excluded.language_tag,sha256=excluded.sha256,
                 enabled=excluded.enabled,installed_at=excluded.installed_at""",
                 (module_id,payload["title"],payload["version"],payload["publisher"],
-                 payload["license"],payload["subject"],digest,enabled,
+                 payload["license"],payload["subject"],payload.get("category","knowledge"),
+                 payload.get("language_tag"),digest,enabled,
                  datetime.now(timezone.utc).isoformat()))
             db.execute("DELETE FROM knowledge_module_chapters WHERE module_id=?", (module_id,))
             db.executemany("""INSERT INTO knowledge_module_chapters
@@ -195,7 +220,8 @@ class KnowledgeModuleStore:
         with self.store._lock:
             rows = self.store.db.execute("""
                 SELECT c.module_id,c.chapter_id,c.title,c.content,c.source,
-                       m.title AS module_title,m.version,m.publisher,m.license,m.subject
+                       m.title AS module_title,m.version,m.publisher,m.license,m.subject,
+                       m.category,m.language_tag
                 FROM knowledge_module_chapters c
                 JOIN knowledge_modules m ON m.module_id=c.module_id
                 WHERE m.enabled=1 ORDER BY c.module_id,c.chapter_id
@@ -215,7 +241,8 @@ class KnowledgeModuleStore:
                 "version": row["version"], "chapter_id": row["chapter_id"],
                 "title": row["title"], "excerpt": row["content"][:1800],
                 "source": row["source"], "publisher": row["publisher"],
-                "license": row["license"], "score": score,
+                "license": row["license"], "category": row["category"],
+                "language_tag": row["language_tag"], "score": score,
                 "trust": "unverified_reference_data"
             })
         hits.sort(key=lambda h: (-h["score"], h["module_id"], h["chapter_id"]))
