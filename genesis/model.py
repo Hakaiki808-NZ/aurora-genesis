@@ -17,6 +17,8 @@ from .capabilities import CapabilityController
 from .engine_boundary import EngineBoundary, EngineReceipt
 from .realignment import RealignmentSchool
 from .knowledge_modules import KnowledgeModuleStore
+from .task_assurance import TaskLedger
+from .user_capabilities import UserCapabilityServices
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -29,7 +31,7 @@ def _default_data_dir()->Path:
 class Genesis:
     """Stable public Genesis Model API. Aurora Engine remains a separate system."""
     VERSION="v0.1"
-    def __init__(self,state_path:str|Path|None=None,workspace:str|Path|None=None,backend:GeneratorBackend|None=None,enable_ollama:bool|None=None,ollama_model:str="qwen2.5-coder:1.5b"):
+    def __init__(self,state_path:str|Path|None=None,workspace:str|Path|None=None,backend:GeneratorBackend|None=None,enable_ollama:bool|None=None,ollama_model:str="qwen2.5-coder:1.5b",profile_id:str="local"):
         cfg=ROOT/"config"
         self.identity=json.loads((cfg/"identity.json").read_text(encoding="utf-8")); self.heritage=json.loads((cfg/"heritage.json").read_text(encoding="utf-8")); self.model_record=json.loads((cfg/"model_record.json").read_text(encoding="utf-8"))
         data_dir=_default_data_dir(); data_dir.mkdir(parents=True,exist_ok=True)
@@ -37,6 +39,8 @@ class Genesis:
         workspace=workspace or os.environ.get("GENESIS_WORKSPACE") or data_dir/"workspace"
         self.store=Store(state_path); self.tools=ToolRegistry(workspace)
         self.knowledge_modules=KnowledgeModuleStore(self.store)
+        self.assurance=TaskLedger(self.store)
+        self.user_capabilities=UserCapabilityServices(self.store,profile_id)
         self.policy=PolicyEngine(cfg/"model_constitution.json",self.tools,self.store)
         self.guardians=GuardianCouncil()
         self.realignment_school=RealignmentSchool()
@@ -148,6 +152,54 @@ class Genesis:
     def uninstall_knowledge_module(self, module_id:str)->dict[str,Any]:
         with self._turn_lock:
             return self.knowledge_modules.uninstall(module_id)
+
+    # Outcome assurance is observational. These operations never dispatch tools or
+    # grant Aurora execution privileges. No task is complete without an explicit
+    # review of evidence against every declared acceptance criterion.
+    def create_task(self,title:str,criteria:list[str],priority:int=50,due_at:str|None=None)->dict[str,Any]:
+        return self.assurance.create(title,criteria,priority,due_at)
+
+    def tasks(self,limit:int=100)->list[dict[str,Any]]: return self.assurance.list(limit)
+    def task(self,task_id:str)->dict[str,Any]: return self.assurance.get(task_id)
+    def due_tasks(self,now:str|None=None,limit:int=100)->list[dict[str,Any]]: return self.assurance.due(now,limit)
+    def task_events(self,task_id:str)->list[dict[str,Any]]: return self.assurance.events(task_id)
+    def task_attention(self,now:str|None=None,limit:int=50)->list[dict[str,Any]]: return self.assurance.attention(now,limit)
+    def transition_task(self,task_id:str,action:str)->dict[str,Any]: return self.assurance.transition(task_id,action)
+    def add_task_evidence(self,task_id:str,criterion_index:int,observation:str,reference:str,source_type:str="user")->dict[str,Any]:
+        return self.assurance.submit_evidence(task_id,criterion_index,observation,reference,source_type)
+    def review_task_evidence(self,task_id:str,evidence_id:str,accepted:bool,reviewer:str)->dict[str,Any]:
+        return self.assurance.review_evidence(task_id,evidence_id,accepted,reviewer)
+    def complete_task(self,task_id:str,reviewer:str,human_confirmed:bool=False)->dict[str,Any]:
+        return self.assurance.complete(task_id,reviewer,human_confirmed)
+
+    # The following are opt-in, profile-scoped *reference* methods. Profile
+    # selection and consent changes MUST be authenticated/authorized in Kyro.
+    # They do not grant Aurora tool authority and do not alter legacy respond()
+    # episode storage (which requires separate privacy migration).
+    def ux_consents(self)->dict[str,bool]: return self.user_capabilities.consents()
+    def ux_set_consent(self,scope:str,enabled:bool)->dict[str,Any]:
+        return self.user_capabilities.consent(scope,enabled)
+    def ux_remember(self,kind:str,key:str,value:str,*,source:str="user_explicit",
+                    expires_at:str|None=None)->dict[str,Any]:
+        return self.user_capabilities.remember(kind,key,value,source=source,expires_at=expires_at)
+    def ux_recall(self,kind:str,query:str="",limit:int=30)->list[dict[str,Any]]:
+        return self.user_capabilities.recall(kind,query,limit)
+    def ux_forget(self,kind:str,key:str)->bool: return self.user_capabilities.forget(kind,key)
+    def ux_add_claim(self,statement:str,sources:list[dict[str,str]]|None=None)->dict[str,Any]:
+        return self.user_capabilities.add_claim(statement,sources)
+    def ux_review_claim(self,claim_id:str,supported:bool,reviewer:str)->dict[str,Any]:
+        return self.user_capabilities.review_claim(claim_id,supported,reviewer)
+    def ux_propose_nudge(self,title:str,due_at:str)->dict[str,Any]:
+        return self.user_capabilities.propose_nudge(title,due_at)
+    def ux_attention(self,now:str|None=None,limit:int=30)->list[dict[str,Any]]:
+        return self.user_capabilities.attention(now,limit)
+    def ux_dismiss_nudge(self,nudge_id:str)->bool:
+        return self.user_capabilities.dismiss_nudge(nudge_id)
+    def ux_compare_options(self,criteria:list[dict[str,Any]],
+                           options:list[dict[str,Any]])->dict[str,Any]:
+        return self.user_capabilities.compare_options(criteria,options)
+    def ux_export_profile(self)->dict[str,Any]: return self.user_capabilities.export_profile()
+    def ux_erase_profile(self)->dict[str,Any]: return self.user_capabilities.erase_profile()
 
     def close(self)->None:self.store.close()
     def __enter__(self):return self
