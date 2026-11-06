@@ -130,6 +130,34 @@ class TaskLedger:
                 "ORDER BY due_at ASC LIMIT ?", (at, limit))]
         return [self.get(i) for i in ids]
 
+    def attention(self, now: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        """A deterministic, pull-only action feed for Kyro; does not schedule work."""
+        at = self._due(now) if now is not None else datetime.now(timezone.utc).isoformat()
+        rank = {"blocked": 0, "overdue": 1, "human_review": 2,
+                "approval_required": 3, "ready_to_start": 4}
+        results = []
+        for task in self.list(limit=500):
+            status = task["status"]
+            if status in self.TERMINAL:
+                continue
+            if status == "BLOCKED":
+                reason = "blocked"
+            elif task["due_at"] and task["due_at"] <= at:
+                reason = "overdue"
+            elif status == "REVIEW":
+                reason = "human_review"
+            elif status == "DRAFT":
+                reason = "approval_required"
+            elif status == "APPROVED":
+                reason = "ready_to_start"
+            else:
+                continue
+            results.append({"task": task, "reason": reason})
+        results.sort(key=lambda item: (rank[item["reason"]], -item["task"]["priority"],
+                                       item["task"]["due_at"] or "9999",
+                                       item["task"]["task_id"]))
+        return results[:max(1, min(int(limit), 100))]
+
     def transition(self, task_id: str, action: str) -> dict[str, Any]:
         states = {
             "approve": ({"DRAFT"}, "APPROVED"),
