@@ -1,0 +1,22 @@
+
+/* Kyro beta: matching light / silver design. */
+:root{color-scheme:light;--bg:#f5f7fa;--text:#1e3041;--line:#dbe3eb}
+body{background:radial-gradient(ellipse 80% 45% at 50% -16%,#d9e5f0 0%,transparent 76%),#f5f7fa;color:var(--text)}
+.masthead{border-bottom:1px solid #dce4ec;padding-bottom:20px}
+.mark{background:linear-gradient(135deg,#fff,#dce6ef);border:1px solid #bbcad9;color:#354d63;box-shadow:0 8px 22px #38546c18}
+h1{color:#213549}h1 span{color:#62778c}.masthead p{color:#708294}
+.muted,.hint,footer{color:#637589}
+.phase{background:#fff;border-color:#d3dee8;color:#486177}
+.access,.conversation{background:linear-gradient(150deg,#fff,#fafdff);border:1px solid #d8e2ec;box-shadow:0 12px 30px #344f6810}
+h2{color:#273e53}label{color:#43596d}
+textarea{background:#f8fafc;color:#263c52;border-color:#ccd9e5}
+textarea:focus{border-color:#6688a7;outline:2px solid #91aec5;outline-offset:1px}
+button{background:linear-gradient(135deg,#344d62,#203749);color:#fff;box-shadow:0 4px 12px #2b465c1d}
+button:hover:not(:disabled){background:#405d75}
+button:focus-visible,a:focus-visible{outline:2px solid #587b99;outline-offset:3px}
+#status{color:#4d6c85}
+.bubble.assistant{background:#edf3f7;border:1px solid #dfe6ec;color:#263e54}
+.bubble.user{background:#d9e5ef;color:#243c51}
+#chat-form{border-color:#dce4ec}
+a{color:#345e80}
+::selection{background:#cedde9;color:#183149}

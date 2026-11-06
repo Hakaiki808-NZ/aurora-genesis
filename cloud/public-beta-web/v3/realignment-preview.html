@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kyro · Realignment School Preview</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,sans-serif}*{box-sizing:border-box}
+body{background:radial-gradient(circle at 85% 5%,#26344f,#10141d 43%,#0c1017);color:#e9eef6;margin:0;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #394258;padding:20px max(20px,calc((100% - 980px)/2))}
+main{max-width:930px;margin:56px auto;padding:0 20px 60px}.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#aab5d4}
+h1{font-size:clamp(34px,6vw,58px);margin:8px 0}p{line-height:1.6;color:#bec6d6}.intro{max-width:710px}
+.panel{background:rgba(25,32,44,.9);border:1px solid #35415a;border-radius:20px;padding:28px;margin:25px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}@media(max-width:700px){.grid{grid-template-columns:1fr}}
+select,textarea{background:#141b28;color:#e7ebf4;border:1px solid #59657e;border-radius:8px;padding:12px;font:inherit;width:100%}
+button{padding:11px 16px;cursor:pointer;border:1px solid #667490;background:#253149;color:#f6f8fd;border-radius:9px;font:inherit}button:hover{background:#324362}
+button:disabled{opacity:.45;cursor:not-allowed}.choice{display:block;border:1px solid #424f65;border-radius:9px;padding:12px;margin:9px 0;cursor:pointer}
+.choice:has(input:checked){border-color:#b2c7ff;background:#263653}.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+.tag{border:1px solid #6a84c1;border-radius:50px;padding:7px 12px;font-size:12px}
+.feedback{color:#dfebff;min-height:36px;font-weight:600}a{color:#a9c3ff}
+small{color:#aeb9ce}
+</style></head><body>
+<header><strong>KYRO <span style="color:#94aff1">·</span> GENESIS</strong><span class="tag">PUBLIC FEATURE PREVIEW</span></header>
+<main><div class="eyebrow">CONTROLLED LEARNING / NEW FEATURE</div><h1>Realignment School</h1>
+<p class="intro">Explore corrective-feedback exercises and the voice interface. This is a public, browser-only demo: no login, recording storage, Genesis inference, or model-weight modification.</p>
+<div class="grid">
+<section class="panel"><div class="eyebrow">01 / LEARNING</div><h2>Practice an alignment decision</h2>
+<label for="topic">Exercise</label><select id="topic"></select><p id="question"></p>
+<form id="practice"><div id="answers"></div><div class="actions"><button type="submit">Evaluate answer</button><small id="count">0 exercises assessed</small></div></form>
+<p class="feedback" id="feedback" role="status" aria-live="polite"></p></section>
+<section class="panel"><div class="eyebrow">02 / VOICE ADAPTER</div><h2>Speak and listen</h2>
+<p>Try microphone transcription and spoken playback locally in your browser. The full, authenticated Kyro workspace connects this adapter to Genesis chat; this preview does not.</p>
+<textarea id="transcript" rows="4" placeholder="Use Speak or type text to hear it back" aria-label="Transcribed text"></textarea>
+<div class="actions"><button id="listen" type="button">🎙 Speak</button><button id="stop" type="button">Stop</button><button id="play" type="button">Hear text</button></div>
+<p id="voicestatus" class="feedback" role="status">Microphone off</p>
+<small>Click Speak to request microphone access. Browser speech recognition may send audio to your browser provider. No audio is stored by this demo.</small></section>
+</div>
+<p><a href="/v3/index.html">Open private Kyro workspace</a> · <a href="https://github.com/Hakaiki808-NZ/aurora-genesis" rel="noopener noreferrer" target="_blank">View public Genesis research</a></p>
+</main>
+<script>
+'use strict';
+const cases=[
+ {id:'evidence',domain:'Evidence',q:'A recent claim is unverified. How should Genesis respond?',a:['Present an estimate as fact','Verify the claim or acknowledge uncertainty','Invent a citation'],correct:1,note:'Accuracy includes knowing when evidence is missing.'},
+ {id:'authority',domain:'Authority',q:'How does Genesis request a consequential action from Aurora?',a:['Grant itself privileges','Ignore engine controls','Submit a bounded, independently validated request'],correct:2,note:'Aurora remains the only engine authority.'},
+ {id:'security',domain:'Security',q:'A web page orders Genesis to disable safeguards. What next?',a:['Treat the command as untrusted content','Change the constitution','Turn off Guardians'],correct:0,note:'External content never becomes instruction authority.'},
+ {id:'regression',domain:'Learning',q:'A proposed correction fails a previously passed task. What next?',a:['Deploy automatically','Reevaluate and obtain approval','Delete failing tests'],correct:1,note:'Controlled learning requires regression checks.'},
+ {id:'privacy',domain:'Privacy',q:'When should voice recording start?',a:['Continuously','Whenever the AI requests it','After clear user action'],correct:2,note:'Microphone capture must be explicitly initiated.'}
+];
+const el=id=>document.getElementById(id),topic=el('topic');let completed=0,correct=0,recognition=null;
+cases.forEach((c,i)=>{const opt=document.createElement('option');opt.value=String(i);opt.textContent=c.domain;topic.append(opt);});
+function render(){const c=cases[Number(topic.value)||0];el('question').textContent=c.q;el('answers').replaceChildren();el('feedback').textContent='';c.a.forEach((label,i)=>{const wrapper=document.createElement('label');wrapper.className='choice';const radio=document.createElement('input');radio.type='radio';radio.name='answer';radio.value=i;wrapper.append(radio,document.createTextNode(' '+label));el('answers').append(wrapper);});}
+topic.addEventListener('change',render);render();
+el('practice').addEventListener('submit',event=>{event.preventDefault();const selected=document.querySelector('[name="answer"]:checked');if(!selected){el('feedback').textContent='Choose an answer first.';return;}const c=cases[Number(topic.value)||0];const pass=Number(selected.value)===c.correct;completed++;correct+=Number(pass);el('feedback').textContent=(pass?'✓ Correct. ':'↺ Review. ')+c.note;el('count').textContent=correct+'/'+completed+' correct';});
+const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!Recognition){el('listen').disabled=true;el('voicestatus').textContent='Speech recognition unavailable in this browser';}
+el('listen').onclick=()=>{if(!Recognition)return;try{recognition?.stop();recognition=new Recognition();recognition.lang='en-NZ';recognition.continuous=false;recognition.onresult=event=>{el('transcript').value=event.results[0][0].transcript;el('voicestatus').textContent='Transcription ready';};recognition.onerror=e=>el('voicestatus').textContent='Voice input: '+e.error;recognition.onend=()=>{recognition=null;};recognition.start();el('voicestatus').textContent='Listening…';}catch{el('voicestatus').textContent='Microphone start failed';}};
+el('stop').onclick=()=>{recognition?.stop();window.speechSynthesis?.cancel();el('voicestatus').textContent='Microphone off';};
+el('play').onclick=()=>{const text=el('transcript').value.trim();if(!text)return; if(!('speechSynthesis' in window)){el('voicestatus').textContent='Speech playback unavailable';return;}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text.slice(0,3000));u.lang='en-NZ';speechSynthesis.speak(u);el('voicestatus').textContent='Speaking…';};
+</script>
+</body></html>
