@@ -35,7 +35,7 @@ def _patch(frame: list[list[int]], x: int, y: int, size: int = 5) -> list[int]:
 def _player(frame: list[list[int]]) -> tuple[int, int] | None:
     # Five orange pixels in two adjacent rows, with a blue lower segment.
     # This is visual-template recognition, not hidden game-state access.
-    for y in range(0, 48):
+    for y in range(0, 56):  # later levels extend the playable board to y=54
         for x in range(0, 60):
             if (all(frame[y][x+i] == 12 and frame[y+1][x+i] == 12
                     for i in range(5)) and
