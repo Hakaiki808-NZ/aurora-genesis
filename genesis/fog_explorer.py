@@ -61,6 +61,7 @@ class FogExplorer:
     @staticmethod
     def _camera_delta(previous:dict[Point,str],now:dict[Point,str])->Point:
         """Estimate discrete screen translation from repeatable landmarks."""
+        best_rank=(float("-inf"),)*4
         best=(float("-inf"),0,0,0)
         zero_score=None
         for dy in (-10,-5,0,5,10):
@@ -79,7 +80,8 @@ class FogExplorer:
                 if dx==0 and dy==0:
                     zero_score=score
                 ranked=(score,-abs(dx)-abs(dy),-abs(dx),-abs(dy))
-                if ranked>best:
+                if ranked>best_rank:
+                    best_rank=ranked
                     best=(score,dx,dy,same)
         score,dx,dy,support=best
         # Do not displace the world map on weak/non-discriminating evidence.
