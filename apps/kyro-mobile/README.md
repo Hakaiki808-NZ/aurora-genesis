@@ -22,7 +22,8 @@ not a WebView of the desktop UI. Aurora remains a distinct protected execution s
   read-only adapter status.
 - No mobile autonomous runtime execution, token persistence, biometric login,
   deep-link allowlist handling beyond the Cognito redirect, push notifications or voice yet.
-- A missing mobile OAuth app client disables sign-in clearly rather than pretending to authenticate.
+- OAuth is configured for private alpha. A placeholder/invalid client ID disables sign-in;
+  full real-device OAuth flow is still unverified.
 - Cloud API status and production readiness require separate real device/E2E verification.
 
 The web-side `cloud/workspace-v5` changes are separate: CSS + web app manifest +
