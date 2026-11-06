@@ -1,0 +1,6 @@
+# This AMI already includes CUDA-enabled PyTorch.
+transformers==4.51.3
+peft==0.15.2
+accelerate==1.6.0
+bitsandbytes==0.45.5
+safetensors>=0.4.5,<1
