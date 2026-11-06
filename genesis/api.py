@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from pydantic import BaseModel, Field
 
 from .model import Genesis
@@ -32,3 +32,20 @@ def policy_audit(limit:int=Query(default=50,ge=1,le=500)): return {"entries":mod
 def knowledge(q:str=Query(min_length=1),limit:int=Query(default=8,ge=1,le=50)): return {"results":model.search_knowledge(q,limit)}
 @app.post("/chat")
 def chat(req:ChatRequest): return model.respond_with_trace(req.message) if req.trace else {"answer":model.respond(req.message)}
+
+class RealignmentAssessment(BaseModel):
+    case_id:str=Field(min_length=1,max_length=64)
+    choice:int=Field(ge=0,le=2)
+
+@app.get("/realignment/curriculum")
+def realignment_curriculum():
+    return {"version":model.realignment_school.VERSION,
+            "cases":model.realignment_school.curriculum(),
+            "mode":"diagnostic_only"}
+
+@app.post("/realignment/assess")
+def realignment_assess(req:RealignmentAssessment):
+    try:
+        return model.realignment_school.assess(req.case_id,req.choice)
+    except ValueError as exc:
+        raise HTTPException(status_code=400,detail=str(exc)) from exc
