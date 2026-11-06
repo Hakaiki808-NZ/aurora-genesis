@@ -1,0 +1,44 @@
+name: Kyro mobile platforms
+on:
+  push:
+    paths:
+      - 'apps/kyro-mobile/**'
+      - 'cloud/workspace-v5/**'
+      - 'tests/kyro-mobile-static.cjs'
+      - '.github/workflows/kyro-mobile.yml'
+  pull_request:
+    paths:
+      - 'apps/kyro-mobile/**'
+      - 'cloud/workspace-v5/**'
+      - 'tests/kyro-mobile-static.cjs'
+      - '.github/workflows/kyro-mobile.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frontend JavaScript syntax
+        run: |
+          node --check cloud/workspace-v5/mobile.js
+          node --check cloud/workspace-v5/service-worker.js
+      - name: Mobile platform static checks
+        run: node tests/kyro-mobile-static.cjs
+      - name: Kyro existing frontend regressions
+        run: node tests/kyro-frontend-static.cjs
+  native-typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/kyro-mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
