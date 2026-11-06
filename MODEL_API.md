@@ -37,6 +37,8 @@ model = Genesis(state_path="state.db", workspace="workspace", enable_ollama=Fals
 
 HTTP: `GET /modules`, `GET /modules/search?q=...`, authenticated `POST /modules`, `POST /modules/{module_id}/status`, and `DELETE /modules/{module_id}`. Mutations require a strong `GENESIS_MODULE_ADMIN_TOKEN` and matching `X-Genesis-Module-Admin` header. Data-only packs are not executable, signed publisher products or purchased credentials. See `docs/architecture/KNOWLEDGE_MODULES.md`.
 
+Free reference and language packs use distribution=open. List and search results expose is_free and, for language packs, category and language_tag. Starter examples: examples/modules/spanish-basics.json and examples/modules/te-reo-maori-basics.json. This currently provides knowledge retrieval, not automatic multilingual fluency or speech.
+
 ## Registered-tool metadata
 
 Tools can declare:

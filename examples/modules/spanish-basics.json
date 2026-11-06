@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "spanish-basics",
+  "title": "Spanish Language Basics — Free Starter Pack",
+  "version": "0.1.0",
+  "publisher": "Aurora / Genesis reference project",
+  "license": "Apache-2.0",
+  "distribution": "open",
+  "category": "language",
+  "language_tag": "es",
+  "subject": "Spanish language beginner vocabulary and grammar English to Spanish",
+  "chapters": [
+    {
+      "id": "greetings-hola",
+      "title": "Spanish greetings — hola, buenos días, buenas tardes",
+      "content": "For an informal Spanish greeting, hola generally means hello. Buenos días is a common good-morning greeting; buenas tardes is used later in the day. These basic translations depend on social context and region, so do not treat them as a complete language model.",
+      "source": "Original beginner Spanish teaching note by the project."
+    },
+    {
+      "id": "politeness-gracias",
+      "title": "Spanish politeness — gracias, por favor, de nada",
+      "content": "In Spanish, gracias is a common way to say thank you; por favor means please; and de nada is a common reply to thanks, like you're welcome. For example, saying muchas gracias adds emphasis: thank you very much. Local usage and formality can vary.",
+      "source": "Original beginner Spanish teaching note by the project."
+    },
+    {
+      "id": "articles-gender",
+      "title": "Spanish grammar — articles, nouns, and adjective agreement",
+      "content": "In Spanish many nouns have grammatical gender: common definite articles include el for masculine singular and la for feminine singular, and los and las for plural. Adjectives often agree in gender and number, with exceptions. Grammar must be learned with vocabulary and context, not inferred from spelling alone.",
+      "source": "Original beginner Spanish teaching note by the project."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "id": "te-reo-maori-basics",
+  "title": "Te Reo Māori Basics — Free Starter Pack",
+  "version": "0.1.0",
+  "publisher": "Aurora / Genesis reference project",
+  "license": "Apache-2.0",
+  "distribution": "open",
+  "category": "language",
+  "language_tag": "mi",
+  "subject": "te reo Māori language Aotearoa beginner greetings everyday phrases pronunciation macrons",
+  "chapters": [
+    {
+      "id": "kia-ora-greetings",
+      "title": "Te reo Māori greetings — kia ora and tēnā koe",
+      "content": "Kia ora is a versatile greeting in te reo Māori, commonly used like hello, hi or thanks depending on the situation. Tēnā koe is a greeting addressed to one person. Tēnā kōrua addresses two people, and tēnā koutou addresses three or more. These are introductory examples; always respect the local context and tikanga.",
+      "source": "Original project explanation checked against University of Auckland greetings guide: https://www.auckland.ac.nz/en/on-campus/life-on-campus/maori-life-on-campus/revitalising-te-reo-maori/kuputaka/greetings-and-sign-offs.html"
+    },
+    {
+      "id": "farewells-haere-ra",
+      "title": "Te reo Māori farewells — haere rā and e noho rā",
+      "content": "In a common farewell exchange, haere rā is said to someone who is leaving; e noho rā is said to someone who is staying. Ka kite anō means see you again. The distinction matters, and the best expression can depend on situation and relationship.",
+      "source": "Original project explanation checked against University of Waikato pronunciation and greeting guidance: https://www.waikato.ac.nz/int/students/maori/pronunciation/"
+    },
+    {
+      "id": "macrons-pronunciation",
+      "title": "Te reo Māori written vowels — macrons and pronunciation",
+      "content": "Written te reo Māori uses macrons, such as ā, ē, ī, ō and ū, to indicate long vowels. Correct macrons can distinguish words and meanings. A text reference pack does not provide reliable spoken pronunciation; audio lessons and speaker-reviewed speech capabilities would need their own authorised resources and testing.",
+      "source": "Original project explanation; learning reference: https://www.waikato.ac.nz/int/students/maori/pronunciation/"
+    }
+  ]
+}
