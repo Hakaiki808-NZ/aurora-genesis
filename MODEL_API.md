@@ -27,6 +27,16 @@ model = Genesis(state_path="state.db", workspace="workspace", enable_ollama=Fals
 - `backup_state(path) -> Path`
 - `close()`
 
+## Installable knowledge modules (v0.1 reference)
+
+- `install_knowledge_module(package, replace=False)`
+- `list_knowledge_modules()`
+- `search_knowledge_modules(query, limit=5)`
+- `enable_knowledge_module(module_id, enabled=True)`
+- `uninstall_knowledge_module(module_id)`
+
+HTTP: `GET /modules`, `GET /modules/search?q=...`, authenticated `POST /modules`, `POST /modules/{module_id}/status`, and `DELETE /modules/{module_id}`. Mutations require a strong `GENESIS_MODULE_ADMIN_TOKEN` and matching `X-Genesis-Module-Admin` header. Data-only packs are not executable, signed publisher products or purchased credentials. See `docs/architecture/KNOWLEDGE_MODULES.md`.
+
 ## Registered-tool metadata
 
 Tools can declare:
