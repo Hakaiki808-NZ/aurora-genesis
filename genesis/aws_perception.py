@@ -14,7 +14,7 @@ from typing import Any, Callable
 from .perception import PerceptionCore
 
 _REGION = re.compile(r"^[a-z]{2}(?:-gov)?-[a-z]+-\d+$")
-_NAME = re.compile(r"^[a-zA-Z0-9-_]{1,64}$")
+_NAME = re.compile(r"^[a-zA-Z0-9_-]{1,64}$")
 _STATES = {"Pending", "Active", "Inactive", "Failed"}
 _UPDATES = {"InProgress", "Successful", "Failed"}
 
