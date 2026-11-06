@@ -26,6 +26,9 @@ class FogExplorer:
         self.visits:Counter=Counter()
         self.blocked:set[tuple[Point,str]]=set()
         self.observed_edges:dict[tuple[Point,str],Point]={}
+        self.edge_revisions:Counter=Counter()
+        self.last_meter_units:int|None=None
+        self.known_energy:set[Point]=set()
         self.attempts:Counter=Counter()
         self.previous_tiles:dict[Point,str]|None=None
         self.previous_world_pos:Point|None=None
@@ -90,7 +93,10 @@ class FogExplorer:
             return (0,0)
         return (dx,dy)
 
-    def update(self,frame_json:str,level:int,screen_player:Point)->Point:
+    def update(
+        self,frame_json:str,level:int,screen_player:Point,
+        meter_units:int|None=None,energy:Iterable[Point]=(),
+    )->Point:
         frame=json.loads(frame_json)
         if len(frame)!=64 or any(len(row)!=64 for row in frame):
             raise ValueError("expected a 64x64 observation grid")
@@ -108,21 +114,47 @@ class FogExplorer:
         self.grid[player]="floor"
         if self.previous_world_pos is not None and self.previous_action is not None:
             previous=self.previous_world_pos
-            if player==previous:
-                self.blocked.add((previous,self.previous_action))
+            action=self.previous_action
+            edge=(previous,action)
+            dx,dy=_DELTAS[action]
+            nominal=(previous[0]+dx,previous[1]+dy)
+            # A meter refill / loss of life may reset the player instantly.
+            # This is not a persistent launcher or a normal navigation edge.
+            reset_or_refill=(
+                meter_units is not None and self.last_meter_units is not None
+                and meter_units > self.last_meter_units+6
+            )
+            if reset_or_refill:
+                self.last_diagnostics["meter_reset_or_refill"]={
+                    "before":self.last_meter_units,"after":meter_units
+                }
+            elif player==previous:
+                self.blocked.add(edge)
+                self.observed_edges.pop(edge,None)
             else:
-                dx,dy=_DELTAS[self.previous_action]
-                # A step blocked by a wall may leave the player unchanged;
-                # a launcher may shift farther than one cell. Record only
-                # the observed landing rather than inventing intermediate map.
-                if player!=(previous[0]+dx,previous[1]+dy):
-                    self.observed_edges[(previous,self.previous_action)]=player
+                self.blocked.discard(edge)
+                # The same action can have different outcomes depending on
+                # environment phase. Forget stale redirects immediately when
+                # fresh observations contradict them.
+                if edge in self.observed_edges and self.observed_edges[edge]!=player:
+                    self.edge_revisions[edge]+=1
+                if player==nominal:
+                    self.observed_edges.pop(edge,None)
+                else:
+                    self.observed_edges[edge]=player
                     self.last_diagnostics["nonlocal_movement"]={
-                        "from":previous,"to":player,
-                        "action":self.previous_action
+                        "from":previous,"to":player,"action":action
                     }
         self.previous_action=None
         self.previous_world_pos=None
+        if meter_units is not None:
+            self.last_meter_units=meter_units
+        # Remember past visible resources even after the fog hides them.
+        # An observed player contact consumes the resource. Other unseen
+        # resources remain hypotheses, not guaranteed pickups.
+        for x,y in energy:
+            self.known_energy.add((x+self.origin[0],y+self.origin[1]))
+        self.known_energy.discard(player)
         self.visits[player]+=1
         self.current_position=player
         self.previous_tiles=current
@@ -159,7 +191,7 @@ class FogExplorer:
         already_observed:bool=False,
     )->dict[str,Any]:
         here=(self.current_position if already_observed
-              else self.update(frame_json,level,screen_player))
+              else self.update(frame_json,level,screen_player,meter_units,energy))
         if here is None:
             raise ValueError("fog explorer has no player observation")
         options=set(allowed)&set(_DELTAS)
@@ -168,12 +200,11 @@ class FogExplorer:
         self.steps+=1
         # Before blindly exploring, visit a visible resource if energy cannot
         # pay for more than a short journey. All pick-ups are observations.
-        if meter_units<=9:
+        if meter_units<=17:
             choices=[]
-            for x,y in energy:
-                pos=(x+self.origin[0],y+self.origin[1])
+            for pos in self.known_energy:
                 route=self._route(here,pos,options)
-                if route and len(route)<=meter_units:
+                if route and len(route)<=max(1,meter_units//2):
                     choices.append((len(route),route,pos))
             if choices:
                 _,route,goal=min(choices,key=lambda x:(x[0],x[2]))
@@ -213,7 +244,7 @@ class FogExplorer:
                 if route:
                     vantage.append((
                         self.visits[pos],
-                        -len(route),
+                        len(route),
                         pos,
                         route
                     ))
@@ -259,6 +290,8 @@ class FogExplorer:
             "visited_cells":len(self.visits),
             "blocked_moves":len(self.blocked),
             "observed_nonlocal_edges":len(self.observed_edges),
+            "revised_edges":sum(self.edge_revisions.values()),
+            "known_energy":len(self.known_energy),
             "camera_origin":self.origin,
             "steps":self.steps,
             "diagnostics":dict(self.last_diagnostics),
