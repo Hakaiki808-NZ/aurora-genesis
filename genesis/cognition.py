@@ -244,5 +244,5 @@ class CognitionEngine:
         did=self.store.record_decision(text,[x.record() for x in decision.candidates],decision.chosen.name,decision.chosen.rationale,decision.confidence)
         answer,ok,outcome=self.act(decision.chosen)
         self.store.add_reflection(did,"success" if ok else "failure",f"{outcome}; confidence={decision.confidence:.3f}")
-        if ok and decision.confidence>=0.85 and decision.chosen.name not in {"knowledge_answer", "neural_answer"}:self.store.add_training_example(text,answer,"validated cognition",decision.confidence)
+        if ok and decision.confidence>=0.85 and decision.chosen.name not in {"knowledge_answer", "neural_answer", "observation_answer"}:self.store.add_training_example(text,answer,"validated cognition",decision.confidence)
         return answer,{"source_trust":source_trust,"decision_id":did,"chosen_action":decision.chosen.name,"rationale":decision.chosen.rationale,"confidence":decision.confidence,"learned":learned,"outcome":"success" if ok else "failure","candidates":[x.record() for x in decision.candidates]}

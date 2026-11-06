@@ -104,6 +104,30 @@ def deliberate(self,text:str,learned:list[dict[str,Any]])->Decision:
         key=re.split(r"(?i)\s+(?:is|are|means|equals)\s+",key,maxsplit=1)[0].strip()
         c.append(Candidate("forget_fact","",126,f"explicitly forget persistent fact '{key}'",action={"type":"forget_fact","key":key,"source":text}))
 
+    # Explicit observation queries only: keep untrusted sensor text outside
+    # neural prompts, tools, general learned facts, and authorization inputs.
+    # Values are read-only evidence; a chat response cannot change policy.
+    observed=re.fullmatch(r"(?is)\s*(?:what is|show)\s+(?:the\s+)?observed\s+([a-z0-9_.:-]{1,80})\s+for\s+([a-z0-9_.:-]{1,160})\??\s*",text)
+    if observed and getattr(self,"perception",None) is not None:
+        attr,entity=observed.group(1),observed.group(2)
+        state=self.perception.belief(entity,attr)
+        kind=state["status"]
+        if kind=="contested":
+            response=(f"{entity} / {attr}: contested observations, "
+                      f"{len(state['alternatives'])} incompatible reported values. "
+                      "No value is accepted. Source claims require independent verification.")
+        elif kind in {"stale","unknown"}:
+            response=(f"{entity} / {attr}: {kind}; no current observation. "
+                      "I cannot infer a present value from historical or missing data.")
+        else:
+            import json as _json
+            val=_json.dumps(state["value"],ensure_ascii=False)
+            response=(f"{entity} / {attr}: observed {val} ({kind}; "
+                      f"{state['independent_groups']} source group(s)). "
+                      "This is attributed evidence, not independently verified truth.")
+        c.append(Candidate("observation_answer",response,119,
+                           "read-only world-state report; no Engine authority"))
+
     subject=self._recall_subject(text)
     if subject:
         exact=self.store.get_fact(subject)

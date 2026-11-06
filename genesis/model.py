@@ -17,6 +17,7 @@ from .capabilities import CapabilityController
 from .engine_boundary import EngineBoundary, EngineReceipt
 from .awareness import AwarenessCore
 from .perception import PerceptionCore
+from .aws_perception import AwsLambdaStateAdapter
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -56,6 +57,7 @@ class Genesis:
         self.last_trace:dict[str,Any]|None=None
         self.awareness=AwarenessCore(self.store,self.identity,self.capabilities)
         self.perception=PerceptionCore(self.store)
+        self.cognition.perception=self.perception
         self._awareness_error:str|None=None
         self._turn_lock=threading.RLock()
 
@@ -90,6 +92,19 @@ class Genesis:
     def belief(self,entity:str,attribute:str)->dict[str,Any]:
         """In-process world-state read; private values are not exposed over HTTP."""
         return self.perception.belief(entity,attribute)
+
+    def sample_aws_lambda(self,function_name:str,*,client:Any|None=None)->dict[str,Any]:
+        """Trusted-host-only, opt-in read-only AWS control-plane observation.
+
+        The caller must enforce authentication and authorization. Never expose
+        this directly through an unauthenticated HTTP route or a model tool.
+        """
+        if os.environ.get("GENESIS_AWS_PERCEPTION_ENABLE")!="1":
+            raise PermissionError("AWS perception is disabled")
+        allowed={n.strip() for n in os.environ.get("GENESIS_AWS_ALLOWED_LAMBDAS","").split(",") if n.strip()}
+        adapter=AwsLambdaStateAdapter(self.perception,allowed_functions=allowed,
+            region=os.environ.get("GENESIS_AWS_REGION","ap-southeast-2"),client=client)
+        return adapter.sample(function_name)
 
     def awareness_state(self)->dict[str,Any]:
         try:
