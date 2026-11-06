@@ -31,6 +31,7 @@ class _Track:
     total_updates: int = 0
     predicted_next: Point | None = None
     last_forecast_period: int | None = None
+    surprise_cooldown: int = 0
 
 
 class TemporalWorldModel:
@@ -86,10 +87,13 @@ class TemporalWorldModel:
                     track.confirmations += 1
                 else:
                     track.contradictions += 1
+                    track.surprise_cooldown = 2
                     errors[kind] = {
                         "predicted": track.predicted_next,
                         "observed": point,
                     }
+            if point is not None and kind not in errors and track.surprise_cooldown > 0:
+                track.surprise_cooldown -= 1
             track.predicted_next = None
             track.positions.append(point)
             track.total_updates += 1
@@ -108,7 +112,7 @@ class TemporalWorldModel:
         if horizon < 1 or horizon > 128:
             raise ValueError("forecast horizon must be 1..128")
         track = self._tracks.get((episode, kind))
-        if track is None:
+        if track is None or track.surprise_cooldown > 0:
             return None
         values = list(track.positions)
         if len(values) < self.min_period * 2:
@@ -162,6 +166,7 @@ class TemporalWorldModel:
                 "prediction_contradictions": track.contradictions,
                 "last_observed": track.positions[-1] if track.positions else None,
                 "last_period": track.last_forecast_period,
+                "surprise_cooldown": track.surprise_cooldown,
             }
         return {
             "episode": episode, "tracks": items,
