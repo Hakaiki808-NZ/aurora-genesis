@@ -70,7 +70,7 @@ class UserCapabilityServices:
             parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
             if parsed.tzinfo is None:
                 raise ValueError("missing timezone")
-            return parsed.astimezone(timezone.utc).isoformat()
+            return parsed.astimezone(timezone.utc).isoformat(timespec="microseconds")
         except (TypeError, AttributeError, ValueError) as exc:
             raise UserCapabilityError(f"{name} must have an explicit timezone") from exc
 
