@@ -247,7 +247,9 @@ class LS20SearchPlanner:
     @staticmethod
     def _route_with_observed_transitions(
         start:tuple[int,int], goal:tuple[int,int], walkable:frozenset[tuple[int,int]],
-        redirects:dict[tuple[tuple[int,int],str],tuple[int,int]]
+        redirects:dict[tuple[tuple[int,int],str],tuple[int,int]],
+        launchers:dict[tuple[int,int],tuple[int,int]],
+        doors:set[tuple[int,int]]
     ) -> list[str] | None:
         if start == goal:
             return []
@@ -257,7 +259,11 @@ class LS20SearchPlanner:
         while q:
             pos=q.popleft()
             for dx,dy,act in _MOVES:
-                dest=redirects.get((pos,act),(pos[0]+dx,pos[1]+dy))
+                nominal=(pos[0]+dx,pos[1]+dy)
+                dest=redirects.get((pos,act),nominal)
+                if dest==nominal and nominal in walkable:
+                    dest=LS20SearchPlanner._apply_launch(
+                        nominal,walkable,doors,launchers)
                 if dest==pos or dest not in walkable or dest in visited:
                     continue
                 visited.add(dest)
@@ -326,11 +332,12 @@ class LS20SearchPlanner:
         objective=out.get("objective")
         if isinstance(objective, (tuple,list)) and len(objective)==2:
             path=self._route_with_observed_transitions(
-                world.player,tuple(objective),world.walkable,overrides)
+                world.player,tuple(objective),world.walkable,overrides,
+                world.launches,{(door.x,door.y) for door in world.door})
             if path:
                 out["action"]={"action_type":path[0]}
                 out["route_len"]=len(path)
-                out["reason"]="observed_transition_route_for_"+str(out.get("reason"))
+                out["reason"]="launch_aware_route_for_"+str(out.get("reason"))
             elif out.get("action") is not None:
                 # No route to the current visual goal. Prevent replaying a
                 # known collision/teleport cycle without new evidence.
