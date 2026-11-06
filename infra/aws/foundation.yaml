@@ -1,4 +1,4 @@
-AWSTemplateVersion: '2010-09-09'
+AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Aurora Genesis Kyro development cloud foundation.
   No public endpoints, compute instances, database instances, or model inference.
