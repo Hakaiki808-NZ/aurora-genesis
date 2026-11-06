@@ -58,6 +58,7 @@ class LS20SearchPlanner:
         # when actual observations show a shape change after tile contact.
         self.global_shape_edges:dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]] = {}
         self.recent_positions:dict[int,deque[tuple[int,int]]] = {}
+        self.modifier_history:dict[tuple[int,str],deque[tuple[int,int]]] = {}
 
     @staticmethod
     def _visible_launchers(frame:list[list[int]], ox:int, oy:int):
@@ -310,12 +311,110 @@ class LS20SearchPlanner:
                 q.append(dest)
         return None
 
+    @staticmethod
+    def _forecast_mover(history: list[tuple[int,int]], horizon:int) -> list[tuple[int,int]]:
+        """Predict positions from only observed motion, never hidden game state.
+
+        Prefer a previously observed recurring two-state suffix; otherwise
+        extrapolate a recent linear velocity and reflect at observed bounds.
+        These predictions are uncertain and revised on every observation.
+        """
+        if not history:
+            return []
+        seq=list(history)
+        forecast=[seq[-1]]
+        for _ in range(horizon):
+            nxt=None
+            if len(seq)>=3:
+                a,b=seq[-2:]
+                # A matching pair in earlier observations yields an empirical
+                # successor, handling reversals and short patrol loops.
+                for i in range(len(seq)-3,-1,-1):
+                    if seq[i:i+2]==[a,b] and i+2<len(seq):
+                        nxt=seq[i+2]
+                        break
+            if nxt is None and len(seq)>=2:
+                x,y=seq[-1]; px,py=seq[-2]
+                dx,dy=x-px,y-py
+                if abs(dx)+abs(dy)==5:
+                    xs=[p[0] for p in history]
+                    ys=[p[1] for p in history]
+                    nx,ny=x+dx,y+dy
+                    if len(history)>=5:
+                        if nx<min(xs) or nx>max(xs): nx=x-dx
+                        if ny<min(ys) or ny>max(ys): ny=y-dy
+                    nxt=(nx,ny)
+            if nxt is None:
+                nxt=seq[-1]
+            forecast.append(nxt)
+            seq.append(nxt)
+        return forecast
+
+    @staticmethod
+    def _moving_intercept(
+        world:SearchWorld,
+        positions:list[tuple[int,int]],
+        allowed:set[str],
+        overrides:dict[tuple[tuple[int,int],str],tuple[int,int]],
+        horizon:int=16,
+    ) -> list[str] | None:
+        """Time-expanded navigation to a predicted moving modifier.
+
+        A cell is sampled on entry; the target moves on player actions.
+        Search includes current action timestep and observed launcher edges.
+        """
+        if not positions:
+            return None
+        starts=(world.player,0)
+        q=deque([starts])
+        parents={}
+        seen={starts}
+        doors={(d.x,d.y) for d in world.door}
+        while q:
+            (x,y),t=q.popleft()
+            if t>=horizon:
+                continue
+            for dx,dy,act in _MOVES:
+                if act not in allowed:
+                    continue
+                nominal=(x+dx,y+dy)
+                landing=overrides.get(((x,y),act),nominal)
+                if landing==nominal and nominal in world.walkable:
+                    landing=LS20SearchPlanner._apply_launch(
+                        nominal,world.walkable,doors,world.launches)
+                if landing not in world.walkable or landing==(x,y):
+                    continue
+                next_state=(landing,t+1)
+                if next_state in seen:
+                    continue
+                seen.add(next_state)
+                parents[next_state]=((x,y),t,act)
+                expected=positions[min(t,len(positions)-1)]
+                if landing == expected:
+                    route=[]
+                    current=next_state
+                    while current!=starts:
+                        parent_pos,parent_t,mv=parents[current]
+                        route.append(mv)
+                        current=(parent_pos,parent_t)
+                    return list(reversed(route))
+                q.append(next_state)
+        return None
+
     def decide(self, serialized: str, level: int, allowed: set[str]) -> dict[str,Any]:
         self.searches+=1
         world=self.perceive(serialized,level)
         if world is None:
             return {"action":None,"policy":"ls20-search-v1",
                     "reason":"visual_perception_failed"}
+        # Track movable modifiers independently per level, using only frame
+        # observations; this history drives a time-expanded intercept search.
+        for kind,points in (("shape",world.shape),("color",world.color),
+                            ("rotation",world.rotation)):
+            if len(points)==1:
+                hist=self.modifier_history.setdefault((level,kind),
+                                                        deque(maxlen=40))
+                hist.append(next(iter(points)))
         # Learn observed movement rules (including collisions and launch pads).
         # Never assume the environment obeyed a planned transition.
         if self.last_action is not None:
@@ -412,12 +511,23 @@ class LS20SearchPlanner:
                         if departures:
                             departures.sort()
                             route_to_shape=[departures[0][1]]
+                    # The visible modifier can move each time we act.
+                    # Intercept its predicted trajectory rather than chasing
+                    # the tile at the point where it was last seen.
+                    track=list(self.modifier_history.get((level,"shape"),()))
+                    if len(track)>=3:
+                        future=self._forecast_mover(track,16)
+                        intercept=self._moving_intercept(
+                            world,future,allowed,overrides,horizon=16)
+                        if intercept:
+                            route_to_shape=intercept
                     if route_to_shape:
                         selected=route_to_shape[0]
                         self.last_action=(level,world.player,selected,
                                           world.key_shape,world.meter_units)
                         return {"action":{"action_type":selected},
-                                "reason":"learn_unknown_shape_cycle",
+                                "reason":("intercept_moving_shape" if len(track)>=3 and intercept else
+                                          "learn_unknown_shape_cycle"),
                                 "policy":"ls20-visual-experiment",
                                 "route_len":len(route_to_shape),
                                 "objective":chosen,
