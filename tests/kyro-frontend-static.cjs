@@ -16,7 +16,7 @@ const checks=[
 ['untrusted preview contains no live API and is read-only',()=>{assert.match(preview,/Illustrative preview/);assert.match(preview,/read-only/);assert.doesNotMatch(pjs,/fetch\s*\(/);assert.doesNotMatch(pjs,/Authorization/);assert.match(pcss,/\.preview-hero/);}],
 ['no inline scripts in CSP-protected pages',()=>{assert.doesNotMatch(html,/<script(?:\s[^>]*)?>[^<]+<\/script>/);assert.doesNotMatch(preview,/<script(?:\s[^>]*)?>[^<]+<\/script>/);}],
 ['preview references complete assets',()=>{for(const asset of ['preview.js','preview.css','styles.css'])assert.ok(preview.includes('/v3/'+asset));}],
-['remaining disclosures are explicit',()=>{assert.match(preview,/experimental research/i);assert.match(html,/Aurora execution is disabled/);}],
+['remaining disclosures are explicit',()=>{assert.match(preview,/experimental research/i);assert.match(html,/Protected engine not attached|Aurora execution not attached/);}],
 ];
 let count=0;
 for(const [name,run] of checks){run();process.stdout.write('PASS '+name+'\n');count++;}
