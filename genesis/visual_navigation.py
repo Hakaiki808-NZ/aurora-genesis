@@ -84,6 +84,8 @@ class LS20VisualPlanner:
         # A modifier disappears visually underneath the moving player's sprite.
         # Remember previously OBSERVED map objects, scoped to each level.
         self.rotation_tiles: dict[int, set[tuple[int, int]]] = {}
+        self.shape_tiles: dict[int, set[tuple[int, int]]] = {}
+        self.color_tiles: dict[int, set[tuple[int, int]]] = {}
 
     @staticmethod
     def _objects(frame: list[list[int]], player: tuple[int, int]):
@@ -123,7 +125,10 @@ class LS20VisualPlanner:
                     # rotation glyph; this was preventing colour planning.
                     objects.append(VisualObject(x,y,"color_or_shape"))
                 elif special and cnt[3] >= 8:
-                    objects.append(VisualObject(x,y,"transform"))
+                    # The bicolour black/white glyph is rotation; a
+                    # monochrome white glyph represents a different operator.
+                    kind = "transform" if cnt[0] and cnt[1] else "shape"
+                    objects.append(VisualObject(x,y,kind))
                 elif colorful >= 3 and cnt[3] >= 8 and (x,y) != player:
                     objects.append(VisualObject(x,y,"color_or_shape"))
         return walkable, objects
@@ -164,6 +169,11 @@ class LS20VisualPlanner:
         walkable, objects = self._objects(frame, pos)
         doors = [o for o in objects if o.kind == "door"]
         visible_transforms = [o for o in objects if o.kind == "transform"]
+        visible_shapes = [o for o in objects if o.kind == "shape"]
+        visible_colors = [o for o in objects if o.kind == "color_or_shape" and
+                          len({frame[o.y+dy][o.x+dx]
+                               for dy in range(5) for dx in range(5)}
+                              & {8,9,12,14}) >= 3]
         if level != self.last_level:
             self.last_level = level
             self.trace.clear()
@@ -172,6 +182,14 @@ class LS20VisualPlanner:
             known.add((obj.x, obj.y))
         transforms = [VisualObject(x, y, "transform") for x, y in known
                       if (x, y) in walkable or (x, y) == pos]
+        shapes_known = self.shape_tiles.setdefault(level,set())
+        shapes_known.update((o.x,o.y) for o in visible_shapes)
+        shapes = [VisualObject(x,y,"shape") for x,y in shapes_known
+                  if (x,y) in walkable or (x,y)==pos]
+        colors_known = self.color_tiles.setdefault(level,set())
+        colors_known.update((o.x,o.y) for o in visible_colors)
+        colors = [VisualObject(x,y,"color_or_shape") for x,y in colors_known
+                  if (x,y) in walkable or (x,y)==pos]
         pickups = [o for o in objects if o.kind == "energy"]
         # Meter is visual HUD only. Each row-61 yellow pixel represents one
         # unit. Public LS20 levels use either one or two units per movement.
@@ -224,15 +242,38 @@ class LS20VisualPlanner:
                     route = self._path(pos,objective,walkable)
                     reason = f"rotate_key_clockwise_{clockwise}_needed"
             else:
-                modifiers = transforms + [o for o in objects if o.kind=="color_or_shape"]
+                if color != door.color and colors:
+                    modifiers = colors
+                    reason = "cycle_key_colour_toward_goal"
+                elif key != door.pattern and shapes:
+                    modifiers = shapes
+                    reason = "cycle_key_shape_toward_goal"
+                else:
+                    modifiers = shapes + transforms + colors
+                    reason = "explore_unknown_modifier"
                 if not modifiers:
                     return {"action":None,"reason":"no_transform_detected",
                             "key":key,"target":door.pattern,"policy":"ls20-vision-v1"}
-                dest = min(modifiers,
-                           key=lambda t:len(self._path(pos,(t.x,t.y),walkable) or [None]*999))
+                available = [(len(p),t,p) for t in modifiers
+                             if (p := self._path(pos,(t.x,t.y),walkable)) is not None]
+                if not available:
+                    return {"action":None,"reason":"modifier_unreachable",
+                            "policy":"ls20-vision-v1"}
+                available.sort(key=lambda q:q[0])
+                _,dest,route = available[0]
                 objective = (dest.x,dest.y)
-                route = self._path(pos,objective,walkable)
-                reason = "search_transform_for_matching_key"
+                if not route:
+                    # The trigger fires on ENTER, not while occupying the tile.
+                    # Move off to a navigable neighbour so we can re-enter.
+                    choices=[]
+                    for dx,dy,act in _MOVES:
+                        neighbor=(pos[0]+dx,pos[1]+dy)
+                        if neighbor in walkable:
+                            choices.append((act,neighbor))
+                    if not choices:
+                        return {"action":None,"reason":"modifier_isolated","policy":"ls20-vision-v1"}
+                    route=[choices[0][0]]
+                    reason="leave_modifier_to_trigger_again"
         # When the next objective cannot be reached within the energy budget,
         # use an available refill pickup. The low-energy rescue also fires
         # while standing on a modifier, preventing a third-life loss.
