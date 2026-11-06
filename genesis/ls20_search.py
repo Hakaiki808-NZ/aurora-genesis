@@ -614,6 +614,74 @@ class LS20SearchPlanner:
                 "meter_units":world.meter_units,
                 "search_stats":{**stats,"visible_launchers":len(world.launches)},
             }
+        # A known lock's colour is a directly observed prerequisite.
+        # Correcting it before repeatedly exploring an already-known shape
+        # cycle gives the agent a measurable subgoal instead of an infinite
+        # transformation loop. This is a general mismatch-and-effect rule,
+        # not an action script for a particular game layout.
+        if level >= 6 and world.door and world.color and not route:
+            desired_colors={goal.color for goal in world.door}
+            if len(desired_colors)==1 and world.key_color not in desired_colors:
+                door_points={(door.x,door.y) for door in world.door}
+                candidate_paths=[]
+                for pos in world.color:
+                    path=self._route_with_observed_transitions(
+                        world.player,pos,world.walkable,overrides,
+                        world.launches,door_points
+                    )
+                    if path is not None:
+                        candidate_paths.append((len(path),pos,path))
+                if candidate_paths:
+                    _,target,route_to_color=min(
+                        candidate_paths,key=lambda item:(item[0],item[1]))
+                    if not route_to_color:
+                        departures=[]
+                        for dx,dy,action in _MOVES:
+                            if action not in allowed:
+                                continue
+                            nominal=(world.player[0]+dx,world.player[1]+dy)
+                            landing=overrides.get((world.player,action),nominal)
+                            if landing==nominal and landing in world.walkable:
+                                landing=self._apply_launch(
+                                    nominal,world.walkable,door_points,
+                                    world.launches)
+                            if landing not in world.walkable or landing==world.player:
+                                continue
+                            return_path=self._route_with_observed_transitions(
+                                landing,target,world.walkable,overrides,
+                                world.launches,door_points
+                            )
+                            if return_path:
+                                departures.append(
+                                    (len(return_path),action,landing))
+                        if departures:
+                            departures.sort()
+                            route_to_color=[departures[0][1]]
+                    if route_to_color:
+                        moves_left=world.meter_units//max(1,world.unit_cost)
+                        if moves_left <= len(route_to_color)+3:
+                            for pickup in world.energy:
+                                recharge=self._route_with_observed_transitions(
+                                    world.player,pickup,world.walkable,overrides,
+                                    world.launches,door_points
+                                )
+                                if recharge and len(recharge)<=moves_left:
+                                    route_to_color=recharge
+                                    target=pickup
+                                    break
+                        action=route_to_color[0]
+                        if action in allowed:
+                            self.last_action=(level,world.player,action,
+                                              world.key_shape,world.meter_units)
+                            return {
+                                "action":{"action_type":action},
+                                "reason":("seek_energy_before_key_color" if target in world.energy
+                                          else "correct_observed_key_colour"),
+                                "policy":"observed_goal_prerequisite_v1",
+                                "position":world.player,"objective":target,
+                                "route_len":len(route_to_color),
+                                "search_stats":stats,
+                            }
         # An unknown shape-cycle operation blocks a complete model-based
         # solution. Gather one REAL observed transition at the visible shape
         # tile instead of cycling colours first or fabricating the result.
