@@ -1,0 +1,32 @@
+name: Kyro launch-site checks
+on:
+  push:
+    paths:
+      - 'cloud/kyro-launch/**'
+      - 'docs/marketing/KYRO_CAMPAIGN.md'
+      - 'tests/kyro_marketing.py'
+      - '.github/workflows/kyro-launch-site.yml'
+  pull_request:
+    paths:
+      - 'cloud/kyro-launch/**'
+      - 'docs/marketing/KYRO_CAMPAIGN.md'
+      - 'tests/kyro_marketing.py'
+      - '.github/workflows/kyro-launch-site.yml'
+permissions:
+  contents: read
+jobs:
+  static-site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate product disclosures and catalogue references
+        run: python -m tests.kyro_marketing
+      - name: Validate browser JS syntax
+        run: node --check cloud/kyro-launch/app.js
