@@ -39,10 +39,21 @@ def parse_action(text: str, allowed: set[str]) -> dict[str, Any] | None:
 
 
 def observed_frame(observation: Any) -> str:
+    """Serialize the LAST actual 64x64 frame, not numpy's abbreviated repr.
+
+    The ARC SDK returns a list of numpy arrays (animation frames). The original
+    default=str code serialized array reprs, losing the pixels and masking
+    meaningful state changes. A full 64x64 palette frame fits comfortably.
+    """
     raw = getattr(observation, "frame", observation)
+    if isinstance(raw, (list, tuple)) and raw:
+        raw = raw[-1]
     if hasattr(raw, "tolist"):
         raw = raw.tolist()
-    return json.dumps(raw, separators=(",", ":"), default=str)[:16000]
+    if not (isinstance(raw, list) and len(raw) == 64 and
+            all(isinstance(row, list) and len(row) == 64 for row in raw)):
+        raise ValueError("ARC observation must have a 64x64 final frame")
+    return json.dumps(raw, separators=(",", ":"))
 
 
 def genesis_action(model: Genesis, frame: str, allowed: set[str], game_id: str) -> dict[str, Any]:
