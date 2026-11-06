@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' https://*.execute-api.ap-southeast-2.amazonaws.com https://*.auth.ap-southeast-2.amazoncognito.com; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'none'">
+ <meta name="referrer" content="no-referrer">
+ <title>Kyro · Genesis — Cloud Research Beta</title>
+ <link rel="stylesheet" href="/style.css"><script defer src="/app.js"></script>
+</head>
+<body><main class="shell">
+ <header class="masthead"><div class="mark">K</div><div><h1>Kyro <span>· Genesis</span></h1><p>Interface + Model <span class="muted">/ Powered by Engine (future)</span></p></div><span class="phase">CLOUD RESEARCH BETA</span></header>
+ <section class="access"><h2>Sign in to test</h2><p class="hint">AWS Sydney · Cognito sign-in · Encrypted seven-day research state. Do not enter personal or sensitive information.</p>
+ <div class="access-row"><button id="login" type="button">Sign in / Register</button><button id="logout" type="button" hidden>Log out</button></div>
+ <p id="status" role="status" aria-live="polite">Connecting…</p>
+ </section>
+ <section class="conversation" aria-label="Genesis test chat"><div id="messages" class="messages" role="log" aria-live="polite"><div class="bubble assistant">Genesis reference model is ready for authenticated testing. This is not an AGI or Aurora Engine demonstration.</div></div>
+ <form id="chat-form"><label for="message">Test input</label><textarea id="message" rows="3" maxlength="2000" required placeholder="Try: Learn that test marker is COBALT."></textarea><button id="send" type="submit" disabled>Send</button></form></section>
+ <footer>Experimental symbolic research prototype · No Aurora execution · Not production qualified</footer>
+ </main></body></html>
