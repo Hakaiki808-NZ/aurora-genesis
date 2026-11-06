@@ -11,6 +11,12 @@ AURORA / Genesis is an experimental AI systems project built around a strict sep
 
 The public repository is intended for research, testing, interoperability work and community contribution. It does **not** claim production readiness or machine consciousness.
 
+## Kyro: build together. Grow with knowledge.
+
+The [Kyro launch-site candidate](cloud/kyro-launch/) showcases our two immediate differentiators: **free installable Genesis reference packs** and **role-based project collaboration** in the invite-only Kyro private-alpha workspace. Explore the [read-only workspace preview](https://d3j65cc3p66kzr.cloudfront.net/v3/preview.html#collab), the [free language and physics pack examples](examples/modules/), and [honest campaign messaging](docs/marketing/KYRO_CAMPAIGN.md).
+
+**Maturity note:** The static launch-site code is **not deployed**; self-service cloud installs, purchases, real-time co-editing, and general-public access are not currently offered. Public launch remains gated by [beta qualification](docs/releases/PUBLIC_BETA_GATE_2026_11_07.md).
+
 ## Architectural rule
 
 > Genesis governs cognition. AURORA governs execution.
