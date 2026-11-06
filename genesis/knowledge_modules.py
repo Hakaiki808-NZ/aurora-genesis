@@ -70,7 +70,7 @@ def _validate(raw: dict[str, Any]) -> dict[str, Any]:
     }
     if "category" in raw or "language_tag" in raw:
         category = raw.get("category", "knowledge")
-        if category not in {"knowledge", "language"}:
+        if not isinstance(category, str) or category not in {"knowledge", "language"}:
             raise KnowledgeModuleError("unsupported category")
         if category == "language":
             language_tag = _required_string(raw, "language_tag", 35)
@@ -156,7 +156,7 @@ class KnowledgeModuleStore:
                     WHERE c.module_id=m.module_id) AS chapters
                     FROM knowledge_modules m ORDER BY m.module_id"""
             ).fetchall()
-        return [dict(r) | {"enabled": bool(r["enabled"])} for r in rows]
+        return [dict(r) | {"enabled": bool(r["enabled"]), "distribution": "open", "is_free": True} for r in rows]
 
     def install(self, package: dict[str, Any], *, replace: bool = False) -> dict[str, Any]:
         payload = _validate(package)
@@ -242,7 +242,8 @@ class KnowledgeModuleStore:
                 "title": row["title"], "excerpt": row["content"][:1800],
                 "source": row["source"], "publisher": row["publisher"],
                 "license": row["license"], "category": row["category"],
-                "language_tag": row["language_tag"], "score": score,
+                "language_tag": row["language_tag"], "distribution": "open",
+                "is_free": True, "score": score,
                 "trust": "unverified_reference_data"
             })
         hits.sort(key=lambda h: (-h["score"], h["module_id"], h["chapter_id"]))
