@@ -174,6 +174,7 @@ class LS20SearchPlanner:
         world: SearchWorld,
         overrides: dict[tuple[tuple[int,int],str],tuple[int,int]] | None = None,
         shape_edges: dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]] | None = None,
+        target_mask: int | None = None,
     ) -> tuple[list[str] | None, dict[str,Any]]:
         """Breadth-first search with exact move cost and consumable refills."""
         if world.key_color not in COLOR_CYCLE:
@@ -205,6 +206,10 @@ class LS20SearchPlanner:
         goal_locations={(o.x,o.y):(idx,o) for idx,o in enumerate(world.door)}
         goal_points=set(goal_locations)
         all_doors=(1<<len(world.door))-1
+        if target_mask is None:
+            target_mask=all_doors
+        if target_mask < 1 or target_mask & ~all_doors:
+            return None, {"reason":"invalid_target_mask"}
         expanded=0
         while queue and expanded < MAX_NODES:
             state=queue.popleft()
@@ -254,7 +259,7 @@ class LS20SearchPlanner:
                 best_meter[key]=after_meter
                 visited.add(end)
                 parents[end]=(state,action)
-                if new_door_mask==all_doors:
+                if new_door_mask & target_mask == target_mask:
                     route=[]
                     cur=end
                     while cur!=start:
@@ -266,6 +271,7 @@ class LS20SearchPlanner:
                                    "expanded":expanded,"visited":len(visited),
                                    "length":len(route),"refills_modelled":len(world.energy),
                                    "doors_modelled":len(world.door),
+                                   "target_mask":target_mask,
                                    "known_shape_transitions":len(shape_edges),
                                    "pruned_dominated":dominated}
                 queue.append(end)
@@ -445,6 +451,18 @@ class LS20SearchPlanner:
         recent=self.recent_positions.setdefault(level,deque(maxlen=16))
         recent.append(world.player)
         route,stats=self.search(world,overrides,learned)
+        # An all-door plan may be impossible until the next mechanism is
+        # discovered. Reaching *one* matching door is still real progress,
+        # and the next live frame reveals whether it actually opened.
+        if not route and len(world.door)>1:
+            candidates=[]
+            for idx,_ in enumerate(world.door):
+                partial,details=self.search(world,overrides,learned,target_mask=1<<idx)
+                if partial:
+                    candidates.append((len(partial),idx,partial,details))
+            if candidates:
+                _,which,route,stats=min(candidates,key=lambda item:(item[0],item[1]))
+                stats={**stats,"partial_goal":True,"remaining_doors":len(world.door)}
         self.last_stats=stats
         if route:
             action=route[0]
