@@ -56,6 +56,7 @@ class Genesis:
             # An offline-only local backend; NEVER loaded in the default auto mode.
             backend=HuggingFaceBackend(
                 model_id=os.environ.get("GENESIS_HF_MODEL_ID","Qwen/Qwen3-0.6B"),
+                revision=os.environ.get("GENESIS_HF_REVISION") or None,
                 enabled=os.environ.get("GENESIS_HF_ENABLE","").lower() in {"1","true","yes"},
                 max_output_tokens=int(os.environ.get("GENESIS_HF_MAX_TOKENS","128")),
                 max_calls=int(os.environ.get("GENESIS_HF_MAX_CALLS","8")),
