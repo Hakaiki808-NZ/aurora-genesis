@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#13171e"/>
+<meta name="description" content="Kyro is the private AWS workspace for projects, code, collaboration, and experimental Genesis research."/>
+<title>Kyro V5 — Intelligence Workspace</title>
+<link rel="stylesheet" href="/v3/styles.css"/>
+<script defer src="/v3/app.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#signin">Skip to workspace access</a>
+<div class="shell">
+<aside class="side">
+ <div class="logo"><div class="mark">K<span>·</span></div><div><strong>KYRO</strong><small>INTELLIGENCE WORKSPACE</small></div></div>
+ <div class="section">WORKSPACE</div>
+ <nav aria-label="Kyro modes">
+  <button class="nav active" data-mode="code">⌘ <span>Code</span></button>
+  <button class="nav" data-mode="collab">◎ <span>Collaborate</span></button>
+  <button class="nav" data-mode="chat">◫ <span>Chat archive</span></button>
+  <button class="nav" data-mode="connectors">◇ <span>Plugins &amp; integrations</span></button>
+ </nav>
+ <div class="section project-header">PROJECTS <button id="new-project" aria-label="Create new project">＋</button></div>
+ <div id="project-list" class="projects" aria-label="Projects"></div>
+ <div class="spacer"></div>
+ <div class="service-pill"><span class="pulse"></span><div><strong id="api-status">Checking cloud API</strong><small>Kyro V5 private alpha · Sydney AWS</small></div></div>
+ <button id="account-btn" class="account-btn">◉ <span id="account-name">Sign in</span></button>
+</aside>
+<main class="main">
+ <header class="bar"><div class="breadcrumb">KYRO <span>/</span> <strong id="mode-title">CODE</strong></div><div class="chips"><span class="chip">AURORA · PENDING</span><span class="chip accent">V5 PRIVATE ALPHA</span></div></header>
+ <div id="signin" class="signin"><div class="hero-icon" aria-hidden="true">✳</div><div class="eyebrow">YOUR CLOUD WORKSPACE</div><h1>Built for thinking.<br/><em>Ready for building.</em></h1><p>One secure place for your projects, code, conversations and collaborators. This private AWS preview requires an administrator-created account.</p>
+<div class="platform-status" aria-label="Three-system integration status">
+ <div class="platform-card"><span class="platform-orb orb-ready" aria-hidden="true"></span><span class="platform-name">KYRO · INTERFACE</span><strong>Cloud workspace</strong><span class="platform-detail">Deployed to AWS Sydney</span><span class="platform-state state-ready">LIVE PREVIEW</span></div>
+ <div class="platform-card"><span class="platform-orb orb-lab" aria-hidden="true"></span><span class="platform-name">GENESIS · MODEL</span><strong>Research reference</strong><span class="platform-detail">Experimental responses only</span><span class="platform-state state-lab">RESEARCH MODE</span></div>
+ <div class="platform-card"><span class="platform-orb orb-pending" aria-hidden="true"></span><span class="platform-name">AURORA · ENGINE</span><strong>Execution restricted</strong><span class="platform-detail">Protected engine not attached</span><span class="platform-state state-pending">NOT CONNECTED</span></div>
+</div>
+<div class="auth-cta"><button class="primary" id="login">Continue with secure sign-in</button><span>Administrator invitation required · no public self-registration</span></div><p id="signin-error" class="signin-error hidden" role="alert" aria-live="assertive"></p><p class="micro">Development preview only. No autonomous engine execution or production AGI claim. <a href="https://github.com/Hakaiki808-NZ/aurora-genesis" rel="noreferrer noopener" target="_blank">Explore the public research project</a>.</p></div>
+ <section id="workspace" class="workspace hidden" aria-live="polite">
+  <div class="header"><div><div class="eyebrow">KYRO / <span id="section-label">CODE WORKSPACE</span></div><h1 id="section-title">Build with intelligence.</h1><p id="section-blurb">Safe editing and collaborative projects, backed by AWS.</p></div><div id="section-actions"></div></div>
+  <div id="code-panel" class="panel code-layout">
+   <div class="files pane"><div class="pane-head">PROJECT FILES <button id="new-file">＋</button></div><div id="file-list"></div></div>
+   <div class="editor pane"><div class="editor-head"><span id="file-name">No file selected</span><span id="file-etag" class="etag"></span></div><textarea id="file-content" spellcheck="false" aria-label="Code editor" placeholder="Choose a file or create a new one…"></textarea><div class="editor-actions"><span id="file-notice">Every save is version checked.</span><button class="primary small" id="save-file" disabled>Save changes</button></div></div>
+   <div class="agent pane"><div class="pane-head">KYRO CODE AGENT <span>✳</span></div><div class="agent-content"><h3>Execution stays controlled.</h3><p>Cloud files and workspace storage are live. Autonomous test runs, shells and agent-generated changes remain pending Aurora approval.</p><button id="draft-job" class="secondary">Create pending lint job</button><div class="divider"></div><div id="jobs"></div></div></div>
+  </div>
+  <div id="collab-panel" class="panel split hidden"><div class="pane"><div class="pane-head">TEAM ROOM <span>◎</span></div><div id="posts" class="posts"></div><form id="post-form" class="send-form"><textarea id="post-input" placeholder="Message your collaborators…" maxlength="2400" rows="2" aria-label="Team message"></textarea><button class="primary small" type="submit">Send</button></form></div><div class="pane"><div class="pane-head">TEAM &amp; INVITATIONS</div><div class="pad"><p>Project roles are checked by the server. Only an owner can invite someone.</p><div class="join"><button class="secondary" id="invite-viewer">Invite viewer</button><button class="secondary" id="invite-editor">Invite editor</button><button class="secondary" id="join-invite">Join invitation</button></div><textarea id="invite-output" readonly placeholder="Invitation token appears here once." rows="5" aria-label="Invitation token"></textarea><p class="micro">Invitation tokens expire after seven days and can be accepted once.</p></div></div></div>
+  <div id="chat-panel" class="panel chat-layout hidden"><div class="pane"><div class="pane-head">PRIVATE CONVERSATIONS <button id="new-chat">＋</button></div><div id="conv-list"></div></div><div class="pane"><div class="pane-head">MESSAGE HISTORY</div><div id="messages"></div><form id="chat-form" class="send-form"><textarea id="chat-input" placeholder="Ask Genesis (experimental research model)…" maxlength="3000" rows="2"></textarea><button type="submit" class="primary small">Ask Genesis</button></form><p class="micro pad">Experimental Genesis research reference answers are saved with your conversation. <a href="/">Open original beta</a>.</p></div></div>
+  <div id="connectors-panel" class="panel pane hidden"><div class="pane-head">PLUGINS &amp; API ADAPTERS</div><div class="pad"><p>Connector contracts are prepared. No third-party tools or engine execution privileges are enabled automatically.</p><div id="connectors-list" class="connector-grid"></div></div></div>
+  <div class="notice" role="status" id="notice">Select a project to begin.</div>
+ </section>
+</main>
+</div>
+</body>
+</html>
