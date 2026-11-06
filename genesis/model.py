@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .backends import GeneratorBackend, OllamaBackend
+from .bedrock_backend import BedrockBackend
 from .cognition import CognitionEngine
 from .storage import Store
 from .tools import ToolRegistry
@@ -39,6 +40,15 @@ class Genesis:
         self.engine_boundary=EngineBoundary(model_release=self.identity.get("full_name","Genesis v0.1"), minimum_engine=self.identity.get("minimum_engine","Aurora pre-v0.1"))
         generator_mode=os.environ.get("GENESIS_GENERATOR","auto").casefold()
         use_ollama = (enable_ollama is True) or (enable_ollama is None and generator_mode in {"auto","ollama"})
+        if backend is None and generator_mode == "bedrock":
+            # Explicit two-switch opt-in. No implicit AWS usage in auto mode.
+            backend=BedrockBackend(
+                model=os.environ.get("GENESIS_BEDROCK_MODEL_ID","apac.amazon.nova-micro-v1:0"),
+                region=os.environ.get("GENESIS_BEDROCK_REGION","ap-southeast-2"),
+                enabled=os.environ.get("GENESIS_BEDROCK_ENABLE","").lower() in {"1","true","yes"},
+                max_output_tokens=int(os.environ.get("GENESIS_BEDROCK_MAX_TOKENS","256")),
+                max_calls=int(os.environ.get("GENESIS_BEDROCK_MAX_CALLS","8")),
+            )
         if backend is None and use_ollama: backend=OllamaBackend(model=os.environ.get("GENESIS_OLLAMA_MODEL",ollama_model))
         self.cognition=CognitionEngine(self.store,self.identity,self.heritage,self.model_record,self.tools,backend,self.policy,self.guardians,self.capabilities,self.engine_boundary)
         self.last_trace:dict[str,Any]|None=None
