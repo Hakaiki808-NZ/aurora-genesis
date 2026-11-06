@@ -34,6 +34,7 @@ class SearchWorld:
     key_color: int
     meter_units: int
     unit_cost: int
+    launches: dict[tuple[int,int],tuple[int,int]]
 
 
 class LS20SearchPlanner:
@@ -50,10 +51,51 @@ class LS20SearchPlanner:
         self.searches = 0
         self.fallbacks = 0
         self.last_stats: dict[str,Any] = {}
-        self.last_action: tuple[int,tuple[int,int],str,tuple[tuple[int,...],...]] | None = None
+        self.last_action: tuple[int,tuple[int,int],str,tuple[tuple[int,...],...],int] | None = None
         self.observed_transitions: dict[int,dict[tuple[tuple[int,int],str],tuple[int,int]]] = {}
         self.learned_shapes: dict[int,dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]]] = {}
         self.recent_positions:dict[int,deque[tuple[int,int]]] = {}
+
+    @staticmethod
+    def _visible_launchers(frame:list[list[int]], ox:int, oy:int):
+        """Infer launch direction from the five-pixel bar along a wall edge.
+
+        A launch is triggered on the adjacent FLOOR cell, and pushes the
+        player away from the wall. Only images are read; no internal game data.
+        """
+        bars={}
+        # Scans a little beyond the maze where bars may touch the outer edge.
+        for y in range(oy, 56, 5):
+            for x in range(ox, 60, 5):
+                patch=_patch(frame,x,y)
+                n4=patch.count(4)
+                n1=patch.count(1)
+                if n4<15 or n1<5:
+                    continue
+                left=all(frame[y+row][x]==1 for row in range(5))
+                right=all(frame[y+row][x+4]==1 for row in range(5))
+                top=all(frame[y][x+col]==1 for col in range(5))
+                bottom=all(frame[y+4][x+col]==1 for col in range(5))
+                if left: bars[(x-5,y)]=(-5,0)
+                if right: bars[(x+5,y)]=(5,0)
+                if top: bars[(x,y-5)]=(0,-5)
+                if bottom: bars[(x,y+5)]=(0,5)
+        return bars
+
+    @staticmethod
+    def _apply_launch(
+        target: tuple[int,int], walkable:frozenset[tuple[int,int]],
+        doors:set[tuple[int,int]], launchers:dict[tuple[int,int],tuple[int,int]]
+    ) -> tuple[int,int]:
+        delta=launchers.get(target)
+        if delta is None: return target
+        current=target
+        for _ in range(12):
+            nxt=(current[0]+delta[0],current[1]+delta[1])
+            if nxt not in walkable or nxt in doors:
+                break
+            current=nxt
+        return current
 
     def perceive(self, serialized: str, level: int) -> SearchWorld | None:
         f = _grid(serialized)
@@ -106,6 +148,7 @@ class LS20SearchPlanner:
         walkable |= rotation | color | shape | {pos}
         meter_units = sum(p == 11 for p in f[61][14:56])
         unit_cost = 2 if level in (1,2,4,6) else 1
+        launches=self._visible_launchers(f,pos[0]%5,pos[1]%5)
         return SearchWorld(
             walkable=frozenset(walkable),
             door=tuple(doors),
@@ -118,6 +161,8 @@ class LS20SearchPlanner:
             key_color=key_color,
             meter_units=meter_units,
             unit_cost=unit_cost,
+            launches={key:delta for key,delta in launches.items()
+                      if key in walkable},
         )
 
     @staticmethod
@@ -144,13 +189,18 @@ class LS20SearchPlanner:
         parents:dict[tuple,tuple[tuple,str]]={}
         energy_bit={point:1<<i for i,point in enumerate(world.energy)}
         goal_locations={(o.x,o.y):o for o in world.door}
+        goal_points=set(goal_locations)
         expanded=0
         while queue and expanded < MAX_NODES:
             state=queue.popleft()
             expanded+=1
             (x,y),pattern,ci,mask,meter=state
             for dx,dy,action in _MOVES:
-                nxt=redirects.get(((x,y),action), (x+dx,y+dy))
+                nominal=(x+dx,y+dy)
+                nxt=redirects.get(((x,y),action),nominal)
+                if nxt==nominal and nominal in world.walkable:
+                    nxt=LS20SearchPlanner._apply_launch(
+                        nominal,world.walkable,goal_points,world.launches)
                 if nxt == (x,y) or nxt not in world.walkable:
                     continue
                 after_meter=meter-world.unit_cost
@@ -232,12 +282,17 @@ class LS20SearchPlanner:
         # Learn observed movement rules (including collisions and launch pads).
         # Never assume the environment obeyed a planned transition.
         if self.last_action is not None:
-            last_level,from_pos,last_move,last_shape=self.last_action
+            last_level,from_pos,last_move,last_shape,previous_meter=self.last_action
             if last_level==level:
                 transitions=self.observed_transitions.setdefault(level,{})
                 expected={a:(from_pos[0]+dx,from_pos[1]+dy)
                           for dx,dy,a in _MOVES}.get(last_move)
-                if world.player!=expected:
+                # Loss of a life respawns the avatar and restores the meter;
+                # it is NOT a launcher edge. Refills are also non-teleport.
+                reset=(world.meter_units>previous_meter and
+                       world.key_shape==last_shape and
+                       world.player!=expected)
+                if world.player!=expected and not reset:
                     transitions[(from_pos,last_move)]=world.player
                 if world.player in world.shape and world.player!=from_pos:
                     if world.key_shape!=last_shape:
@@ -254,7 +309,7 @@ class LS20SearchPlanner:
             if action not in allowed:
                 return {"action":None,"policy":"ls20-search-v1",
                         "reason":"invalid_search_action"}
-            self.last_action=(level,world.player,action,world.key_shape)
+            self.last_action=(level,world.player,action,world.key_shape,world.meter_units)
             return {
                 "action":{"action_type":action},
                 "reason":"resource_constrained_search",
@@ -263,7 +318,7 @@ class LS20SearchPlanner:
                 "position":world.player,
                 "objective":route[-1],
                 "meter_units":world.meter_units,
-                "search_stats":stats,
+                "search_stats":{**stats,"visible_launchers":len(world.launches)},
             }
         # Fallback is explicitly tagged; it cannot be claimed as a solved plan.
         self.fallbacks+=1
@@ -322,7 +377,7 @@ class LS20SearchPlanner:
                     out["reason"]="escape_observed_oscillation"
         selected=out.get("action")
         if isinstance(selected,dict) and selected.get("action_type") in allowed:
-            self.last_action=(level,world.player,selected["action_type"],world.key_shape)
+            self.last_action=(level,world.player,selected["action_type"],world.key_shape,world.meter_units)
         out["policy"]="ls20-search-v1-fallback"
         out["search_stats"]={**stats,"known_teleports_or_blocks":len(overrides),
                               "learned_shape_transitions":len(learned)}
