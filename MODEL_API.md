@@ -64,6 +64,34 @@ Routes:
 The HTTP adapter is a Model interface only. It is not the Aurora Engine Contract.
 
 
+## Outcome assurance v0 (pre-alpha)
+
+Evidence-backed task tracking is available through Genesis Model methods:
+
+- create_task(title, criteria, priority=50, due_at=None)
+- tasks(limit=100), task(task_id), task_events(task_id)
+- due_tasks(now=None, limit=100), task_attention(now=None, limit=50)
+- transition_task(task_id, action)
+- add_task_evidence(task_id, criterion_index, observation, reference, source_type="user")
+- review_task_evidence(task_id, evidence_id, accepted, reviewer)
+- complete_task(task_id, reviewer, human_confirmed=False)
+
+A task reaches COMPLETED_ATTESTED only if every criterion has accepted evidence
+and explicit confirmation is provided. This status represents a reviewer's
+attestation, **not** cryptographically verified external success. No tools
+are dispatched and no Aurora authority is granted by the task ledger.
+
+HTTP: token-gated POST/GET /tasks, GET /tasks/due, GET /tasks/attention,
+GET /tasks/{task_id} and review/evidence/transition routes. Set a server-side
+GENESIS_CONTROL_TOKEN (at least 32 characters), and send the secret through the
+X-Genesis-Control-Token header. No task control route is active without it.
+The shared secret does not replace end-user authentication in Kyro and must
+never appear in browser/mobile client code. See
+[Task Outcome Assurance](docs/architecture/TASK_OUTCOME_ASSURANCE.md).
+
+backup_state() includes the new SQLite tables; the legacy JSON export_state()
+currently does not.
+
 ## Guardian hardening notes (v0.1)
 
 `state()` now reports the Challenge Omega and Guardian jury size. Consequential external actions are prepared only after Intent Capsule, Constitution, Kernel, capability and Guardian checks produce a complete Model authorization and a valid Model Authorization Proof. The public API still exposes no Supreme or Engine-handler control surface.
