@@ -112,16 +112,24 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--max-actions", type=int, default=100)
     parser.add_argument("--out", default="ls20-visual-result.json")
+    parser.add_argument("--require-win", action="store_true")
     args = parser.parse_args()
-    if not 1 <= args.max_actions <= 500:
-        parser.error("actions must be between 1 and 500")
+    if not 1 <= args.max_actions <= 900:
+        parser.error("actions must be between 1 and 900")
     result = run(args.max_actions)
     Path(args.out).write_text(json.dumps(result, indent=2), encoding="utf-8")
     print("LS20_RESULT "+json.dumps({k:v for k,v in result.items() if k != "action_trace"}))
     print("LS20_TRACE_HEAD "+json.dumps(result["action_trace"][:35]))
     print("LS20_TRACE_TAIL "+json.dumps(result["action_trace"][-12:]))
-    # Don't let the CI job say 'passed the game' merely because it ran.
-    # The JSON result is the authoritative outcome.
+    # An exploratory run may finish successfully as a process without
+    # winning. When requested, fail CI unless the official game was won.
+    if args.require_win and not (
+        result.get("result") == "won" and
+        result.get("last_game_state") == "WIN" and
+        result.get("win_levels") is not None and
+        result.get("levels_completed", 0) >= result["win_levels"]
+    ):
+        raise SystemExit("LS20_ACCEPTANCE=FAIL: no seven-level WIN")
 
 
 if __name__ == "__main__":
