@@ -22,6 +22,17 @@ def run():
     assert memory.forecast("episode-a","shape",4) is None, "surprise invalidates cycle"
     assert memory.summary("episode-a")["tracks"]["shape"]["prediction_contradictions"]==1
 
+    # A moving object can be obscured by the player on many frames.
+    # Enough repeated visible evidence should recover its phase, without
+    # assuming missing values were stationary positions.
+    for i in range(20):
+        visible = cycle[i%4] if (i % 5 != 0) else None
+        memory.observe("occluded",{"shape":visible},i)
+    sparse=memory.forecast("occluded","shape",8)
+    assert sparse is not None, memory.summary("occluded")
+    assert sparse.period == 4, sparse
+    assert sparse.positions_after_actions[:4] == cycle, sparse
+
     memory.observe("episode-b",{"shape":(1,2)},0)
     assert memory.forecast("episode-b","shape",2) is None
     assert "shape" in memory.summary("episode-b")["tracks"]
