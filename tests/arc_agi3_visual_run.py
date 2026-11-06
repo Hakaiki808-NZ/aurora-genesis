@@ -42,9 +42,11 @@ def run(max_actions: int) -> dict:
     }
     previous_level = getattr(obs, "levels_completed", 0)
     for index in range(max_actions):
-        decision = planner.decide(observed_frame(obs),
+        serial_frame = observed_frame(obs)
+        decision = planner.decide(serial_frame,
                                   int(getattr(obs, "levels_completed", 0)),
                                   allowed)
+        world = planner.perceive(serial_frame, int(getattr(obs, "levels_completed", 0)))
         move = decision.get("action")
         if move is None:
             results["result"] = "planner_abstained"
@@ -78,6 +80,18 @@ def run(max_actions: int) -> dict:
             "target":decision.get("objective"),
             "route_length":decision.get("route_len"),
             "search_info": decision.get("search_stats"),
+            "visual_world": ({
+                "player": world.player,
+                "rotation": sorted(world.rotation),
+                "color": sorted(world.color),
+                "shape": sorted(world.shape),
+                "energy": world.energy,
+                "key_color": world.key_color,
+                "key_shape": world.key_shape,
+                "meter": world.meter_units,
+                "doors": [{"at":(o.x,o.y),"color":o.color,"shape":o.pattern}
+                          for o in world.door]
+            } if world else None),
             "levels_completed":level,
         })
         if obs.state == GameState.WIN:
