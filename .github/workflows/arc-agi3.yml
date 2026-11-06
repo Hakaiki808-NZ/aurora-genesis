@@ -1,0 +1,88 @@
+name: ARC-AGI-3 exploratory probe
+
+on:
+  push:
+    branches: [experiment/arc-agi3-readiness]
+  workflow_dispatch:
+
+jobs:
+  genesis-interface-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - name: Offline compatibility probe (not a benchmark score)
+        run: python -m tests.arc_agi3_probe --offline --out arc-agi3-offline.json
+      - name: Check parser's action validation
+        run: |
+          python - <<'PY'
+          from tests.arc_agi3_probe import parse_action
+          allowed = {"ACTION1", "ACTION6"}
+          assert parse_action('{"action_type":"ACTION1"}', allowed) == {"action_type":"ACTION1"}
+          assert parse_action('{"action_type":"ACTION2"}', allowed) is None
+          assert parse_action('{"action_type":"ACTION6","x":64,"y":0}', allowed) is None
+          assert parse_action('{"action_type":"ACTION6","x":32,"y":7}', allowed)["x"] == 32
+          assert parse_action("ACTION1", allowed) is None
+          print("ARC action validation: PASS")
+          PY
+      - name: Store offline report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-agi3-offline-readiness
+          path: arc-agi3-offline.json
+          if-no-files-found: warn
+
+  one-game-live-attempt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt arc-agi
+      - name: Attempt official public LS20 environment with reference Genesis
+        run: python -m tests.arc_agi3_probe --live --game ls20 --max-actions 3 --out arc-agi3-live.json
+      - name: Store actual ARC API attempt report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-agi3-live-attempt
+          path: arc-agi3-live.json
+          if-no-files-found: warn
+
+  frame-observation-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt arc-agi
+      - name: Inspect LS20 observation frames, without source access
+        run: python -m tests.arc_agi3_diagnostics
+
+  ls20-visual-planning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt arc-agi
+      - name: Run public LS20 observation-driven planner and capture modifier traces
+        run: python -m tests.arc_agi3_visual_run --max-actions 420 --out ls20-visual-result.json
+      - name: Persist exact gameplay result and action trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ls20-visual-result
+          path: ls20-visual-result.json
+          if-no-files-found: warn

@@ -14,6 +14,7 @@ from .policy import PolicyEngine
 from .guardians import GuardianCouncil
 from .capabilities import CapabilityController
 from .engine_boundary import EngineBoundary, EngineReceipt
+from .interactive import InteractiveExplorer
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -42,6 +43,7 @@ class Genesis:
         if backend is None and use_ollama: backend=OllamaBackend(model=os.environ.get("GENESIS_OLLAMA_MODEL",ollama_model))
         self.cognition=CognitionEngine(self.store,self.identity,self.heritage,self.model_record,self.tools,backend,self.policy,self.guardians,self.capabilities,self.engine_boundary)
         self.last_trace:dict[str,Any]|None=None
+        self.interactive = InteractiveExplorer()
         self._turn_lock=threading.RLock()
 
     def respond(self,text:str)->str:
@@ -56,6 +58,20 @@ class Genesis:
 
     def respond_with_trace(self,text:str)->dict[str,Any]:
         answer=self.respond(text); return {"answer":answer,"trace":self.last_trace}
+
+    def decide_game_action(self,game_id:str,observation:str,allowed_actions:list[str])->dict[str,Any]:
+        """Select a bounded interactive action; never execute game steps here."""
+        with self._turn_lock:
+            return self.interactive.decide_action(game_id,observation,allowed_actions)
+
+    def observe_game_outcome(self,game_id:str,observation:str,state:str="UNKNOWN")->dict[str,Any]:
+        """Record the next environment frame as feedback for the last decision."""
+        with self._turn_lock:
+            return self.interactive.observe_outcome(game_id,observation,state)
+
+    def game_history(self,game_id:str)->dict[str,Any]:
+        with self._turn_lock:
+            return self.interactive.history(game_id)
 
     def state(self)->dict[str,Any]:
         return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"health":self.self_check()}
