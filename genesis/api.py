@@ -1,9 +1,14 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, Query, HTTPException
+import hmac
+import os
+from typing import Any
+
+from fastapi import FastAPI, Query, HTTPException, Header, Depends
 from pydantic import BaseModel, Field
 
 from .model import Genesis
+from .knowledge_modules import KnowledgeModuleError
 
 app=FastAPI(title="Genesis v0.1",version="v0.1")
 model=Genesis()
@@ -49,3 +54,51 @@ def realignment_assess(req:RealignmentAssessment):
         return model.realignment_school.assess(req.case_id,req.choice)
     except ValueError as exc:
         raise HTTPException(status_code=400,detail=str(exc)) from exc
+
+
+# Administrator-only, data-only module management.
+# Do not expose public installation without an authenticated owner identity,
+# publisher signatures, entitlement checks and Aurora policy mediation.
+class ModuleInstallRequest(BaseModel):
+    package:dict[str,Any]
+    replace:bool=False
+
+class ModuleStatusRequest(BaseModel):
+    enabled:bool
+
+def require_module_admin(token:str|None=Header(default=None,alias="X-Genesis-Module-Admin")):
+    expected=os.environ.get("GENESIS_MODULE_ADMIN_TOKEN","")
+    if len(expected)<24:
+        raise HTTPException(status_code=503,detail="module administration is disabled until a strong token is configured")
+    if not token or not hmac.compare_digest(token,expected):
+        raise HTTPException(status_code=403,detail="module administrator authentication required")
+
+@app.get("/modules")
+def modules(): return {"modules":model.list_knowledge_modules()}
+
+@app.get("/modules/search")
+def module_search(q:str=Query(min_length=1,max_length=5000),
+                  limit:int=Query(default=5,ge=1,le=20)):
+    return {"results":model.search_knowledge_modules(q,limit)}
+
+@app.post("/modules")
+def install_module(req:ModuleInstallRequest,
+                   _admin:None=Depends(require_module_admin)):
+    try:
+        return model.install_knowledge_module(req.package,replace=req.replace)
+    except KnowledgeModuleError as exc:
+        raise HTTPException(status_code=400,detail=str(exc)) from exc
+
+@app.post("/modules/{module_id}/status")
+def set_module_status(module_id:str,req:ModuleStatusRequest,
+                      _admin:None=Depends(require_module_admin)):
+    try: return model.enable_knowledge_module(module_id,req.enabled)
+    except KnowledgeModuleError as exc:
+        raise HTTPException(status_code=404,detail=str(exc)) from exc
+
+@app.delete("/modules/{module_id}")
+def remove_module(module_id:str,
+                  _admin:None=Depends(require_module_admin)):
+    try: return model.uninstall_knowledge_module(module_id)
+    except KnowledgeModuleError as exc:
+        raise HTTPException(status_code=404,detail=str(exc)) from exc
