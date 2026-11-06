@@ -326,6 +326,65 @@ class LS20SearchPlanner:
                 "meter_units":world.meter_units,
                 "search_stats":{**stats,"visible_launchers":len(world.launches)},
             }
+        # An unknown shape-cycle operation blocks a complete model-based
+        # solution. Gather one REAL observed transition at the visible shape
+        # tile instead of cycling colours first or fabricating the result.
+        if level >= 4 and world.shape and world.door:
+            wanted={obj.pattern for obj in world.door}
+            orientations={world.key_shape}
+            current_shape=world.key_shape
+            for _ in range(3):
+                current_shape=_rotate_clockwise(current_shape)
+                orientations.add(current_shape)
+            shape_needed=not (orientations & wanted)
+            if shape_needed:
+                shape_candidates=[]
+                for dest in world.shape:
+                    path=self._route_with_observed_transitions(
+                        world.player,dest,world.walkable,overrides,
+                        world.launches,{(d.x,d.y) for d in world.door})
+                    if path is not None:
+                        shape_candidates.append((len(path),dest,path))
+                if shape_candidates:
+                    shape_candidates.sort()
+                    _,chosen,route_to_shape=shape_candidates[0]
+                    if not route_to_shape:
+                        # Re-entering the same modifier is the only way to
+                        # discover more of its unknown shape permutation.
+                        departures=[]
+                        for dx,dy,action in _MOVES:
+                            if action not in allowed: continue
+                            nominal=(world.player[0]+dx,world.player[1]+dy)
+                            landing=overrides.get((world.player,action),nominal)
+                            if landing==nominal and landing in world.walkable:
+                                landing=self._apply_launch(
+                                    nominal,world.walkable,
+                                    {(d.x,d.y) for d in world.door},world.launches)
+                            if landing==world.player or landing not in world.walkable:
+                                continue
+                            return_path=self._route_with_observed_transitions(
+                                landing,chosen,world.walkable,overrides,
+                                world.launches,{(d.x,d.y) for d in world.door})
+                            if return_path:
+                                departures.append((len(return_path),action))
+                        if departures:
+                            departures.sort()
+                            route_to_shape=[departures[0][1]]
+                    if route_to_shape:
+                        selected=route_to_shape[0]
+                        self.last_action=(level,world.player,selected,
+                                          world.key_shape,world.meter_units)
+                        return {"action":{"action_type":selected},
+                                "reason":"learn_unknown_shape_cycle",
+                                "policy":"ls20-visual-experiment",
+                                "route_len":len(route_to_shape),
+                                "objective":chosen,
+                                "position":world.player,
+                                "search_stats":{**stats,
+                                                "shape_transition_samples":
+                                                len(learned),
+                                                "visible_launchers":
+                                                len(world.launches)}}
         # Fallback is explicitly tagged; it cannot be claimed as a solved plan.
         self.fallbacks+=1
         out=self.visual.decide(serialized,level,allowed)
