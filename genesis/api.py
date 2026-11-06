@@ -117,6 +117,12 @@ def due_tasks(limit:int=Query(default=100,ge=1,le=500)):
     return {"tasks":model.due_tasks(limit=limit),"automated_notifications":False}
 
 
+@app.get("/tasks/attention",dependencies=[Depends(require_task_control)])
+def task_attention(limit:int=Query(default=50,ge=1,le=100)):
+    return {"items":model.task_attention(limit=limit),
+            "mode":"pull_only","automated_notifications":False}
+
+
 @app.get("/tasks/{task_id}",dependencies=[Depends(require_task_control)])
 def get_task(task_id:str):
     return model.task(task_id)
