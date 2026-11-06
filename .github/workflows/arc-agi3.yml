@@ -67,3 +67,22 @@ jobs:
       - run: python -m pip install -r requirements.txt arc-agi
       - name: Inspect LS20 observation frames, without source access
         run: python -m tests.arc_agi3_diagnostics
+
+  ls20-visual-planning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt arc-agi
+      - name: Run public LS20 observation-driven planner for at most 100 actions
+        run: python -m tests.arc_agi3_visual_run --max-actions 100 --out ls20-visual-result.json
+      - name: Persist exact gameplay result and action trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ls20-visual-result
+          path: ls20-visual-result.json
+          if-no-files-found: warn
