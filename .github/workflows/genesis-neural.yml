@@ -1,0 +1,37 @@
+name: Genesis neural adapter checks
+on:
+  push:
+    paths:
+      - 'genesis/**'
+      - 'tests/neural_backend.py'
+      - '.github/workflows/genesis-neural.yml'
+      - 'verify.py'
+  pull_request:
+    paths:
+      - 'genesis/**'
+      - 'tests/neural_backend.py'
+      - '.github/workflows/genesis-neural.yml'
+      - 'verify.py'
+permissions:
+  contents: read
+jobs:
+  no-cloud-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      GENESIS_GENERATOR: none
+      GENESIS_BEDROCK_ENABLE: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python syntax and compile
+        run: python -m compileall -q genesis tests/neural_backend.py
+      - name: Bounded neural backend tests (stubbed, no external calls)
+        run: python -m tests.neural_backend
+      - name: Existing behavior regression
+        run: |
+          python -m tests.regression
+          python -m tests.refinement
+          python -m tests.api_test
