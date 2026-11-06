@@ -172,7 +172,7 @@ export default function App(){
   setPosts(data.posts||[]);
  });
  return <SafeAreaView style={styles.safe}>
-  <StatusBar barStyle="dark-content" backgroundColor="#f2f5f7"/>
+  <StatusBar barStyle="dark-content"/>
   <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS==='ios'?'padding':undefined}>
    <View style={styles.header}>
     <View style={styles.brand}><Text style={styles.monogram}>K·</Text>
@@ -274,12 +274,12 @@ const styles=StyleSheet.create({
  card:{padding:18,marginBottom:12,backgroundColor:'#fff',borderColor:'#d8e5ec',borderWidth:1,borderRadius:16,gap:10},
  cardTitle:{fontWeight:'700',fontSize:18,color:'#284b63'},
  button:{backgroundColor:'#446c84',padding:15,borderRadius:12,alignItems:'center',marginTop:8,minHeight:48},
- buttonLabel:{color:'#fff',fontWeight:'750',fontSize:14},
+ buttonLabel:{color:'#fff',fontWeight:'700',fontSize:14},
  secondary:{backgroundColor:'#e5eef3',borderWidth:1,borderColor:'#c8dbe6'},
  secondaryLabel:{color:'#30556d'},disabled:{opacity:.45},warning:{color:'#9c4232',padding:12,lineHeight:21},
  muted:{color:'#688092',fontSize:13,lineHeight:20},disclosure:{marginTop:12,color:'#657b8d',fontSize:12,lineHeight:19},
  welcome:{padding:16,paddingHorizontal:20,gap:3},greeting:{fontSize:25,fontWeight:'700',color:'#284961'},
- content:{paddingHorizontal:14,paddingBottom:30,gap:10},sectionHeading:{fontWeight:'750',fontSize:18,color:'#284961',marginTop:12,marginBottom:4},
+ content:{paddingHorizontal:14,paddingBottom:30,gap:10},sectionHeading:{fontWeight:'700',fontSize:18,color:'#284961',marginTop:12,marginBottom:4},
  tile:{backgroundColor:'#fff',borderRadius:13,borderWidth:1,borderColor:'#d8e5ec',padding:15,minHeight:56,justifyContent:'center',gap:4},
  tileSelected:{borderColor:'#547b91',backgroundColor:'#eaf3f8'},
  tileTitle:{color:'#2d526c',fontWeight:'700',fontSize:15},
