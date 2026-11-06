@@ -14,6 +14,7 @@ from typing import Any
 
 from .temporal_world import TemporalWorldModel
 from .temporal_search import search_temporal
+from .fog_explorer import FogExplorer
 from .visual_navigation import (
     LS20VisualPlanner, VisualObject, _grid, _key, _patch,
     _player, _rotate_clockwise, _MOVES,
@@ -62,6 +63,7 @@ class LS20SearchPlanner:
         self.recent_positions:dict[int,deque[tuple[int,int]]] = {}
         self.modifier_history:dict[tuple[int,str],deque[tuple[int,int]]] = {}
         self.temporal_model = TemporalWorldModel(min_period=2, max_period=16)
+        self.fog_explorer = FogExplorer()
         self.last_world_feedback:dict[str,Any] = {}
 
     @staticmethod
@@ -417,6 +419,17 @@ class LS20SearchPlanner:
         if world is None:
             return {"action":None,"policy":"ls20-search-v1",
                     "reason":"visual_perception_failed"}
+        # Do not assume that the entire board (including the door) is
+        # visible. If it is hidden, explicitly explore the observed frontier
+        # and preserve the discovered map across actions and camera motion.
+        if not world.door:
+            self.last_action=None
+            exploratory=self.fog_explorer.decide(
+                serialized,level,world.player,allowed,
+                world.meter_units//max(1,world.unit_cost),world.energy
+            )
+            exploratory["search_stats"]={"fog":self.fog_explorer.summary()}
+            return exploratory
         # Track moving entities across observations. Unknown/occluded
         # detections are explicit None, not fabricated locations.
         episode=f"ls20-level-{level}"
