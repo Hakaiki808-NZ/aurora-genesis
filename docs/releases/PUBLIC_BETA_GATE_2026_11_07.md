@@ -15,9 +15,11 @@
 - Both APIs protect private routes with Cognito JWT authorizers.
 - Main V3 API stage throttled to 5 requests/second (burst 10); research API to 1 request/second (burst 3).
 - Active Aurora Controller/Angel/Motor, Kyro core and School Lambda services; C1-only Aurora.
-- Four CloudWatch metric alarms were created in Sydney during this release audit; **notification actions are disabled**, so alarms alone do not alert an operator.
+- Six CloudWatch metric alarms were created in Sydney during this release audit (Kyro API 5xx/4xx, Kyro Lambda errors, Aurora Controller errors, research API 5xx, research Lambda errors); **notification actions are disabled**, so alarms alone do not alert an operator.
 - USD 1 AWS budget exists; it is an **alert, not a hard expenditure stop**.
-- Source snapshot includes deployed 16 public browser objects, with S3 ETags and sizes.
+- Source snapshot includes 18 deployed public browser objects, with S3 ETags and sizes; GitHub and AWS copies matched after merge.
+- A CSP incompatibility in the Realignment preview was repaired in live S3 by externalizing JavaScript and CSS; the original HTML is backed up in S3.
+- Candidate GitHub public-beta qualification and existing test suites passed.
 - GitHub CI for existing reference model previously passed; this branch adds static and anonymous public-edge checks.
 
 ## Mandatory user-facing acceptance before opening broadly
@@ -35,7 +37,7 @@
 - [ ] Configure an actionable alarm destination/operator and run a simulated failure notification.
 - [ ] Record deployment/rollback and restore drill for Kyro, data, and Aurora control state.
 - [ ] Review IAM scopes, API token authorization, cross-user data isolation, CloudFront origin and storage access, and threat model.
-- [ ] Verify independent cost stop/disable procedure, quotas, and current account permissions before wider enrollment.
+- [ ] Verify independent cost stop/disable procedure, quotas, and current account permissions before wider enrollment. AWS rejected a proposed reserved-concurrency cap for the research Lambda because the account must retain 10 unreserved executions; no concurrency change was made. The research API remains throttled at 1 request/second, burst 3.
 - [ ] Check DynamoDB restore strategy: inspected Kyro and Aurora tables do not yet have point-in-time recovery enabled. Enable only with explicit cost acceptance.
 - [ ] Implement a tested incident response, contact and response policy.
 - [ ] Validate hosted neural model quota, per-request max tokens, cost ceilings and access before enabling inference; do not infer model quality from test harness passes.
