@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "status": "public_preview_catalogue",
+  "description": "Reference-only. No checkout, cloud installation, or verified credentials.",
+  "modules": [
+    {
+      "id": "spanish-basics",
+      "title": "Spanish Basics",
+      "category": "language",
+      "language": "Spanish · es",
+      "icon": "ES",
+      "price": "Free",
+      "description": "Greetings, everyday vocabulary, politeness and introductory grammar.",
+      "chapters": 3,
+      "href": "https://github.com/Hakaiki808-NZ/aurora-genesis/blob/main/examples/modules/spanish-basics.json",
+      "availability": "Open-source reference pack"
+    },
+    {
+      "id": "te-reo-maori-basics",
+      "title": "Te Reo Māori Basics",
+      "category": "language",
+      "language": "Te reo Māori · mi",
+      "icon": "MI",
+      "price": "Free",
+      "description": "Introductory greetings, farewells and macron awareness for Māori text.",
+      "chapters": 3,
+      "href": "https://github.com/Hakaiki808-NZ/aurora-genesis/blob/main/examples/modules/te-reo-maori-basics.json",
+      "availability": "Open-source reference pack"
+    },
+    {
+      "id": "physics-foundations",
+      "title": "Physics Foundations",
+      "category": "knowledge",
+      "language": "Physics · starter",
+      "icon": "φ",
+      "price": "Free",
+      "description": "Three introductory reference topics: Newton's law, kinetic energy and momentum.",
+      "chapters": 3,
+      "href": "https://github.com/Hakaiki808-NZ/aurora-genesis/blob/main/examples/modules/physics-foundations.json",
+      "availability": "Open-source reference pack"
+    }
+  ]
+}
