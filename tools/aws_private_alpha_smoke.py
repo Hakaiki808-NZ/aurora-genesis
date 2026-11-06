@@ -2,7 +2,7 @@
 """Read-only AWS private-alpha smoke checks for the public Kyro entrypoints.
 
 No AWS credentials, test accounts, model inference, or privileged engine access.
-The two protected routes must reject anonymous requests at API Gateway.
+All protected Kyro and Aurora routes must reject anonymous requests at API Gateway.
 """
 from __future__ import annotations
 
@@ -62,6 +62,9 @@ def main() -> int:
         ("private readiness", "GET", "/api/v3/readiness", None),
         ("private projects", "GET", "/api/v3/projects", None),
         ("private conversation mutation", "POST", "/api/v3/conversations", b'{"title":"unauthorized-probe"}'),
+        ("private Aurora health", "GET", "/api/v3/aurora/health", None),
+        ("private Aurora execute", "POST", "/api/v3/aurora/execute", b'{}'),
+        ("private Aurora audit", "GET", "/api/v3/aurora/audit/00000000-0000-0000-0000-000000000000/verify", None),
     ]
     for label, method, path, body in cases:
         try:
