@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "physics-foundations",
+  "title": "Physics Foundations — Demonstration Pack",
+  "version": "0.1.0",
+  "publisher": "Aurora / Genesis reference project",
+  "license": "Apache-2.0",
+  "distribution": "open",
+  "subject": "classical physics mechanics",
+  "chapters": [
+    {
+      "id": "newtons-second-law",
+      "title": "Newton's second law — net force and acceleration",
+      "content": "For a body of constant mass, net external force is the product of mass and acceleration: F = ma. Force is measured in newtons (N), mass in kilograms (kg), and acceleration in metres per second squared (m/s²). This is a model of classical mechanics, not a statement that every possible force problem follows F = ma without conditions.",
+      "source": "Original short reference note for the Genesis demonstration; not a university qualification."
+    },
+    {
+      "id": "kinetic-energy",
+      "title": "Kinetic energy of a moving body",
+      "content": "In non-relativistic classical mechanics, kinetic energy equals one half of mass multiplied by speed squared: K = 1/2 mv². This expression is an approximation when the speed is much smaller than the speed of light.",
+      "source": "Original short reference note for the Genesis demonstration; not a university qualification."
+    },
+    {
+      "id": "momentum-conservation",
+      "title": "Conservation of linear momentum",
+      "content": "In an isolated system with no net external force, the total linear momentum remains constant. The momentum of a particle in the classical model is its mass times its velocity: p = mv.",
+      "source": "Original short reference note for the Genesis demonstration; not a university qualification."
+    }
+  ]
+}
