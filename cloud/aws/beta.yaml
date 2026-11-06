@@ -1,0 +1,368 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Authenticated low-traffic Kyro Genesis research beta - not Aurora or production AGI
+Parameters:
+  Stage:
+    Type: String
+    Default: beta
+    AllowedValues: [beta]
+  CodeBucket:
+    Type: String
+    Description: Private artifact bucket created by phase-one foundation
+  BundleManifest:
+    Type: String
+    Description: JSON list of pinned private source artifact versions
+Resources:
+  StateBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteExpiredResearchState
+            Status: Enabled
+            Prefix: test-state/
+            ExpirationInDays: 7
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 7
+          - Id: AbortMultipart
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+      Tags:
+        - Key: Project
+          Value: aurora-genesis-kyro
+        - Key: DataClass
+          Value: beta-test-only
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+  OAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub 'agk-oac-${AWS::StackName}'
+        Description: Signed access to private Kyro beta assets
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+  KyroSecurityHeaders:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub 'agk-security-${AWS::StackName}'
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: >-
+              default-src 'none'; script-src 'self'; style-src 'self';
+              connect-src 'self' https://*.execute-api.ap-southeast-2.amazonaws.com
+              https://*.auth.ap-southeast-2.amazoncognito.com;
+              base-uri 'none'; frame-ancestors 'none'; form-action 'none';
+              object-src 'none'
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: no-referrer
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Override: true
+  KyroDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        HttpVersion: http2
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: kyro-web-assets
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !Ref OAC
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: kyro-web-assets
+          ResponseHeadersPolicyId: !Ref KyroSecurityHeaders
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          AllowedMethods: [GET, HEAD]
+          CachedMethods: [GET, HEAD]
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          MinTTL: 0
+          DefaultTTL: 0
+          MaxTTL: 0
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSignedCloudFrontOnly
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${FrontendBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${KyroDistribution}'
+  BetaUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub 'aurora-genesis-kyro-${Stage}'
+      UserPoolTier: LITE
+      AutoVerifiedAttributes: [email]
+      UsernameAttributes: [email]
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      MfaConfiguration: 'OFF'
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 2
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+  BetaClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref BetaUserPool
+      ClientName: kyro-browser-research-beta
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows: [code]
+      AllowedOAuthScopes: [openid, email, profile, aws.cognito.signin.user.admin]
+      SupportedIdentityProviders: [COGNITO]
+      CallbackURLs:
+        - !Sub 'https://${KyroDistribution.DomainName}/'
+      LogoutURLs:
+        - !Sub 'https://${KyroDistribution.DomainName}/'
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+  BetaDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub 'agk-beta-${AWS::AccountId}'
+      ManagedLoginVersion: 1
+      UserPoolId: !Ref BetaUserPool
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'agk-kyro-${Stage}-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LimitedBetaStorageAndLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: OnlyTestState
+                Effect: Allow
+                Action: [s3:GetObject, s3:PutObject]
+                Resource: !Sub '${StateBucket.Arn}/test-state/*'
+              - Sid: ReadVersionPinnedResearchCode
+                Effect: Allow
+                Action: [s3:GetObject, s3:GetObjectVersion]
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${CodeBucket}/beta/source-parts/*'
+              - Sid: ListOwnState
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt StateBucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix: 'test-state/*'
+              - Sid: WriteOwnLogs
+                Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/agk-kyro-${Stage}:*'
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/agk-kyro-${Stage}'
+      RetentionInDays: 3
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: ApiLogGroup
+    Properties:
+      FunctionName: !Sub 'agk-kyro-${Stage}'
+      Runtime: python3.12
+      Handler: index.lambda_handler
+      Role: !GetAtt ApiRole.Arn
+      Timeout: 20
+      MemorySize: 512
+      Code:
+        ZipFile: |
+          """AWS-managed inline loader for pinned private source artifacts."""
+          import json
+          import os
+          import sys
+          from pathlib import Path
+          import boto3
+
+          LOADED_HANDLER = None
+
+          def lambda_handler(event, context):
+              global LOADED_HANDLER
+              if LOADED_HANDLER is None:
+                  s3 = boto3.client("s3")
+                  root = Path("/tmp/agk-reference")
+                  root.mkdir(parents=True, exist_ok=True)
+                  for pinned in json.loads(os.environ["BUNDLE_MANIFEST"]):
+                      record = s3.get_object(
+                          Bucket=os.environ["CODE_BUCKET"],
+                          Key=pinned["key"],
+                          VersionId=pinned["version"],
+                      )
+                      if record.get("VersionId") != pinned["version"]:
+                          raise RuntimeError("Unpinned research bundle")
+                      entries = json.loads(record["Body"].read().decode("utf-8"))
+                      for name, content in entries.items():
+                          if not isinstance(content, str):
+                              raise RuntimeError("Invalid source entry")
+                          good = (name.startswith("genesis/") or
+                                  name.startswith("config/") or
+                                  name == "data/bootstrap.txt" or
+                                  name == "cloud_handler.py")
+                          if not good or ".." in Path(name).parts or name.startswith("/"):
+                              raise RuntimeError("Unexpected source path")
+                          destination = root / name
+                          destination.parent.mkdir(parents=True, exist_ok=True)
+                          destination.write_text(content, encoding="utf-8")
+                  sys.path.insert(0, str(root))
+                  from cloud_handler import lambda_handler as actual
+                  LOADED_HANDLER = actual
+              return LOADED_HANDLER(event, context)
+      Environment:
+        Variables:
+          STATE_BUCKET: !Ref StateBucket
+          CODE_BUCKET: !Ref CodeBucket
+          BUNDLE_MANIFEST: !Ref BundleManifest
+          GENESIS_GENERATOR: none
+          GENESIS_CAPABILITY_LEVEL: C3
+          HOME: /tmp
+          XDG_DATA_HOME: /tmp
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub 'agk-kyro-${Stage}-api'
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - !Sub 'https://${KyroDistribution.DomainName}'
+        AllowMethods: [GET, POST, OPTIONS]
+        AllowHeaders: [authorization, content-type]
+        MaxAge: 300
+  ApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ApiFunction.Arn
+      PayloadFormatVersion: '2.0'
+  JWTAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref HttpApi
+      Name: cognito-jwt
+      AuthorizerType: JWT
+      IdentitySource: ['$request.header.Authorization']
+      JwtConfiguration:
+        Audience:
+          - !Ref BetaClient
+        Issuer: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${BetaUserPool}'
+  StatusRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: 'GET /api/status'
+      Target: !Sub 'integrations/${ApiIntegration}'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref JWTAuthorizer
+      AuthorizationScopes: [aws.cognito.signin.user.admin]
+  ChatRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: 'POST /api/chat'
+      Target: !Sub 'integrations/${ApiIntegration}'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref JWTAuthorizer
+      AuthorizationScopes: [aws.cognito.signin.user.admin]
+  DefaultStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: '$default'
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 3
+        ThrottlingRateLimit: 1
+  InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ApiFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*/*'
+Outputs:
+  SiteURL:
+    Value: !Sub 'https://${KyroDistribution.DomainName}/'
+  StaticBucketName:
+    Value: !Ref FrontendBucket
+  UserPoolId:
+    Value: !Ref BetaUserPool
+  UserPoolClientId:
+    Value: !Ref BetaClient
+  CognitoDomain:
+    Value: !Sub 'https://${BetaDomain}.auth.${AWS::Region}.amazoncognito.com'
+  APIURL:
+    Value: !GetAtt HttpApi.ApiEndpoint
+  APIId:
+    Value: !Ref HttpApi
+  FunctionName:
+    Value: !Ref ApiFunction
+  StateBucketName:
+    Value: !Ref StateBucket

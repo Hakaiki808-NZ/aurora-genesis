@@ -3,7 +3,7 @@ import subprocess, sys, platform, json
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
-TESTS=['tests.acceptance','tests.regression','tests.refinement','tests.hardening','tests.api_test','tests.constitutional','tests.constitution_stress','tests.guardian_hardening','tests.phases.phase2_integration','tests.phases.phase3_adversarial','tests.phases.phase4_recovery_integration','tests.local_alpha']
+TESTS=['tests.acceptance','tests.regression','tests.refinement','tests.hardening','tests.api_test','tests.constitutional','tests.constitution_stress','tests.guardian_hardening','tests.phases.phase2_integration','tests.phases.phase3_adversarial','tests.phases.phase4_recovery_integration','tests.intent_context_regression','tests.cloud_beta_static','tests.local_alpha']
 
 def main():
     results=[]
