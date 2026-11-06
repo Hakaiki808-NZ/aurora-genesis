@@ -66,6 +66,32 @@ Resources:
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
+  KyroSecurityHeaders:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub 'agk-security-${AWS::StackName}'
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: >-
+              default-src 'none'; script-src 'self'; style-src 'self';
+              connect-src 'self' https://*.execute-api.ap-southeast-2.amazonaws.com
+              https://*.auth.ap-southeast-2.amazoncognito.com;
+              base-uri 'none'; frame-ancestors 'none'; form-action 'none';
+              object-src 'none'
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: no-referrer
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Override: true
   KyroDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -82,6 +108,7 @@ Resources:
               OriginAccessIdentity: ''
         DefaultCacheBehavior:
           TargetOriginId: kyro-web-assets
+          ResponseHeadersPolicyId: !Ref KyroSecurityHeaders
           ViewerProtocolPolicy: redirect-to-https
           Compress: true
           AllowedMethods: [GET, HEAD]
