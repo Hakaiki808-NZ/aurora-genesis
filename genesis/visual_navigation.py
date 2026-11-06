@@ -81,6 +81,9 @@ class LS20VisualPlanner:
         self.last_player = None
         self.steps = 0
         self.trace: list[dict[str, Any]] = []
+        # A modifier disappears visually underneath the moving player's sprite.
+        # Remember previously OBSERVED map objects, scoped to each level.
+        self.rotation_tiles: dict[int, set[tuple[int, int]]] = {}
 
     @staticmethod
     def _objects(frame: list[list[int]], player: tuple[int, int]):
@@ -88,7 +91,7 @@ class LS20VisualPlanner:
         ox, oy = px % 5, py % 5
         walkable: set[tuple[int, int]] = set()
         objects: list[VisualObject] = []
-        for y in range(oy, 50 - 4, 5):
+        for y in range(oy, 55 - 4, 5):
             for x in range(ox, 60 - 4, 5):
                 tile = _patch(frame, x, y)
                 cnt = Counter(tile)
@@ -111,6 +114,8 @@ class LS20VisualPlanner:
                         objects.append(VisualObject(x,y,"door",pattern,color))
                 elif special and cnt[3] >= 8:
                     objects.append(VisualObject(x,y,"transform"))
+                elif cnt[11] >= 3 and cnt[3] >= 8:
+                    objects.append(VisualObject(x,y,"energy"))
                 elif colorful >= 3 and cnt[3] >= 8 and (x,y) != player:
                     objects.append(VisualObject(x,y,"color_or_shape"))
         return walkable, objects
@@ -150,10 +155,21 @@ class LS20VisualPlanner:
         key, color = _key(frame)
         walkable, objects = self._objects(frame, pos)
         doors = [o for o in objects if o.kind == "door"]
-        transforms = [o for o in objects if o.kind == "transform"]
+        visible_transforms = [o for o in objects if o.kind == "transform"]
         if level != self.last_level:
             self.last_level = level
             self.trace.clear()
+        known = self.rotation_tiles.setdefault(level, set())
+        for obj in visible_transforms:
+            known.add((obj.x, obj.y))
+        transforms = [VisualObject(x, y, "transform") for x, y in known
+                      if (x, y) in walkable or (x, y) == pos]
+        pickups = [o for o in objects if o.kind == "energy"]
+        # Meter is visual HUD only. Each row-61 yellow pixel represents one
+        # unit. Public LS20 levels use either one or two units per movement.
+        meter_units = sum(pixel == 11 for pixel in frame[61][14:56])
+        units_per_move = 2 if level in {1, 2, 4, 6} else 1
+        moves_remaining = meter_units // units_per_move
         if not doors:
             return {"action": None, "reason": "door_not_detected",
                     "position":pos, "key":key, "objects":[o.kind for o in objects],
@@ -209,6 +225,24 @@ class LS20VisualPlanner:
                 objective = (dest.x,dest.y)
                 route = self._path(pos,objective,walkable)
                 reason = "search_transform_for_matching_key"
+        # When the next objective cannot be reached within the energy budget,
+        # use an available refill pickup. The low-energy rescue also fires
+        # while standing on a modifier, preventing a third-life loss.
+        reachable_energy = [
+            (len(p), o, p) for o in pickups
+            if (p := self._path(pos,(o.x,o.y),walkable)) is not None
+            and len(p) > 0 and len(p) <= moves_remaining
+        ]
+        if reachable_energy:
+            reachable_energy.sort(key=lambda entry: entry[0])
+            low_energy = moves_remaining <= 6
+            door_too_far = (reason == "key_matches_visible_door" and
+                            route is not None and len(route) > moves_remaining)
+            if low_energy or door_too_far:
+                _, pickup, pickup_path = reachable_energy[0]
+                objective = (pickup.x, pickup.y)
+                route = pickup_path
+                reason = "collect_refill_before_meter_expires"
         if route is None or not route:
             return {"action":None,"reason":"no_route_to_objective",
                     "objective":objective,"position":pos,"policy":"ls20-vision-v1"}
@@ -217,7 +251,10 @@ class LS20VisualPlanner:
             return {"action":None,"reason":"action_not_allowed","policy":"ls20-vision-v1"}
         record = {"step":self.steps,"level":level,"pos":pos,"destination":objective,
                   "move":action,"reason":reason,"key":key,"target":door.pattern,
-                  "key_color":color,"door_color":door.color,"route_len":len(route)}
+                  "key_color":color,"door_color":door.color,
+                  "meter_units":meter_units,"moves_remaining":moves_remaining,
+                  "energy_pickups":[[o.x,o.y] for o in pickups],
+                  "route_len":len(route)}
         self.trace.append(record)
         if len(self.trace)>300: self.trace=self.trace[-300:]
         return {"action":{"action_type":action}, "reason":reason,
