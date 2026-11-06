@@ -16,6 +16,7 @@ from .guardians import GuardianCouncil
 from .capabilities import CapabilityController
 from .engine_boundary import EngineBoundary, EngineReceipt
 from .awareness import AwarenessCore
+from .perception import PerceptionCore
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -54,6 +55,7 @@ class Genesis:
         self.cognition=CognitionEngine(self.store,self.identity,self.heritage,self.model_record,self.tools,backend,self.policy,self.guardians,self.capabilities,self.engine_boundary)
         self.last_trace:dict[str,Any]|None=None
         self.awareness=AwarenessCore(self.store,self.identity,self.capabilities)
+        self.perception=PerceptionCore(self.store)
         self._awareness_error:str|None=None
         self._turn_lock=threading.RLock()
 
@@ -78,10 +80,21 @@ class Genesis:
     def state(self)->dict[str,Any]:
         return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"awareness":self.awareness_state(),"health":self.self_check()}
 
+    def perception_state(self)->dict[str,Any]:
+        return self.perception.status()
+
+    def observe_local_clock(self)->dict[str,Any]:
+        """Explicit read-only host-clock sample, with no Aurora attestation."""
+        return self.perception.observe_local_clock()
+
+    def belief(self,entity:str,attribute:str)->dict[str,Any]:
+        """In-process world-state read; private values are not exposed over HTTP."""
+        return self.perception.belief(entity,attribute)
+
     def awareness_state(self)->dict[str,Any]:
         try:
             snap=self.awareness.snapshot()
-            return {**snap,"telemetry_error":self._awareness_error}
+            return {**snap,"perception":self.perception_state(),"telemetry_error":self._awareness_error}
         except Exception as exc:
             return {"mode":"unavailable","telemetry_error":type(exc).__name__}
 
@@ -103,6 +116,8 @@ class Genesis:
         checks["capability_ceiling"]=self.capabilities.granted_level in {"C0","C1","C2","C3","C4","C5"}
         checks["engine_separation"]=self.engine_boundary.minimum_engine.startswith("Aurora ")
         checks["awareness_ledger"]=self.awareness.healthy()
+        try: checks["perception_ledger"]=self.perception_state()["sensor_attestation"] is False
+        except Exception: checks["perception_ledger"]=False
         return {"ok":all(checks.values()),"checks":checks}
 
     def goal(self,goal_id:int)->dict[str,Any]|None:return self.store.goal(goal_id)
