@@ -61,7 +61,7 @@ Resources:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
       OriginAccessControlConfig:
-        Name: !Sub 'agk-kyro-beta-oac-${AWS::AccountId}'
+        Name: !Sub 'agk-oac-${AWS::StackName}'
         Description: Signed access to private Kyro beta assets
         OriginAccessControlOriginType: s3
         SigningBehavior: always
