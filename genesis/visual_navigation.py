@@ -112,10 +112,16 @@ class LS20VisualPlanner:
                         pattern = tuple(tuple(1 if c == color else 0 for c in row)
                                         for row in small)
                         objects.append(VisualObject(x,y,"door",pattern,color))
-                elif special and cnt[3] >= 8:
-                    objects.append(VisualObject(x,y,"transform"))
                 elif cnt[11] >= 3 and cnt[3] >= 8:
                     objects.append(VisualObject(x,y,"energy"))
+                elif (len({c for c in tile if c in {8,9,12,14}}) >= 3
+                      and cnt[3] >= 8 and (x,y) != player):
+                    # Multicolour patch may contain BLACK (0) pixels too.
+                    # Test it before assuming any black/white pixel is a
+                    # rotation glyph; this was preventing colour planning.
+                    objects.append(VisualObject(x,y,"color_or_shape"))
+                elif special and cnt[3] >= 8:
+                    objects.append(VisualObject(x,y,"transform"))
                 elif colorful >= 3 and cnt[3] >= 8 and (x,y) != player:
                     objects.append(VisualObject(x,y,"color_or_shape"))
         return walkable, objects
