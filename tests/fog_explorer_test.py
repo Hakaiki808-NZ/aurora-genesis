@@ -1,6 +1,8 @@
 """Fog-of-war exploration tests from synthetic 64x64 observations."""
 import json
 from genesis.fog_explorer import FogExplorer
+from genesis.ls20_search import LS20SearchPlanner, SearchWorld
+from genesis.visual_navigation import VisualObject
 
 
 def frame(shift_x=0):
@@ -40,6 +42,25 @@ def run():
     b.reset(2)
     assert b.summary()["mapped_cells"]==0
 
+    # A partly obscured goal must not replace the previously observed
+    # complete glyph; the full pattern is the only grounded target.
+    model=LS20SearchPlanner()
+    complete=((1,0,1),(1,1,0),(0,1,1))
+    clipped=((1,0,1),(1,1,0),(0,1,0))
+    def observed(pattern):
+        return SearchWorld(
+            walkable=frozenset({(19,35),(29,50)}),
+            door=(VisualObject(29,50,"door",pattern,8),),
+            rotation=frozenset(),color=frozenset(),
+            shape=frozenset(),energy=(),player=(19,35),
+            key_shape=((0,1,0),(0,1,0),(1,1,1)),
+            key_color=12,meter_units=42,unit_cost=2,launches={}
+        )
+    saved=model._remember_fog_world(observed(complete),6)
+    clipped_result=model._remember_fog_world(observed(clipped),6)
+    assert saved.door[0].pattern == complete
+    assert clipped_result.door[0].pattern == complete
+    print("FOG_DOOR_MEMORY=PASS")
     print("FOG_EXPLORATION=PASS")
 
 
