@@ -40,6 +40,13 @@ def run():
     assert len(fake.calls) == 2 and not active.available()
 
     assert HuggingFaceBackend(enabled=True, generator=FakeGenerator(invalid=True)).generate("Q") is None
+    # Cache loads must be pinned even before transformers is imported.
+    try:
+        HuggingFaceBackend(enabled=True)._generator()
+        raise AssertionError("unpinned model load accepted")
+    except ValueError:
+        pass
+
     for kwargs in ({"model_id": "unknown/model"}, {"max_calls": 0}, {"max_output_tokens": 999}):
         try:
             HuggingFaceBackend(**kwargs)
