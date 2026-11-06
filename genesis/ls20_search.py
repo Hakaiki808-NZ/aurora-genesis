@@ -54,6 +54,9 @@ class LS20SearchPlanner:
         self.last_action: tuple[int,tuple[int,int],str,tuple[tuple[int,...],...],int] | None = None
         self.observed_transitions: dict[int,dict[tuple[tuple[int,int],str],tuple[int,int]]] = {}
         self.learned_shapes: dict[int,dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]]] = {}
+        # Shape-tile mechanics transfer across levels. This is learned ONLY
+        # when actual observations show a shape change after tile contact.
+        self.global_shape_edges:dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]] = {}
         self.recent_positions:dict[int,deque[tuple[int,int]]] = {}
 
     @staticmethod
@@ -183,18 +186,20 @@ class LS20SearchPlanner:
 
         redirects = overrides or {}
         shape_edges = shape_edges or {}
-        start=(world.player, world.key_shape, COLOR_CYCLE.index(world.key_color), 0, world.meter_units)
+        start=(world.player, world.key_shape, COLOR_CYCLE.index(world.key_color),
+               0, world.meter_units, 0)
         queue=deque([start])
         visited={start}
         parents:dict[tuple,tuple[tuple,str]]={}
         energy_bit={point:1<<i for i,point in enumerate(world.energy)}
-        goal_locations={(o.x,o.y):o for o in world.door}
+        goal_locations={(o.x,o.y):(idx,o) for idx,o in enumerate(world.door)}
         goal_points=set(goal_locations)
+        all_doors=(1<<len(world.door))-1
         expanded=0
         while queue and expanded < MAX_NODES:
             state=queue.popleft()
             expanded+=1
-            (x,y),pattern,ci,mask,meter=state
+            (x,y),pattern,ci,mask,meter,door_mask=state
             for dx,dy,action in _MOVES:
                 nominal=(x+dx,y+dy)
                 nxt=redirects.get(((x,y),action),nominal)
@@ -218,16 +223,20 @@ class LS20SearchPlanner:
                     newpattern = shape_edges[newpattern]
                 newcolor = (ci+1)%len(COLOR_CYCLE) if nxt in world.color else ci
                 lock=goal_locations.get(nxt)
+                new_door_mask=door_mask
                 if lock:
-                    if (newpattern != lock.pattern or
-                        COLOR_CYCLE[newcolor] != lock.color):
-                        continue
-                end=(nxt,newpattern,newcolor,newmask,after_meter)
+                    door_id,door=lock
+                    if not (door_mask & (1<<door_id)):
+                        if (newpattern != door.pattern or
+                            COLOR_CYCLE[newcolor] != door.color):
+                            continue
+                        new_door_mask |= 1<<door_id
+                end=(nxt,newpattern,newcolor,newmask,after_meter,new_door_mask)
                 if end in visited:
                     continue
                 visited.add(end)
                 parents[end]=(state,action)
-                if lock:
+                if new_door_mask==all_doors:
                     route=[]
                     cur=end
                     while cur!=start:
@@ -237,7 +246,9 @@ class LS20SearchPlanner:
                     route.reverse()
                     return route, {"reason":"solved_symbolic_search",
                                    "expanded":expanded,"visited":len(visited),
-                                   "length":len(route),"refills_modelled":len(world.energy)}
+                                   "length":len(route),"refills_modelled":len(world.energy),
+                                   "doors_modelled":len(world.door),
+                                   "known_shape_transitions":len(shape_edges)}
                 queue.append(end)
         return None, {"reason":"no_goal_path_found",
                       "expanded":expanded,"visited":len(visited),
@@ -303,9 +314,11 @@ class LS20SearchPlanner:
                 if world.player in world.shape and world.player!=from_pos:
                     if world.key_shape!=last_shape:
                         self.learned_shapes.setdefault(level,{})[last_shape]=world.key_shape
+                        self.global_shape_edges[last_shape]=world.key_shape
             self.last_action=None
         overrides=self.observed_transitions.setdefault(level,{})
         learned=self.learned_shapes.setdefault(level,{})
+        learned.update(self.global_shape_edges)
         recent=self.recent_positions.setdefault(level,deque(maxlen=16))
         recent.append(world.player)
         route,stats=self.search(world,overrides,learned)
