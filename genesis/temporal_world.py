@@ -113,23 +113,41 @@ class TemporalWorldModel:
         values = list(track.positions)
         if len(values) < self.min_period * 2:
             return None
-        # Accept an observed periodic suffix only when two complete cycles
-        # match. Missing/occluded observations invalidate that candidate.
-        for p in range(self.min_period, min(self.max_period, len(values)//2)+1):
-            first, second = values[-2*p:-p], values[-p:]
-            if (first == second and all(x is not None for x in second)
-                and len(set(second)) > 1):
-                positions = tuple(second[i % p] for i in range(horizon))
-                track.predicted_next = positions[0]
-                track.last_forecast_period = p
-                verified = track.confirmations
-                contradicted = track.contradictions
-                confidence = min(0.99, (2*p+verified)/(2*p+verified+contradicted+1))
-                return MotionForecast(
-                    positions_after_actions=positions, period=p,
-                    confidence=confidence, observed_samples=len(values),
-                    method="two_identical_observed_cycles",
-                )
+        # Occlusion is not lack of periodicity. Reconstruct each phase from
+        # repeated *observed* positions, ignoring invisible frames. A period
+        # is accepted only when every phase has an observed position, at
+        # least two cycles of samples support it, and contradictions are few.
+        # The freshest 48 steps limit stale-cycle contamination after resets.
+        from collections import Counter
+        window = values[-48:]
+        n = len(window)
+        for p in range(self.min_period, min(self.max_period,n//2)+1):
+            bins = {i:Counter() for i in range(p)}
+            for i, point in enumerate(window):
+                if point is not None:
+                    bins[i%p][point] += 1
+            if any(not bin_values for bin_values in bins.values()):
+                continue
+            visible = sum(sum(bin_values.values()) for bin_values in bins.values())
+            if visible < 2*p:
+                continue
+            phases = {i:bins[i].most_common(1)[0][0] for i in range(p)}
+            if len(set(phases.values())) < 2:
+                continue
+            consistent = sum(bins[i][phases[i]] for i in range(p))
+            if consistent < visible * 0.85:
+                continue
+            # The end of the window is the latest observation, so phase n
+            # is the position AFTER the next action.
+            positions = tuple(phases[(n+i)%p] for i in range(horizon))
+            track.predicted_next = positions[0]
+            track.last_forecast_period = p
+            confidence = min(0.99, consistent/(visible+1))
+            return MotionForecast(
+                positions_after_actions=positions, period=p,
+                confidence=confidence, observed_samples=visible,
+                method="occlusion_tolerant_periodic_phase",
+            )
         return None
 
     def summary(self, episode: str) -> dict[str, Any]:
