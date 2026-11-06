@@ -1,6 +1,7 @@
 """Run with python -m tests.task_assurance from the repo root."""
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import os
 from tempfile import TemporaryDirectory
 
 from genesis.storage import Store
@@ -61,6 +62,28 @@ def run():
         rejects(lambda: ledger.create("x", []), "empty acceptance criteria")
         rejects(lambda: ledger.create("x", ["y"], due_at="2026-11-07T10:00"), "naive due date accepted")
         store.close()
+    from fastapi import HTTPException
+    from genesis.api import require_task_control
+    old = os.environ.get("GENESIS_CONTROL_TOKEN")
+    try:
+        os.environ.pop("GENESIS_CONTROL_TOKEN", None)
+        try:
+            require_task_control("untrusted")
+            raise AssertionError("unconfigured task control accepted")
+        except HTTPException as exc:
+            assert exc.status_code == 503
+        os.environ["GENESIS_CONTROL_TOKEN"] = "t" * 40
+        try:
+            require_task_control("untrusted")
+            raise AssertionError("invalid task control token accepted")
+        except HTTPException as exc:
+            assert exc.status_code == 401
+        assert require_task_control("t" * 40) is True
+    finally:
+        if old is None:
+            os.environ.pop("GENESIS_CONTROL_TOKEN", None)
+        else:
+            os.environ["GENESIS_CONTROL_TOKEN"] = old
     print("TASK_ASSURANCE=PASS")
 
 
