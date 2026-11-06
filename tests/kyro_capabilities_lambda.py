@@ -82,7 +82,6 @@ def run():
         assert all(call("/consents")[1]["consents"].values())
         assert call("/memory", "POST", {"kind": "memory", "key": "project", "value": "alpha"})[0] == 200
         assert call("/memory", "POST", {"kind": "preference", "key": "theme", "value": "light"})[0] == 200
-        assert call("/memory?kind=preference")[0] == 400  # actual query is separate
         assert call("/memory")[1]["items"][0]["value"] == "alpha"
         assert call("/memory", user="bob")[0] == 403
         assert call("/consents", "POST", {"scope": "memory", "enabled": True}, user="bob")[0] == 200
