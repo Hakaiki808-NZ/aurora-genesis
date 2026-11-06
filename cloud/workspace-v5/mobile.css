@@ -1,0 +1,65 @@
+/* Mobile-first overrides for Kyro V5. Loaded after the silver/light theme. */
+.mobile-projects-trigger{display:none}
+@media(max-width:760px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .shell,.main,.preview-shell,.preview-main{min-width:0;width:100%}
+  .side,.preview-aside{position:relative;display:block;width:100%;min-width:0;padding:8px 14px;background:var(--pane2);border:0;border-bottom:1px solid var(--line)}
+  .side .logo,.preview-logo{padding:2px 4px;min-height:50px;margin:0}
+  .logo strong{font-size:17px;letter-spacing:2px}.logo small{font-size:8px}
+  .side nav,.preview-aside nav{
+    position:fixed;bottom:0;left:0;right:0;z-index:100;display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));gap:0;overflow:visible;
+    background:var(--pane2);border-top:1px solid var(--line);
+    padding:5px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px));
+    box-shadow:0 -8px 30px #1b354316
+  }
+  .side nav .nav,.preview-aside nav .nav{
+    width:100%;min-width:0;min-height:54px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:0;text-align:center;
+    padding:6px 2px;margin:0;border-radius:10px;white-space:normal;font-size:19px
+  }
+  .side nav .nav span,.preview-aside nav .nav span{font-size:10px;line-height:1.2;overflow-wrap:anywhere}
+  .side .section,.side .projects,.side .service-pill,.side .account-btn,.side .project-header{display:none}
+  .side.mobile-menu-open .project-header{display:flex;margin:8px 2px 4px}
+  .side.mobile-menu-open .projects{display:block;max-height:35vh;overflow:auto;padding:5px 0 8px}
+  .side.mobile-menu-open .account-btn{display:flex;margin:8px 0 4px}
+  .side.mobile-menu-open .service-pill{display:flex}
+  .side.mobile-menu-open .project{min-height:44px}
+  .mobile-projects-trigger{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--pane);color:var(--text);font-weight:700}
+  .bar{height:auto;min-height:60px;padding:8px 12px;gap:10px;flex-wrap:wrap}
+  .bar .breadcrumb{min-width:0;letter-spacing:1px}
+  .bar .chips{margin-left:auto;align-items:center}
+  .header{display:block}.header h1,.signin h1{font-size:clamp(26px,7vw,36px)}
+  .signin{margin:4vh auto;padding:14px 18px 24px}
+  .signin p{margin-left:auto;margin-right:auto}
+  .workspace{padding:14px 10px}
+  .panel{min-width:0;min-height:0;overflow:visible}
+  .panel .pane{min-width:0;min-height:0;border-right:0;border-bottom:1px solid var(--line)}
+  .panel .pane:last-child{border-bottom:0}
+  .code-layout,.split,.chat-layout{display:grid;grid-template-columns:minmax(0,1fr)}
+  .code-layout .files{max-height:220px;overflow:auto}
+  .code-layout .editor textarea{min-height:260px}
+  .files #file-list,.posts,#conv-list,#messages{max-height:280px}
+  .editor-actions{flex-wrap:wrap}.editor-actions button{min-height:44px}
+  .send-form{align-items:flex-end}.send-form textarea{min-width:0;font-size:16px}
+  .send-form button{min-height:44px}
+  .overview-hero{padding:20px}.overview-cards,.overview-metrics{grid-template-columns:1fr}
+  .command-dialog,.prefs-dialog{width:calc(100vw - 24px);max-height:calc(100dvh - 32px);overflow-y:auto}
+  .preview-page{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .preview-aside .preview-logo{display:flex}
+  .preview-aside nav{display:grid}
+  .preview-main .bar{min-height:60px;height:auto}
+  .preview-view{padding:14px 12px}
+  .preview-hero{padding:24px 18px}.preview-hero h1{font-size:clamp(32px,9vw,44px)}
+  .preview-metrics,.preview-feature-grid,.preview-code-grid,.preview-collab-grid,.preview-chat-grid,.preview-connector-grid{grid-template-columns:minmax(0,1fr)}
+  .preview-editor pre{white-space:pre;max-width:100%;overflow-x:auto}
+  .preview-footer{padding:15px}
+}
+@media(max-width:390px){
+  .side nav .nav span,.preview-aside nav .nav span{font-size:9px}
+  .mark{width:36px;height:36px;line-height:36px;font-size:22px}
+  .breadcrumb{font-size:10px}.mobile-projects-trigger{padding:7px}
+}
+@media(pointer:coarse){button,.nav,.project,.action-card{touch-action:manipulation}.preview-page button{min-height:44px}}
+@media(prefers-reduced-motion:reduce){.side nav,.preview-aside nav{scroll-behavior:auto}}
