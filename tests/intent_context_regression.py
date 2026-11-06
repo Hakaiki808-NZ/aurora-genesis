@@ -15,10 +15,14 @@ def main():
             action = {"type": "tool", "name": "counter_increment", "args": {"delta": 1}}
             allowed = g.cognition._authorization_chain(action, authorization="explicit",
                         source_trust="trusted", stage="intent_context_regression")
-            assert "intent_capsule" in allowed, "Unexpected gate result: " + repr(allowed)
-            assert allowed["intent_capsule"].required_capability == "C4"
-            assert allowed["intent_capsule"].authorization_basis == "explicit_human"
-            assert "external_side_effect" in allowed["intent_capsule"].expected_side_effects
+            # The production Genesis import installs cognition_patch, which
+            # wraps its gate context rather than returning the raw one.
+            context = allowed.get("context", allowed)
+            capsule = allowed.get("capsule", context.get("intent_capsule"))
+            assert capsule is not None, "Missing intent capsule"
+            assert capsule.required_capability == "C4"
+            assert capsule.authorization_basis == "explicit_human"
+            assert "external_side_effect" in capsule.expected_side_effects
             assert allowed["effective"] == "allow", allowed["effective"]
             denied = g.cognition._authorization_chain(action, authorization="delegated",
                         source_trust="trusted", stage="intent_context_regression")
