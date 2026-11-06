@@ -12,6 +12,7 @@ from collections import Counter, deque
 from dataclasses import dataclass
 from typing import Any
 
+from .temporal_world import TemporalWorldModel
 from .visual_navigation import (
     LS20VisualPlanner, VisualObject, _grid, _key, _patch,
     _player, _rotate_clockwise, _MOVES,
@@ -59,6 +60,8 @@ class LS20SearchPlanner:
         self.global_shape_edges:dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]] = {}
         self.recent_positions:dict[int,deque[tuple[int,int]]] = {}
         self.modifier_history:dict[tuple[int,str],deque[tuple[int,int]]] = {}
+        self.temporal_model = TemporalWorldModel(min_period=2, max_period=16)
+        self.last_world_feedback:dict[str,Any] = {}
 
     @staticmethod
     def _visible_launchers(frame:list[list[int]], ox:int, oy:int):
@@ -413,14 +416,21 @@ class LS20SearchPlanner:
         if world is None:
             return {"action":None,"policy":"ls20-search-v1",
                     "reason":"visual_perception_failed"}
-        # Track movable modifiers independently per level, using only frame
-        # observations; this history drives a time-expanded intercept search.
-        for kind,points in (("shape",world.shape),("color",world.color),
-                            ("rotation",world.rotation)):
-            if len(points)==1:
-                hist=self.modifier_history.setdefault((level,kind),
-                                                        deque(maxlen=40))
-                hist.append(next(iter(points)))
+        # Track moving entities across observations. Unknown/occluded
+        # detections are explicit None, not fabricated locations.
+        episode=f"ls20-level-{level}"
+        observed_entities={
+            kind: (next(iter(points)) if len(points)==1 else None)
+            for kind,points in (("shape",world.shape),("color",world.color),
+                                ("rotation",world.rotation))
+        }
+        self.last_world_feedback=self.temporal_model.observe(
+            episode,observed_entities,self.searches
+        )
+        for kind,point in observed_entities.items():
+            if point is not None:
+                self.modifier_history.setdefault((level,kind),
+                    deque(maxlen=40)).append(point)
         # Learn observed movement rules (including collisions and launch pads).
         # Never assume the environment obeyed a planned transition.
         if self.last_action is not None:
@@ -533,10 +543,12 @@ class LS20SearchPlanner:
                     # Intercept its predicted trajectory rather than chasing
                     # the tile at the point where it was last seen.
                     track=list(self.modifier_history.get((level,"shape"),()))
-                    if len(track)>=3:
-                        future=self._forecast_mover(track,16)
+                    forecast=self.temporal_model.forecast(episode,"shape",16)
+                    intercept=None
+                    if forecast is not None and forecast.confidence >= 0.75:
                         intercept=self._moving_intercept(
-                            world,future,allowed,overrides,horizon=16)
+                            world,list(forecast.positions_after_actions),
+                            allowed,overrides,horizon=16)
                         if intercept:
                             route_to_shape=intercept
                     if route_to_shape:
@@ -544,7 +556,7 @@ class LS20SearchPlanner:
                         self.last_action=(level,world.player,selected,
                                           world.key_shape,world.meter_units)
                         return {"action":{"action_type":selected},
-                                "reason":("intercept_moving_shape" if len(track)>=3 and intercept else
+                                "reason":("intercept_moving_shape" if intercept else
                                           "learn_unknown_shape_cycle"),
                                 "policy":"ls20-visual-experiment",
                                 "route_len":len(route_to_shape),
@@ -616,5 +628,6 @@ class LS20SearchPlanner:
             self.last_action=(level,world.player,selected["action_type"],world.key_shape,world.meter_units)
         out["policy"]="ls20-search-v1-fallback"
         out["search_stats"]={**stats,"known_teleports_or_blocks":len(overrides),
-                              "learned_shape_transitions":len(learned)}
+                              "learned_shape_transitions":len(learned),
+                              "temporal_world":self.temporal_model.summary(episode)}
         return out
