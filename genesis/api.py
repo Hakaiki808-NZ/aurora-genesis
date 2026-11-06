@@ -18,6 +18,8 @@ def health(): return {"status":"ok","model":model.identity["model_name"],"versio
 def state(): return model.state()
 @app.get("/diagnostics")
 def diagnostics(): return model.self_check()
+@app.get("/awareness")
+def awareness(): return model.awareness_state()
 @app.get("/goals")
 def goals(): return {"goals":model.store.goals()}
 @app.get("/goals/{goal_id}")
