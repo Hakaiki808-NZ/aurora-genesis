@@ -76,6 +76,32 @@ Routes:
 The HTTP adapter is a Model interface only. It is not the Aurora Engine Contract.
 
 
+## Seven capability opt-in foundation (pre-alpha)
+
+The optional programmatic UserCapabilityServices profile store adds
+deny-by-default personal memory and preference records, claim/source dossiers
+that cannot self-declare verification, pull-only due suggestions and
+deterministic user-supplied weighted decision comparison.
+
+Construct with Genesis(..., profile_id="local"), then use ux_consents(),
+ux_set_consent(scope, enabled), ux_remember(kind,key,value),
+ux_recall(kind), ux_forget(kind,key), ux_add_claim(statement,sources),
+ux_review_claim(claim_id,supported,reviewer),
+ux_propose_nudge(title,due_at), ux_attention(), ux_dismiss_nudge(id),
+ux_compare_options(criteria,options), ux_export_profile() and
+ux_erase_profile().
+
+**Privacy limitation:** these new consent controls apply only to new ux_*
+SQLite tables. They do NOT govern older respond() episode/fact/goal
+storage, logs, backups or provider data. Do not describe the whole system
+as consent-gated; the legacy store requires separate migration.
+
+**Security limitation:** no HTTP routes are exposed for these features;
+Kyro must authenticate users, authorize a profile, and bind reviewer identity.
+The profile_id constructor is an application trust boundary and cannot be
+treated as authentication. No Aurora tools are invoked by these services.
+See [Seven Capability Integration](docs/architecture/SEVEN_CAPABILITY_INTEGRATION.md).
+
 ## Guardian hardening notes (v0.1)
 
 `state()` now reports the Challenge Omega and Guardian jury size. Consequential external actions are prepared only after Intent Capsule, Constitution, Kernel, capability and Guardian checks produce a complete Model authorization and a valid Model Authorization Proof. The public API still exposes no Supreme or Engine-handler control surface.
