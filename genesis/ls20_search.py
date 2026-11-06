@@ -58,6 +58,7 @@ class LS20SearchPlanner:
         # Shape-tile mechanics transfer across levels. This is learned ONLY
         # when actual observations show a shape change after tile contact.
         self.global_shape_edges:dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]] = {}
+        self.shape_transition_votes:dict[tuple[tuple[int,...],...],Counter] = {}
         self.recent_positions:dict[int,deque[tuple[int,int]]] = {}
         self.modifier_history:dict[tuple[int,str],deque[tuple[int,int]]] = {}
 
@@ -465,7 +466,7 @@ class LS20SearchPlanner:
         # Learn observed movement rules (including collisions and launch pads).
         # Never assume the environment obeyed a planned transition.
         if self.last_action is not None:
-            last_level,from_pos,last_move,last_shape,previous_meter=self.last_action
+            last_level,from_pos,last_move,last_shape,previous_meter,previous_shapes=self.last_action
             if last_level==level:
                 transitions=self.observed_transitions.setdefault(level,{})
                 expected={a:(from_pos[0]+dx,from_pos[1]+dy)
@@ -480,11 +481,23 @@ class LS20SearchPlanner:
                 # Moving modifiers can vacate the cell before the new frame
                 # is emitted.  Learn from the visible key transition itself.
                 # Reject pure quarter-turn rotation and life resets.
-                if (world.key_shape != last_shape and
+                # Require evidence that the player entered an observed
+                # shape operator. A changed HUD alone is not causal proof:
+                # moving colour/rotation operators and respawn can produce
+                # unrelated changes. Retain conflicting hypotheses rather
+                # than overwriting an earlier relationship with noise.
+                contact=(world.player in previous_shapes or
+                         world.player in world.shape or
+                         expected in previous_shapes)
+                if (contact and world.key_shape != last_shape and
                     world.key_shape != _rotate_clockwise(last_shape) and
                     not reset):
-                    self.learned_shapes.setdefault(level,{})[last_shape]=world.key_shape
-                    self.global_shape_edges[last_shape]=world.key_shape
+                    votes=self.shape_transition_votes.setdefault(last_shape,Counter())
+                    votes[world.key_shape]+=1
+                    most,count=votes.most_common(1)[0]
+                    if count >= 1 and count>sum(v for k,v in votes.items() if k!=most):
+                        self.learned_shapes.setdefault(level,{})[last_shape]=most
+                        self.global_shape_edges[last_shape]=most
             self.last_action=None
         overrides=self.observed_transitions.setdefault(level,{})
         learned=self.learned_shapes.setdefault(level,{})
@@ -505,7 +518,7 @@ class LS20SearchPlanner:
             if action not in allowed:
                 return {"action":None,"policy":"ls20-search-v1",
                         "reason":"invalid_search_action"}
-            self.last_action=(level,world.player,action,world.key_shape,world.meter_units)
+            self.last_action=(level,world.player,action,world.key_shape,world.meter_units,frozenset(world.shape))
             return {
                 "action":{"action_type":action},
                 "reason":"resource_constrained_search",
@@ -578,7 +591,7 @@ class LS20SearchPlanner:
                     if route_to_shape:
                         selected=route_to_shape[0]
                         self.last_action=(level,world.player,selected,
-                                          world.key_shape,world.meter_units)
+                                          world.key_shape,world.meter_units,frozenset(world.shape))
                         return {"action":{"action_type":selected},
                                 "reason":("intercept_moving_shape" if len(track)>=3 and intercept else
                                           "learn_unknown_shape_cycle"),
@@ -649,7 +662,7 @@ class LS20SearchPlanner:
                     out["reason"]="escape_observed_oscillation"
         selected=out.get("action")
         if isinstance(selected,dict) and selected.get("action_type") in allowed:
-            self.last_action=(level,world.player,selected["action_type"],world.key_shape,world.meter_units)
+            self.last_action=(level,world.player,selected["action_type"],world.key_shape,world.meter_units,frozenset(world.shape))
         out["policy"]="ls20-search-v1-fallback"
         out["search_stats"]={**stats,"known_teleports_or_blocks":len(overrides),
                               "learned_shape_transitions":len(learned)}
