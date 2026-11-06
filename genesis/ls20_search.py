@@ -190,6 +190,15 @@ class LS20SearchPlanner:
                0, world.meter_units, 0)
         queue=deque([start])
         visited={start}
+        # Dominance: for identical map/key/door/pickup state, extra energy
+        # can only make more continuations possible.  Keep the maximum
+        # meter reached for that abstract state, avoiding 42 near-identical
+        # copies of many branches.
+        def abstract(state):
+            pos, pattern, ci, pickups, meter, doors = state
+            return (pos, pattern, ci, pickups, doors)
+        best_meter = {abstract(start):start[4]}
+        dominated = 0
         parents:dict[tuple,tuple[tuple,str]]={}
         energy_bit={point:1<<i for i,point in enumerate(world.energy)}
         goal_locations={(o.x,o.y):(idx,o) for idx,o in enumerate(world.door)}
@@ -200,6 +209,9 @@ class LS20SearchPlanner:
             state=queue.popleft()
             expanded+=1
             (x,y),pattern,ci,mask,meter,door_mask=state
+            if meter < best_meter.get(abstract(state), -1):
+                dominated += 1
+                continue
             for dx,dy,action in _MOVES:
                 nominal=(x+dx,y+dy)
                 nxt=redirects.get(((x,y),action),nominal)
@@ -234,6 +246,11 @@ class LS20SearchPlanner:
                 end=(nxt,newpattern,newcolor,newmask,after_meter,new_door_mask)
                 if end in visited:
                     continue
+                key=abstract(end)
+                if best_meter.get(key,-1) >= after_meter:
+                    dominated += 1
+                    continue
+                best_meter[key]=after_meter
                 visited.add(end)
                 parents[end]=(state,action)
                 if new_door_mask==all_doors:
@@ -248,12 +265,15 @@ class LS20SearchPlanner:
                                    "expanded":expanded,"visited":len(visited),
                                    "length":len(route),"refills_modelled":len(world.energy),
                                    "doors_modelled":len(world.door),
-                                   "known_shape_transitions":len(shape_edges)}
+                                   "known_shape_transitions":len(shape_edges),
+                                   "pruned_dominated":dominated}
                 queue.append(end)
         return None, {"reason":"no_goal_path_found",
                       "expanded":expanded,"visited":len(visited),
                       "reached_cap":expanded>=MAX_NODES,
-                      "refills_modelled":len(world.energy)}
+                      "refills_modelled":len(world.energy),
+                      "pruned_dominated":dominated,
+                      "abstract_states":len(best_meter)}
 
     @staticmethod
     def _route_with_observed_transitions(
@@ -350,7 +370,12 @@ class LS20SearchPlanner:
                 current_shape=_rotate_clockwise(current_shape)
                 orientations.add(current_shape)
             shape_needed=not (orientations & wanted)
-            if shape_needed:
+            # Also learn the shape transition when the current shape has no
+            # observed successor.  Level six contains *two* lock targets;
+            # being able to match one of them is insufficient reason to
+            # stop learning the general shape cycle.
+            unseen_shape_transition = world.key_shape not in learned
+            if shape_needed or unseen_shape_transition:
                 shape_candidates=[]
                 for dest in world.shape:
                     path=self._route_with_observed_transitions(
