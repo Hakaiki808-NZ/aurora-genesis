@@ -53,6 +53,7 @@ class LS20SearchPlanner:
         self.last_action: tuple[int,tuple[int,int],str,tuple[tuple[int,...],...]] | None = None
         self.observed_transitions: dict[int,dict[tuple[tuple[int,int],str],tuple[int,int]]] = {}
         self.learned_shapes: dict[int,dict[tuple[tuple[int,...],...],tuple[tuple[int,...],...]]] = {}
+        self.recent_positions:dict[int,deque[tuple[int,int]]] = {}
 
     def perceive(self, serialized: str, level: int) -> SearchWorld | None:
         f = _grid(serialized)
@@ -97,7 +98,7 @@ class LS20SearchPlanner:
             # active tiles. Retain only an occluded known tile under the player.
             for name,visible in (("rotation",rotation),("color",color),("shape",shape)):
                 remembered = seen[name]
-                if world_pos := (pos in remembered):
+                if pos in remembered:
                     visible.add(pos)
                 remembered.clear()
                 remembered.update(visible)
@@ -244,6 +245,8 @@ class LS20SearchPlanner:
             self.last_action=None
         overrides=self.observed_transitions.setdefault(level,{})
         learned=self.learned_shapes.setdefault(level,{})
+        recent=self.recent_positions.setdefault(level,deque(maxlen=16))
+        recent.append(world.player)
         route,stats=self.search(world,overrides,learned)
         self.last_stats=stats
         if route:
@@ -287,8 +290,36 @@ class LS20SearchPlanner:
                         if dest in world.walkable and dest!=world.player:
                             candidates.append(other)
                     if candidates:
-                        out["action"]={"action_type":candidates[0]}
-                        out["reason"]="explore_alternative_after_observed_transition"
+                        alternative=[act for act in candidates if act!=action]
+                        if alternative:
+                            out["action"]={"action_type":alternative[0]}
+                            out["reason"]="explore_alternative_after_observed_transition"
+        # The public fifth level contains mobile modifiers/launchers. When the
+        # observable avatar oscillates, avoid another move into the same
+        # immediately visited state and probe a genuinely new exit direction.
+        if level >= 4 and recent.count(world.player) >= 3:
+            selected_action=(out.get("action") or {}).get("action_type")
+            goal=out.get("objective")
+            def rank(act:str):
+                delta=next(((dx,dy) for dx,dy,name in _MOVES if name==act),(0,0))
+                dest=overrides.get((world.player,act),
+                                   (world.player[0]+delta[0],world.player[1]+delta[1]))
+                distance=(abs(dest[0]-goal[0])+abs(dest[1]-goal[1])) if (
+                    isinstance(goal,(tuple,list)) and len(goal)==2) else 0
+                return (recent.count(dest),distance,act)
+            choices=[]
+            for dx,dy,act in _MOVES:
+                if act not in allowed:
+                    continue
+                dest=overrides.get((world.player,act),
+                                   (world.player[0]+dx,world.player[1]+dy))
+                if dest in world.walkable and dest!=world.player:
+                    choices.append(act)
+            if choices:
+                best=min(choices,key=rank)
+                if best!=selected_action:
+                    out["action"]={"action_type":best}
+                    out["reason"]="escape_observed_oscillation"
         selected=out.get("action")
         if isinstance(selected,dict) and selected.get("action_type") in allowed:
             self.last_action=(level,world.player,selected["action_type"],world.key_shape)
