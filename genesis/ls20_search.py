@@ -421,7 +421,8 @@ class LS20SearchPlanner:
                     "reason":"visual_perception_failed"}
         # Keep the observation-only map updated across all planner modes,
         # including turns where a previously unseen door becomes visible.
-        self.fog_explorer.update(serialized,level,world.player)
+        self.fog_explorer.update(serialized,level,world.player,
+                                world.meter_units,world.energy)
         # Do not assume that the entire board (including the door) is
         # visible. If it is hidden, explicitly explore the observed frontier
         # and preserve the discovered map across actions and camera motion.
