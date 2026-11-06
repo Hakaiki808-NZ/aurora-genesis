@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import * as Crypto from 'expo-crypto';
 import {
  COGNITO_CLIENT_ID,COGNITO_HOST,isConfigured,kyroApi,
  type Project,type Conversation,type Message,type WorkspaceFile,type TeamPost,type Connector
@@ -151,7 +152,7 @@ export default function App(){
   const content=chatText.trim();
   if(!idToken||!conversationId||!content)return;
   await kyroApi(idToken,'/conversations/'+conversationId+'/generate',{
-   method:'POST',body:{content,request_id:AuthSession.makeRedirectUri?generateRequestId():''}
+   method:'POST',body:{content,request_id:Crypto.randomUUID()}
   });
   setChatText('');
   const data=await kyroApi<{messages:Message[]}>(idToken,'/conversations/'+conversationId+'/messages');
@@ -259,14 +260,6 @@ export default function App(){
    {!idToken&&error?<Text accessibilityRole="alert" style={styles.warning}>{error}</Text>:null}
   </KeyboardAvoidingView>
  </SafeAreaView>;
-}
-
-// React Native does not guarantee browser crypto.randomUUID; use Expo's cryptographic RNG.
-function generateRequestId():string{
- const bytes=Array.from(require('expo-crypto').getRandomBytes(16) as Uint8Array);
- bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
- const hex=bytes.map(b=>b.toString(16).padStart(2,'0')).join('');
- return hex.slice(0,8)+'-'+hex.slice(8,12)+'-'+hex.slice(12,16)+'-'+hex.slice(16,20)+'-'+hex.slice(20);
 }
 
 const styles=StyleSheet.create({
