@@ -1,0 +1,78 @@
+AWSTemplateVersion: '2010-09-09'
+Description: >
+  Aurora Genesis Kyro development cloud foundation.
+  No public endpoints, compute instances, database instances, or model inference.
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+Resources:
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: AbortIncompleteUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+      Tags:
+        - Key: Project
+          Value: aurora-genesis-kyro
+        - Key: Environment
+          Value: !Ref Stage
+  KyroRegistry:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub 'aurora-genesis-kyro-${Stage}'
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: >
+          {"rules":[{"rulePriority":1,"description":"Retain latest five images","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":5},"action":{"type":"expire"}}]}
+      Tags:
+        - Key: Project
+          Value: aurora-genesis-kyro
+        - Key: Environment
+          Value: !Ref Stage
+  KyroLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aurora-genesis/${Stage}/kyro'
+      RetentionInDays: 7
+  DeploymentMarker:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/aurora-genesis/${Stage}/deployment-phase'
+      Type: String
+      Value: 'foundation-only-no-public-workloads'
+      Tier: Standard
+Outputs:
+  ArtifactBucketName:
+    Description: Private artifact bucket. Never make public.
+    Value: !Ref ArtifactBucket
+  RegistryUri:
+    Description: Private container registry URI.
+    Value: !GetAtt KyroRegistry.RepositoryUri
+  LogGroupName:
+    Description: Log group retained for seven days.
+    Value: !Ref KyroLogGroup
+  DeploymentMarkerName:
+    Description: Marker for the current deployment phase.
+    Value: !Ref DeploymentMarker
