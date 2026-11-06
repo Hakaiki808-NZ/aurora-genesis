@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .temporal_world import TemporalWorldModel
+from .temporal_search import search_temporal
 from .visual_navigation import (
     LS20VisualPlanner, VisualObject, _grid, _key, _patch,
     _player, _rotate_clockwise, _MOVES,
@@ -473,6 +474,41 @@ class LS20SearchPlanner:
             if candidates:
                 _,which,route,stats=min(candidates,key=lambda item:(item[0],item[1]))
                 stats={**stats,"partial_goal":True,"remaining_doors":len(world.door)}
+        # Replace static plans with a time-expanded model when actual
+        # observations establish a recurring mover cycle. This searches
+        # simultaneous position, shape, colour, energy, doors, and timestep.
+        # If the causal model is incomplete, keep the verified static or
+        # information-gathering fallback rather than inventing a route.
+        periodic={}
+        for kind in ("shape","color","rotation"):
+            projection=self.temporal_model.forecast(episode,kind,60)
+            if projection is not None and projection.confidence >= 0.75:
+                periodic[kind]=projection.positions_after_actions
+        if periodic:
+            timed,temporal_stats=search_temporal(
+                world,learned,periodic,color_cycle=COLOR_CYCLE,
+                horizon=60,max_nodes=45000,overrides=overrides
+            )
+            if timed is None and len(world.door)>1:
+                partial_candidates=[]
+                for idx,_ in enumerate(world.door):
+                    subplan,detail=search_temporal(
+                        world,learned,periodic,color_cycle=COLOR_CYCLE,
+                        horizon=60,max_nodes=25000,target_mask=1<<idx,
+                        overrides=overrides
+                    )
+                    if subplan:
+                        partial_candidates.append((len(subplan.actions),idx,subplan,detail))
+                if partial_candidates:
+                    _,_,timed,temporal_stats=min(
+                        partial_candidates,key=lambda x:(x[0],x[1]))
+            if timed is not None:
+                route=list(timed.actions)
+                stats={**temporal_stats,"temporal_plan":True,
+                       "observed_moving_kinds":sorted(periodic)}
+            else:
+                stats={**stats,"temporal_attempt":temporal_stats,
+                       "observed_moving_kinds":sorted(periodic)}
         self.last_stats=stats
         if route:
             action=route[0]
