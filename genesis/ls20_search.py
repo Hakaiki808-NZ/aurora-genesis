@@ -425,7 +425,23 @@ class LS20SearchPlanner:
             level,{"door":{},"shape":{},"color":{},"rotation":{}}
         )
         for obj in world.door:
-            cache["door"][(obj.x,obj.y)]=obj
+            point=(obj.x,obj.y)
+            old=cache["door"].get(point)
+            if old is not None and old.color==obj.color:
+                old_pattern=old.pattern
+                new_pattern=obj.pattern
+                if old_pattern is not None and new_pattern is not None:
+                    old_mask={i for i,b in enumerate(sum(old_pattern,())) if b}
+                    new_mask={i for i,b in enumerate(sum(new_pattern,())) if b}
+                    # Fog can temporarily remove pixels from the visible
+                    # door icon. Preserve a more complete observation when
+                    # the newly seen pattern is its strict subset.
+                    if new_mask < old_mask:
+                        continue
+                    if old_mask < new_mask:
+                        cache["door"][point]=obj
+                        continue
+            cache["door"][point]=obj
         for kind,observed in (("shape",world.shape),
                               ("color",world.color),
                               ("rotation",world.rotation)):
