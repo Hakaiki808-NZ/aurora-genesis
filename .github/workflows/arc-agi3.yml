@@ -55,3 +55,15 @@ jobs:
           name: arc-agi3-live-attempt
           path: arc-agi3-live.json
           if-no-files-found: warn
+
+  frame-observation-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt arc-agi
+      - name: Inspect LS20 observation frames, without source access
+        run: python -m tests.arc_agi3_diagnostics
