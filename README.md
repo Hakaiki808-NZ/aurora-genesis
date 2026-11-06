@@ -60,3 +60,23 @@ The first public development line is **v0.1**. Earlier internal development labe
 ## License
 
 Public code in this repository is licensed under the **Apache License 2.0**. See `LICENSE`.
+
+## Local Kyro / Genesis research alpha
+
+The separately authenticated, **loopback-only** Kyro alpha is started with:
+
+```sh
+python -m pip install -r requirements.txt
+python launch_local_alpha.py
+```
+
+Open http://127.0.0.1:8767 and paste the access token printed in the
+launch terminal. No Aurora execution engine is connected in this public
+reference build. The default backend is deliberately deterministic and
+limited; set `GENESIS_GENERATOR=ollama` only when opting into local Ollama.
+
+Run `python verify.py` for the regression suite (including the local HTTP
+integration test), and `python -m evals.baseline` for elementary cognitive
+regression probes. **These tests do not establish AGI.**
+
+See [launch qualification and blockers](docs/launch/ALPHA_READINESS.md).
