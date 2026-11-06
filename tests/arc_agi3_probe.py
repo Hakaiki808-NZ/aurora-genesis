@@ -45,22 +45,20 @@ def observed_frame(observation: Any) -> str:
     return json.dumps(raw, separators=(",", ":"), default=str)[:16000]
 
 
-def genesis_action(model: Genesis, frame: str, allowed: set[str]) -> dict[str, Any]:
-    prompt = (
-        "You are exploring an unknown ARC-AGI-3 environment. "
-        "Learn its rules through observations and actions. "
-        "Available actions: " + ", ".join(sorted(allowed)) + ". "
-        'Return ONLY JSON like {"action_type":"ACTION1"} or '
-        '{"action_type":"ACTION6","x":32,"y":32}. '
-        "Observation (frame): " + frame
-    )
-    response = model.respond_with_trace(prompt)
-    action = parse_action(response["answer"], allowed)
+def genesis_action(model: Genesis, frame: str, allowed: set[str], game_id: str) -> dict[str, Any]:
+    # Do not pass observations through respond(): its natural-language learning
+    # parser caused the original no-valid-action failure.
+    response = model.decide_game_action(game_id, frame, sorted(allowed))
+    proposed = response.get("action")
+    action = parse_action(json.dumps(proposed), allowed)
     return {
         "valid_action": action is not None,
         "action": action,
-        "model_output_excerpt": response["answer"][:500],
-        "trace_available": isinstance(response.get("trace"), dict),
+        "decision_reason": response.get("reason"),
+        "policy": response.get("policy"),
+        "step": response.get("step"),
+        "model_output_excerpt": json.dumps(response, sort_keys=True)[:500],
+        "trace_available": True,
     }
 
 
@@ -86,7 +84,7 @@ def probe(offline: bool, game_id: str, max_actions: int) -> dict[str, Any]:
             report["self_check"] = model.self_check()
             if offline:
                 frame = json.dumps([[0] * 64 for _ in range(64)], separators=(",", ":"))
-                decision = genesis_action(model, frame, {"ACTION1", "ACTION2"})
+                decision = genesis_action(model, frame, {"ACTION1", "ACTION2"}, "synthetic-grid")
                 report["first_decision"] = decision
                 report["status"] = "action_ready" if decision["valid_action"] else "no_valid_action"
                 report["note"] = "Synthetic grid, NOT an ARC-AGI-3 game or score"
@@ -109,8 +107,9 @@ def probe(offline: bool, game_id: str, max_actions: int) -> dict[str, Any]:
                     return report
                 allowed = {action.name for action in env.action_space}
                 report["allowed_actions"] = sorted(allowed)
+                report["action_log"] = []
                 for step in range(max_actions):
-                    decision = genesis_action(model, observed_frame(observation), allowed)
+                    decision = genesis_action(model, observed_frame(observation), allowed, game_id)
                     if step == 0:
                         report["first_decision"] = decision
                     if not decision["valid_action"]:
@@ -120,9 +119,12 @@ def probe(offline: bool, game_id: str, max_actions: int) -> dict[str, Any]:
                     data = {k: act[k] for k in ("x", "y") if k in act}
                     observation = env.step(GameAction[act["action_type"]], data=data)
                     report["actions_taken"] += 1
+                    report["action_log"].append(act)
                     if observation is None:
                         report["status"] = "observation_failed"
                         break
+                    report["last_feedback"] = model.observe_game_outcome(game_id, observed_frame(observation), observation.state.name)
+                    report["levels_completed"] = getattr(observation, "levels_completed", None)
                     if observation.state == GameState.WIN:
                         report["status"] = "game_won"
                         break
@@ -131,6 +133,7 @@ def probe(offline: bool, game_id: str, max_actions: int) -> dict[str, Any]:
                         break
                 else:
                     report["status"] = "action_budget_reached"
+                report["game_history"] = model.game_history(game_id)
                 card = arc.get_scorecard()
                 if card is not None:
                     report["exploratory_score"] = getattr(card, "score", None)
@@ -153,7 +156,7 @@ def main() -> None:
     result = probe(opts.offline, opts.game, opts.max_actions)
     Path(opts.out).write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
     print(json.dumps(result, indent=2, default=str))
-    if result.get("status") in {"sdk_missing", "environment_unavailable", "no_observation", "runtime_error"}:
+    if result.get("status") in {"sdk_missing", "environment_unavailable", "no_observation", "runtime_error", "no_valid_action"}:
         raise SystemExit(2)
 
 
