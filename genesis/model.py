@@ -16,6 +16,7 @@ from .guardians import GuardianCouncil
 from .capabilities import CapabilityController
 from .engine_boundary import EngineBoundary, EngineReceipt
 from .realignment import RealignmentSchool
+from .knowledge_modules import KnowledgeModuleStore
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -35,6 +36,7 @@ class Genesis:
         state_path=state_path or os.environ.get("GENESIS_STATE_PATH") or data_dir/"genesis_state.sqlite3"
         workspace=workspace or os.environ.get("GENESIS_WORKSPACE") or data_dir/"workspace"
         self.store=Store(state_path); self.tools=ToolRegistry(workspace)
+        self.knowledge_modules=KnowledgeModuleStore(self.store)
         self.policy=PolicyEngine(cfg/"model_constitution.json",self.tools,self.store)
         self.guardians=GuardianCouncil()
         self.realignment_school=RealignmentSchool()
@@ -53,6 +55,7 @@ class Genesis:
             )
         if backend is None and use_ollama: backend=OllamaBackend(model=os.environ.get("GENESIS_OLLAMA_MODEL",ollama_model))
         self.cognition=CognitionEngine(self.store,self.identity,self.heritage,self.model_record,self.tools,backend,self.policy,self.guardians,self.capabilities,self.engine_boundary)
+        self.cognition.knowledge_modules=self.knowledge_modules
         self.last_trace:dict[str,Any]|None=None
         self._turn_lock=threading.RLock()
 
@@ -70,7 +73,7 @@ class Genesis:
         answer=self.respond(text); return {"answer":answer,"trace":self.last_trace}
 
     def state(self)->dict[str,Any]:
-        return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"realignment_school":{"version":self.realignment_school.VERSION,"cases":len(self.realignment_school.curriculum()),"autonomous_updates":False},"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"health":self.self_check()}
+        return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"knowledge_modules":self.knowledge_modules.list(),"realignment_school":{"version":self.realignment_school.VERSION,"cases":len(self.realignment_school.curriculum()),"autonomous_updates":False},"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"health":self.self_check()}
 
     def self_check(self)->dict[str,Any]:
         checks={}
@@ -126,6 +129,25 @@ class Genesis:
             return {"accepted":False,"reason":f"request is not awaiting an Engine receipt: {tx['state']}"}
         self.store.set_action_state(tx["action_id"],receipt.status,{"result":receipt.result,"error":receipt.error},engine_receipt_id=receipt.receipt_id)
         return {"accepted":True,"idempotent":False,"state":receipt.status,"action_id":tx["action_id"],"request_id":receipt.request_id,"receipt_id":receipt.receipt_id}
+
+    def install_knowledge_module(self, package:dict[str,Any], *, replace:bool=False)->dict[str,Any]:
+        """Explicit installation of data-only reference material. No Engine privileges."""
+        with self._turn_lock:
+            return self.knowledge_modules.install(package, replace=replace)
+
+    def list_knowledge_modules(self)->list[dict[str,Any]]:
+        return self.knowledge_modules.list()
+
+    def search_knowledge_modules(self, query:str, limit:int=5)->list[dict[str,Any]]:
+        return self.knowledge_modules.search(query, limit)
+
+    def enable_knowledge_module(self, module_id:str, enabled:bool=True)->dict[str,Any]:
+        with self._turn_lock:
+            return self.knowledge_modules.set_enabled(module_id, enabled)
+
+    def uninstall_knowledge_module(self, module_id:str)->dict[str,Any]:
+        with self._turn_lock:
+            return self.knowledge_modules.uninstall(module_id)
 
     def close(self)->None:self.store.close()
     def __enter__(self):return self
