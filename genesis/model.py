@@ -15,6 +15,7 @@ from .policy import PolicyEngine
 from .guardians import GuardianCouncil
 from .capabilities import CapabilityController
 from .engine_boundary import EngineBoundary, EngineReceipt
+from .awareness import AwarenessCore
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -52,15 +53,22 @@ class Genesis:
         if backend is None and use_ollama: backend=OllamaBackend(model=os.environ.get("GENESIS_OLLAMA_MODEL",ollama_model))
         self.cognition=CognitionEngine(self.store,self.identity,self.heritage,self.model_record,self.tools,backend,self.policy,self.guardians,self.capabilities,self.engine_boundary)
         self.last_trace:dict[str,Any]|None=None
+        self.awareness=AwarenessCore(self.store,self.identity,self.capabilities)
+        self._awareness_error:str|None=None
         self._turn_lock=threading.RLock()
 
     def respond(self,text:str)->str:
         if not isinstance(text,str) or not text.strip(): return "Please provide a non-empty message."
         if len(text)>100000: return "Message exceeds the 100,000 character model-input limit."
         with self._turn_lock:
+            self._awareness_error=None
+            try: self.awareness.begin_turn(text)
+            except Exception as exc: self._awareness_error=type(exc).__name__
             self.store.add_episode("user",text,0.6)
             answer,trace=self.cognition.respond(text)
             self.store.add_episode("assistant",answer,0.6)
+            try: self.awareness.end_turn(trace)
+            except Exception as exc: self._awareness_error=type(exc).__name__
             self.last_trace=trace
             return answer
 
@@ -68,7 +76,14 @@ class Genesis:
         answer=self.respond(text); return {"answer":answer,"trace":self.last_trace}
 
     def state(self)->dict[str,Any]:
-        return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"health":self.self_check()}
+        return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"awareness":self.awareness_state(),"health":self.self_check()}
+
+    def awareness_state(self)->dict[str,Any]:
+        try:
+            snap=self.awareness.snapshot()
+            return {**snap,"telemetry_error":self._awareness_error}
+        except Exception as exc:
+            return {"mode":"unavailable","telemetry_error":type(exc).__name__}
 
     def self_check(self)->dict[str,Any]:
         checks={}
@@ -87,6 +102,7 @@ class Genesis:
         checks["intent_capsule_gate"]=hasattr(self.cognition,"_authorization_chain")
         checks["capability_ceiling"]=self.capabilities.granted_level in {"C0","C1","C2","C3","C4","C5"}
         checks["engine_separation"]=self.engine_boundary.minimum_engine.startswith("Aurora ")
+        checks["awareness_ledger"]=self.awareness.healthy()
         return {"ok":all(checks.values()),"checks":checks}
 
     def goal(self,goal_id:int)->dict[str,Any]|None:return self.store.goal(goal_id)
