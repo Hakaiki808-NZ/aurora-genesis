@@ -138,6 +138,7 @@ class Genesis:
     def task(self,task_id:str)->dict[str,Any]: return self.assurance.get(task_id)
     def due_tasks(self,now:str|None=None,limit:int=100)->list[dict[str,Any]]: return self.assurance.due(now,limit)
     def task_events(self,task_id:str)->list[dict[str,Any]]: return self.assurance.events(task_id)
+    def task_attention(self,now:str|None=None,limit:int=50)->list[dict[str,Any]]: return self.assurance.attention(now,limit)
     def transition_task(self,task_id:str,action:str)->dict[str,Any]: return self.assurance.transition(task_id,action)
     def add_task_evidence(self,task_id:str,criterion_index:int,observation:str,reference:str,source_type:str="user")->dict[str,Any]:
         return self.assurance.submit_evidence(task_id,criterion_index,observation,reference,source_type)
