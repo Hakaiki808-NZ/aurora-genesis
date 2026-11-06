@@ -1,0 +1,33 @@
+name: AWS private-alpha public-edge smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "tools/aws_private_alpha_smoke.py"
+      - ".github/workflows/aws-private-alpha-smoke.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "tools/aws_private_alpha_smoke.py"
+      - ".github/workflows/aws-private-alpha-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-public-edge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check script syntax
+        run: python -m py_compile tools/aws_private_alpha_smoke.py
+      - name: Check Kyro availability and anonymous security boundary
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: python tools/aws_private_alpha_smoke.py
