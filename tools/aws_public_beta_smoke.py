@@ -18,9 +18,9 @@ def fetch(url: str, method: str = "GET", data: bytes | None = None):
     })
     try:
         with urlopen(req, timeout=12) as res:
-            return res.status, dict(res.headers), res.read(1024 * 32)
+            return res.status, {k.lower(): v for k, v in res.headers.items()}, res.read(1024 * 32)
     except HTTPError as err:
-        return err.code, dict(err.headers), err.read(1024 * 4)
+        return err.code, {k.lower(): v for k, v in err.headers.items()}, err.read(1024 * 4)
 
 
 def main() -> int:

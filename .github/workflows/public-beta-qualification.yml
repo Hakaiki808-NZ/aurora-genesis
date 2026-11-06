@@ -36,6 +36,7 @@ jobs:
           node --check cloud/public-beta-web/v3/ux.js
           node --check cloud/public-beta-web/v3/preview.js
           node --check cloud/public-beta-web/v3/school-voice.js
+          node --check cloud/public-beta-web/v3/realignment-preview.js
   public-edge:
     runs-on: ubuntu-latest
     timeout-minutes: 5

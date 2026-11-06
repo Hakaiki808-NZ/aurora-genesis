@@ -3,14 +3,19 @@
   "origin": "AWS S3 behind d3j65cc3p66kzr.cloudfront.net",
   "assets": [
     {
-      "path": "index.html",
-      "bytes": 2257,
-      "etag": "\"9b33dcbe6f6155ce64c5ad65493bd898\""
-    },
-    {
       "path": "app.js",
       "bytes": 5321,
       "etag": "\"ceaccd146c2e0c223765f1305fa94882\""
+    },
+    {
+      "path": "config.json",
+      "bytes": 260,
+      "etag": "\"8b83513406d25e1f48e762f77192dc31\""
+    },
+    {
+      "path": "index.html",
+      "bytes": 2257,
+      "etag": "\"9b33dcbe6f6155ce64c5ad65493bd898\""
     },
     {
       "path": "style.css",
@@ -23,9 +28,9 @@
       "etag": "\"44fb9c71428e715c0f1878053be64508\""
     },
     {
-      "path": "config.json",
-      "bytes": 260,
-      "etag": "\"8b83513406d25e1f48e762f77192dc31\""
+      "path": "v3/app.js",
+      "bytes": 17822,
+      "etag": "\"49da3c9e73bb08988eaa7f9b68718a22\""
     },
     {
       "path": "v3/index.html",
@@ -33,9 +38,44 @@
       "etag": "\"922dcc29906c788bb857677468062570\""
     },
     {
-      "path": "v3/app.js",
-      "bytes": 17822,
-      "etag": "\"49da3c9e73bb08988eaa7f9b68718a22\""
+      "path": "v3/preview.css",
+      "bytes": 10053,
+      "etag": "\"60233ebb34d06ee68fb0c57bacc1cecf\""
+    },
+    {
+      "path": "v3/preview.html",
+      "bytes": 10605,
+      "etag": "\"f7514a0a85131f6b86eff2df348cda78\""
+    },
+    {
+      "path": "v3/preview.js",
+      "bytes": 3787,
+      "etag": "\"ed0889c1ab74bb5d4efbce46c0448ec3\""
+    },
+    {
+      "path": "v3/realignment-preview.css",
+      "bytes": 1634,
+      "etag": "\"f0c98e13853d3c9437665dfb745e3f5c\""
+    },
+    {
+      "path": "v3/realignment-preview.html",
+      "bytes": 2237,
+      "etag": "\"cd58e503eb63eeb6bc4c5c483b8baff1\""
+    },
+    {
+      "path": "v3/realignment-preview.js",
+      "bytes": 3708,
+      "etag": "\"2411f7077553218d6d62d5bc36c4a73a\""
+    },
+    {
+      "path": "v3/school-voice.css",
+      "bytes": 1344,
+      "etag": "\"1574ab7680be92e8b1599258aa6fd5d3\""
+    },
+    {
+      "path": "v3/school-voice.js",
+      "bytes": 6116,
+      "etag": "\"a2ae7d63e31d947f643dee33f9c8c74a\""
     },
     {
       "path": "v3/styles.css",
@@ -51,36 +91,6 @@
       "path": "v3/ux.js",
       "bytes": 4910,
       "etag": "\"dd74b995e7e653a90d88b6a8478d06e0\""
-    },
-    {
-      "path": "v3/preview.html",
-      "bytes": 10605,
-      "etag": "\"f7514a0a85131f6b86eff2df348cda78\""
-    },
-    {
-      "path": "v3/preview.css",
-      "bytes": 10053,
-      "etag": "\"60233ebb34d06ee68fb0c57bacc1cecf\""
-    },
-    {
-      "path": "v3/preview.js",
-      "bytes": 3787,
-      "etag": "\"ed0889c1ab74bb5d4efbce46c0448ec3\""
-    },
-    {
-      "path": "v3/realignment-preview.html",
-      "bytes": 7477,
-      "etag": "\"c28158f647a1b947b7bfe7fb96bfc0a5\""
-    },
-    {
-      "path": "v3/school-voice.css",
-      "bytes": 1344,
-      "etag": "\"1574ab7680be92e8b1599258aa6fd5d3\""
-    },
-    {
-      "path": "v3/school-voice.js",
-      "bytes": 6116,
-      "etag": "\"a2ae7d63e31d947f643dee33f9c8c74a\""
     }
   ]
 }
