@@ -7,6 +7,7 @@ on:
       - 'tests/huggingface_import.py'
       - 'tests/unit_rate_verification.py'
       - 'tests/hf_scoring.py'
+      - 'tests/cpu_lora_plan.py'
       - 'tests/reasoning_guardrails.py'
       - 'tools/eval/**'
       - 'requirements_hf.txt'
@@ -19,6 +20,7 @@ on:
       - 'tests/huggingface_import.py'
       - 'tests/unit_rate_verification.py'
       - 'tests/hf_scoring.py'
+      - 'tests/cpu_lora_plan.py'
       - 'tests/reasoning_guardrails.py'
       - 'tools/eval/**'
       - 'requirements_hf.txt'
@@ -49,6 +51,7 @@ jobs:
           python -m tests.unit_rate_verification
           python -m tests.hf_scoring
           python -m tests.reasoning_guardrails
+          python -m tests.cpu_lora_plan
       - name: Existing behavior regression
         run: |
           python -m tests.regression
