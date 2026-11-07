@@ -20,6 +20,7 @@ from .knowledge_modules import KnowledgeModuleStore
 from .task_assurance import TaskLedger
 from .user_capabilities import UserCapabilityServices
 from .memory_network import MemoryNetwork
+from .memory_encoders import OllamaLocalEmbeddings
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -42,7 +43,13 @@ class Genesis:
         self.knowledge_modules=KnowledgeModuleStore(self.store)
         self.assurance=TaskLedger(self.store)
         self.user_capabilities=UserCapabilityServices(self.store,profile_id)
-        self.memory=MemoryNetwork(self.store,profile_id)  # opt-in; does not write until consent
+        memory_encoder=None; memory_encoder_id=""
+        if os.environ.get("GENESIS_MEMORY_ENCODER","").casefold()=="ollama":
+            embedding_model=os.environ.get("GENESIS_MEMORY_EMBEDDING_MODEL","embeddinggemma")
+            memory_encoder=OllamaLocalEmbeddings(embedding_model)
+            memory_encoder_id=f"ollama-loopback:{embedding_model}"
+        self.memory=MemoryNetwork(self.store,profile_id,encoder=memory_encoder,
+                                  encoder_id=memory_encoder_id)  # always consent gated
         self.policy=PolicyEngine(cfg/"model_constitution.json",self.tools,self.store)
         self.guardians=GuardianCouncil()
         self.realignment_school=RealignmentSchool()
