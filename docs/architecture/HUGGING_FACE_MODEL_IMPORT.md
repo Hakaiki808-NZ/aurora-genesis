@@ -7,7 +7,7 @@
 - **Safetensors:** data-only model-weight files; do not import pickle-based `.bin`, `.pt`, `.pth` or unknown executable formats.
 - **Transformers:** `config.json`, tokenizer files, generation configuration and `AutoModelForCausalLM` for supported architectures.
 - **Hugging Face Hub:** versioned snapshots pinned to an immutable commit SHA; selective downloads.
-- **PEFT/LoRA:** existing experimental QLoRA training emits `adapter_model.safetensors` and `adapter_config.json`. Adapter loading into the live Genesis backend is **not yet enabled**; base-model compatibility, evaluation and signing are required first.
+- **PEFT/LoRA:** the existing GPU QLoRA training prototype and new bounded CPU LoRA pipeline emit `adapter_model.safetensors` plus `adapter_config.json`. Research adapter loading is explicitly opt-in and verifies the exact base checkpoint/revision, adapter digest and LoRA topology. **No automatic production adapter admission** is implemented; publisher signatures, independent quality/security review and rollback gates remain required.
 - **GGUF:** an alternative quantized runtime format for llama.cpp/Ollama. It is NOT a drop-in replacement for Safetensors or guaranteed to load every model; the existing Ollama backend handles separately installed models.
 
 ## Approved initial base model
@@ -34,6 +34,29 @@ python run.py
 The importer checks the upstream model ID, exact revision, declared license, individual file sizes, a 1.5 GB maximum download allowance and SHA-256. It rejects unknown files and remote code; creates a local manifest only after validating downloaded files. Model snapshots and other weights must stay **outside GitHub** and outside public static Kyro assets. Imports require working internet access, adequate disk/RAM and an operator's explicit license acceptance. A snapshot integrity manifest is NOT a cryptographic publisher signature.
 
 The inference backend stays off until both `GENESIS_GENERATOR=huggingface` and `GENESIS_HF_ENABLE=1` are configured. It uses local files only, `trust_remote_code=False`, `use_safetensors=True`, CPU execution and bounded requests. It returns text only to Genesis cognition; it cannot call tools or authorize Engine actions.
+
+## Research-only trained adapter inference
+
+The approved base weights remain immutable. After explicitly training and privately
+archiving a versioned CPU LoRA adapter, copy the adapter and its accompanying
+`metrics.json` to private local directories. Run:
+
+```bash
+python -m pip install -r requirements_hf_adapter.txt
+export GENESIS_GENERATOR=huggingface
+export GENESIS_HF_ENABLE=1
+export GENESIS_HF_MODEL_DIR=/private/approved-qwen-checkpoint
+export GENESIS_HF_ADAPTER_EXPERIMENTAL_ENABLE=1
+export GENESIS_HF_ADAPTER_DIR=/private/trained-adapter
+export GENESIS_HF_ADAPTER_METRICS=/private/training-metrics.json
+python run.py
+```
+
+When the adapter flag is off, base-only inference behaves as before. The research
+loader rejects missing, modified, unsupported or wrong-base adapters. It is **not**
+a substitute for independent Engine admission, provenance signing, held-out evaluation
+or tenant isolation. See the
+[real two-round training report](../research/GENESIS_REAL_LORA_TRAINING_2026-11-07.md).
 
 ## Boundaries and acceptance gates
 
