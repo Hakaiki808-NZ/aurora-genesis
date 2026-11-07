@@ -86,7 +86,15 @@ def cost_gate(cost_usd,limit_usd):
         limit=Decimal(str(limit_usd))
     except InvalidOperation:
         raise TrainingBlocked("cost information unavailable")
-    if not spent.is_finite() or spent<0 or limit<=0 or spent>=limit:
+    if not spent.is_finite() or limit<=0:
+        raise TrainingBlocked("cloud spend estimate outside safe threshold")
+    # Cost Explorer sometimes reports fractional negative cents from
+    # adjustments. Permit only negligible rounding noise, never large credits.
+    if spent < 0:
+        if spent < Decimal("-0.01"):
+            raise TrainingBlocked("large negative bill cannot be used as spending evidence")
+        spent=Decimal("0")
+    if spent>=limit:
         raise TrainingBlocked("cloud spend estimate outside safe threshold")
     return str(spent)
 
