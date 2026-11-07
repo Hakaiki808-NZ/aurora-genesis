@@ -55,7 +55,10 @@ was returning HTTP 401 for requests matching its route.
 
 The live API Gateway `ces52hcf3e` now also has:
 `OPTIONS /api/v3/{proxy+}` with `AuthorizationType: NONE`
-and target `integrations/et2ylsh`. API Gateway's existing CORS config
+and target `integrations/563tava`, an AWS_PROXY integration to the dedicated
+`kyro-temp-preflight-dev` Lambda created by the `kyro-temporary-chat-preflight-dev`
+CloudFormation stack. The function returns HTTP 204 and cannot access chat,
+Cognito tokens, or Aurora execution. API Gateway's existing CORS config
 permits the CloudFront origin, authorization/content-type headers,
 GET/POST/PUT/OPTIONS. The `$default` stage auto-deployed the new route.
 
@@ -71,3 +74,18 @@ browser end-to-end scenario still requires a signed-in test.
 
 The current backend returns a research-reference answer; it does **not**
 establish live neural inference or streaming generation.
+
+
+### 2026-11-07 correction
+
+The previous unauthenticated OPTIONS route was connected to `kyro-v3-core-dev`,
+which intentionally returned HTTP **403** for OPTIONS requests. API Gateway
+access logs confirmed these 403 preflight failures, so the browser could not
+send authenticated conversation requests. The route now targets an isolated
+204 responder (integration `563tava`), with a scoped Lambda invocation
+permission for API Gateway and the original authenticated ANY route preserved.
+The API Gateway `$default` stage has auto-deployed this change.
+
+Verification: the new OPTIONS Lambda returned HTTP 204 to a synthetic event;
+API Gateway route/integration/CORS/Cognito permissions were read back. **A
+real browser preflight followed by a signed-in chat still needs user testing**.
