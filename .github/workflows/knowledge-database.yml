@@ -1,0 +1,26 @@
+name: Knowledge database contract
+on:
+  pull_request:
+    paths:
+      - "cloud/knowledge-service/**"
+      - "tests/knowledge_service_contract.py"
+      - "tools/aws/deploy_knowledge_service.py"
+  push:
+    paths:
+      - "cloud/knowledge-service/**"
+      - "tests/knowledge_service_contract.py"
+      - "tools/aws/deploy_knowledge_service.py"
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Offline contract tests
+        run: python -m unittest tests.knowledge_service_contract -v
+      - name: Syntax checks
+        run: python -m py_compile cloud/knowledge-service/index.py tools/aws/deploy_knowledge_service.py
