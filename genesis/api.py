@@ -105,6 +105,38 @@ def remove_module(module_id:str,
     except KnowledgeModuleError as exc:
         raise HTTPException(status_code=404,detail=str(exc)) from exc
 
+# Public discovery is read-only; mutations reuse the private module admin gate.
+@app.get("/addons")
+def addons(): return {"addons":model.list_addons()}
+
+@app.get("/addons/{addon_id}/syllabus")
+def addon_syllabus(addon_id:str):
+    try: return model.addon_syllabus(addon_id)
+    except KnowledgeModuleError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+@app.post("/addons")
+def install_addon(req:ModuleInstallRequest,_admin:None=Depends(require_module_admin)):
+    try: return model.install_addon(req.package,replace=req.replace)
+    except KnowledgeModuleError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+@app.post("/addons/{addon_id}/status")
+def set_addon_status(addon_id:str,req:ModuleStatusRequest,
+                     _admin:None=Depends(require_module_admin)):
+    try: return model.set_addon_enabled(addon_id,req.enabled)
+    except KnowledgeModuleError as exc:
+        raise HTTPException(status_code=409 if addon_id=="genesis-core" else 404,
+                            detail=str(exc)) from exc
+
+@app.delete("/addons/{addon_id}")
+def remove_addon(addon_id:str,_admin:None=Depends(require_module_admin)):
+    try: return model.uninstall_addon(addon_id)
+    except KnowledgeModuleError as exc:
+        raise HTTPException(status_code=409 if addon_id=="genesis-core" else 404,
+                            detail=str(exc)) from exc
+
+
 # Task assurance routes are intentionally control-plane only. Kyro must keep
 # GENESIS_CONTROL_TOKEN server-side and authenticate the actual end-user before
 # using these endpoints. If no strong token is configured, routes are disabled.
