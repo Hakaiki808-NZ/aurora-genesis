@@ -1,0 +1,32 @@
+.kyro-vfc{
+  position:relative;overflow:hidden;border:1px solid #81b5d06e;border-radius:22px;
+  background:radial-gradient(ellipse at 13% 50%,#53bce633,transparent 37%),
+    linear-gradient(115deg,#0d1a2d,#152a42 55%,#101728);
+  color:#ecf7ff;padding:21px 25px;margin:0 0 25px;
+  box-shadow:0 16px 38px #0b172a24;
+}
+.kyro-vfc::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 44%,#c5eeff07 50%,transparent 57%);}
+.kyro-vfc-eyebrow{font-size:10px;font-weight:800;letter-spacing:.21em;color:#8ddff7}
+.kyro-vfc-grid{display:flex;align-items:center;gap:30px;margin-top:12px}
+.kyro-vfc-orb{flex:none;width:132px;height:132px;border-radius:50%;
+  border:1px solid #b8e9ffad;background:radial-gradient(circle at 30% 27%,#a9edff88,transparent 29%),radial-gradient(circle,#286183,#0a162a 75%);
+  display:grid;place-items:center;box-shadow:0 0 0 12px #6edfff16,0 0 0 24px #6edfff09,0 0 45px #60ceff5c;
+  color:#ccf6ff;font-size:52px;transition:box-shadow .25s}
+.kyro-vfc-active .kyro-vfc-orb{animation:kyro-vfc-pulse 1.15s ease-in-out infinite;
+  box-shadow:0 0 0 12px #6edfff34,0 0 0 24px #6edfff13,0 0 70px #60ceff}
+@keyframes kyro-vfc-pulse{50%{transform:scale(1.045)}}
+.kyro-vfc-body{flex:1;min-width:0}.kyro-vfc-body h2{font-size:clamp(21px,2.7vw,30px);color:white;margin:0 0 5px}
+.kyro-vfc-body p{font-size:13px;color:#b9d4e7;margin:0 0 14px}
+.kyro-vfc-actions{display:flex;gap:9px;flex-wrap:wrap}
+.kyro-vfc-actions button{border:1px solid #a2dcf674;border-radius:12px;background:#c5f0ff13;
+  color:#f0faff;padding:9px 13px;cursor:pointer;font:inherit}
+.kyro-vfc-actions .kyro-vfc-primary{background:linear-gradient(120deg,#96e7fb,#aeaefe);border:0;color:#092039;font-weight:800}
+.kyro-vfc-actions button:focus-visible{outline:3px solid #8ce9ff;outline-offset:2px}
+.kyro-vfc-options{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:#bfd3e4;margin:14px 0 8px}
+.kyro-vfc-options label{display:flex;align-items:center;gap:5px}
+.kyro-vfc-options input{accent-color:#70dfff}
+.kyro-vfc-status{font-size:12px;color:#b9efff;min-height:1.4em}
+.kyro-vfc-disclosure{font-size:11px;color:#9bb8c9;margin:16px 0 0;line-height:1.45}
+@media(max-width:670px){.kyro-vfc-grid{flex-direction:column;text-align:center;gap:16px}.kyro-vfc-actions,.kyro-vfc-options{justify-content:center}.kyro-vfc-orb{height:112px;width:112px}}
+@media(prefers-reduced-motion:reduce){.kyro-vfc-active .kyro-vfc-orb{animation:none}}
