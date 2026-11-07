@@ -27,6 +27,7 @@ echo "DEPENDENCIES_INSTALLED_UTC=$(date -u +%FT%TZ)"
 export HF_HUB_DISABLE_TELEMETRY=1 TOKENIZERS_PARALLELISM=false
 export GENESIS_HF_MODEL_DIR="$MODEL"
 export GENESIS_HF_RESULTS="$BASE/results.json"
+export PYTHONPATH="$REPO"
 cd "$REPO"
 "$BASE/venv/bin/python" -m genesis.hf_import import --model qwen2.5-0.5b-instruct --destination "$MODEL" --execute --accept-license
 "$BASE/venv/bin/python" -m genesis.hf_import verify --model qwen2.5-0.5b-instruct --destination "$MODEL" > "$BASE/verification.json"
