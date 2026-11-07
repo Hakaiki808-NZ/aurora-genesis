@@ -2,11 +2,15 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import io
+import json
+from unittest.mock import patch
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from genesis import Genesis
 from genesis.memory_network import MemoryNetwork, MemoryNetworkError
+from genesis.memory_encoders import OllamaLocalEmbeddings
 from genesis.storage import Store
 from genesis.user_capabilities import UserCapabilityServices
 
@@ -103,6 +107,29 @@ def run():
         neural = MemoryNetwork(store, "alice", encoder=fake_encoder, encoder_id="test-v1")
         neural.remember("long", "semantic", "Earth", "planet")
         assert neural.recall("Earth")
+
+        # The Ollama integration is simulated; CI never calls a local/remote model.
+        adapter = OllamaLocalEmbeddings("embeddinggemma")
+        assert adapter.ENDPOINT == "http://127.0.0.1:11434/api/embed"
+        payload = json.dumps({"embeddings": [[0.0, 1.0, 0.5]]}).encode("utf-8")
+        with patch.object(adapter._opener, "open", return_value=io.BytesIO(payload)) as mock_open:
+            assert adapter("Earth") == [0.0, 1.0, 0.5]
+            request = mock_open.call_args.args[0]
+            assert request.full_url == "http://127.0.0.1:11434/api/embed"
+            assert json.loads(request.data)["model"] == "embeddinggemma"
+            assert mock_open.call_args.kwargs["timeout"] == 8.0
+        with patch.object(adapter._opener, "open", side_effect=OSError("offline")):
+            denied(lambda: adapter("Earth"))
+        with patch.object(adapter._opener, "open", return_value=io.BytesIO(b'{"embeddings": [[NaN]]}')):
+            denied(lambda: adapter("Earth"))
+        denied(lambda: OllamaLocalEmbeddings("not valid"))
+        with patch.dict("os.environ", {"GENESIS_MEMORY_ENCODER": "ollama",
+                                      "GENESIS_MEMORY_EMBEDDING_MODEL": "embeddinggemma"}):
+            configured = Genesis(state_path=Path(tmp) / "configured.sqlite3",
+                                 workspace=Path(tmp) / "configured-workspace",
+                                 enable_ollama=False, profile_id="configured")
+            assert isinstance(configured.memory.encoder, OllamaLocalEmbeddings)
+            configured.close()
 
         # High-level Genesis interface is opt-in, never auto-populates memory.
         g = Genesis(state_path=Path(tmp) / "genesis.sqlite3",
