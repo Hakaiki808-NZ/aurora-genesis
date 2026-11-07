@@ -20,7 +20,7 @@ function verifyIdentity(token,nonce){const c=tokenClaims(token);if(c.iss!==CONFI
 async function call(url,opts={},timeout=60000){
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeout);
  try{return await fetch(url,{...opts,signal:controller.signal,cache:'no-store'});}
- catch(e){if(e.name==='AbortError')throw Error('The Kyro request timed out. The server may still finish processing.');throw Error('Connection failed. Check the API status and your network.');}
+ catch(e){if(e.name==='AbortError')throw Error('The request timed out. The server might still process it.');if(url.startsWith(CONFIG.auth))throw Error('Cannot connect to AWS Cognito sign-in. The Kyro API is reachable, but the identity-provider request was blocked or failed. Reload and sign in again.');throw Error('Unable to connect to the Kyro API. Check the API status and your network.');}
  finally{clearTimeout(timer);}
 }
 function setSignedOut(message){
