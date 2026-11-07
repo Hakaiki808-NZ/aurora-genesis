@@ -1,4 +1,4 @@
-name: ARC-AGI-3 harness synthetic readiness
+name: ARC-AGI-3 readiness and manually gated live test
 on:
   push:
     paths:
@@ -13,6 +13,17 @@ on:
       - 'docs/benchmarks/ARC_AGI_3_READINESS.md'
       - '.github/workflows/arc-agi-3-readiness.yml'
   workflow_dispatch:
+    inputs:
+      run_arc_live:
+        description: 'Manually authorize real ARC and private Kyro test'
+        type: boolean
+        required: true
+        default: false
+      game:
+        description: 'Official four-character ARC-AGI-3 game ID'
+        type: string
+        required: true
+        default: ls20
 permissions:
   contents: read
 jobs:
@@ -36,3 +47,37 @@ jobs:
           set -e
           test "$result" -eq 2
           python -c "import json; r=json.load(open('/tmp/arc-agi-3-not-run.json')); assert r['result']=='BLOCKED' and r['official_score'] is None"
+  online-arc:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_arc_live && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check private credentials and install official ARC toolkit
+        env:
+          ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
+          KYRO_ARC_URL: ${{ secrets.KYRO_ARC_URL }}
+          KYRO_ARC_TOKEN: ${{ secrets.KYRO_ARC_TOKEN }}
+        run: |
+          test -n "$ARC_API_KEY"
+          test -n "$KYRO_ARC_URL"
+          test -n "$KYRO_ARC_TOKEN"
+          python -m pip install arc-agi==0.9.9
+      - name: Play bounded official game through private Kyro
+        env:
+          ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
+          KYRO_ARC_URL: ${{ secrets.KYRO_ARC_URL }}
+          KYRO_ARC_TOKEN: ${{ secrets.KYRO_ARC_TOKEN }}
+          ARC_GAME: ${{ inputs.game }}
+        run: python -m tools.benchmarks.arc_agi_3 --live --agent kyro-https --game "$ARC_GAME" --max-actions 8 --output arc_agi_3_result.json
+      - name: Preserve labelled score or blocker (never credentials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genesis-arc-agi-3-attempt
+          path: arc_agi_3_result.json
+          if-no-files-found: ignore
+          retention-days: 7
