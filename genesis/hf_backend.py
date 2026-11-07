@@ -66,7 +66,8 @@ class HuggingFaceBackend(GeneratorBackend):
                     )
                     self._model = AutoModelForCausalLM.from_pretrained(
                         path, local_files_only=True, trust_remote_code=False,
-                        use_safetensors=True, torch_dtype=torch.float32
+                        use_safetensors=True, torch_dtype=torch.float32,
+                        attn_implementation="eager"
                     )
                     self._model.eval()
                 import torch
@@ -77,8 +78,11 @@ class HuggingFaceBackend(GeneratorBackend):
                 )
                 with torch.inference_mode():
                     outputs = self._model.generate(
-                        input_ids=tokens, max_new_tokens=self.max_output_tokens,
+                        input_ids=tokens,
+                        attention_mask=torch.ones_like(tokens),
+                        max_new_tokens=self.max_output_tokens,
                         do_sample=False,
+                        temperature=1.0, top_p=1.0, top_k=50,
                         pad_token_id=self._tokenizer.eos_token_id
                     )
                 answer = self._tokenizer.decode(
