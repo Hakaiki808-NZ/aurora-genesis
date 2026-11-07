@@ -199,7 +199,7 @@ class KnowledgeModuleStore:
                     WHERE c.module_id=m.module_id) AS chapters
                     FROM knowledge_modules m ORDER BY m.module_id"""
             ).fetchall()
-        return [dict(r) | {"enabled": bool(r["enabled"]), "distribution": "open",
+        return [{k: v for k, v in dict(r).items() if k != "programme_json"} | {"enabled": bool(r["enabled"]), "distribution": "open",
                            "is_free": True} |
                 ({"programme": json.loads(r["programme_json"])} if r["programme_json"] else {})
                 for r in rows]
@@ -244,6 +244,8 @@ class KnowledgeModuleStore:
                 "status": "replaced" if existing else "installed", "sha256": digest}
 
     def set_enabled(self, module_id: str, enabled: bool) -> dict[str, Any]:
+        if module_id == "genesis-core":
+            raise KnowledgeModuleError("Genesis Core cannot be managed as a knowledge module")
         with self.store.tx() as db:
             row = db.execute("UPDATE knowledge_modules SET enabled=? WHERE module_id=?",
                              (int(enabled), module_id))
@@ -252,6 +254,8 @@ class KnowledgeModuleStore:
         return {"id": module_id, "enabled": enabled}
 
     def uninstall(self, module_id: str) -> dict[str, Any]:
+        if module_id == "genesis-core":
+            raise KnowledgeModuleError("Genesis Core cannot be uninstalled")
         with self.store.tx() as db:
             row = db.execute("DELETE FROM knowledge_modules WHERE module_id=?", (module_id,))
             if row.rowcount == 0:
