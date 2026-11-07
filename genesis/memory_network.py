@@ -121,6 +121,14 @@ class MemoryNetwork:
                     INSERT INTO mn_revisions(profile,revision) VALUES(NEW.profile,1)
                     ON CONFLICT(profile) DO UPDATE SET revision=revision+1;
                 END;
+                CREATE TRIGGER IF NOT EXISTS mn_delete_consent
+                AFTER DELETE ON ux_consents
+                WHEN OLD.scope='memory'
+                BEGIN
+                    DELETE FROM mn_items WHERE profile=OLD.profile;
+                    INSERT INTO mn_revisions(profile,revision) VALUES(OLD.profile,1)
+                    ON CONFLICT(profile) DO UPDATE SET revision=revision+1;
+                END;
             """)
             # FTS5 may be omitted in lean SQLite builds; fallback remains usable.
             try:
