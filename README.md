@@ -63,6 +63,25 @@ Genesis now has a **data-only reference-pack prototype**. You can explicitly ins
 
 The knowledge-module system also includes two **free** starter language packs: [Spanish basics](examples/modules/spanish-basics.json) and [te reo Māori basics](examples/modules/te-reo-maori-basics.json). They are installable, removable, and searchable like physics references, with Unicode-aware retrieval and explicit language metadata. They are short demonstrations, **not** complete translation models or a public Kyro marketplace.
 
+## Hugging Face model weights (experimental)
+
+Genesis now has an **opt-in local Hugging Face import/inference adapter** for one approved
+open-weight baseline: Qwen2.5-0.5B-Instruct. The model catalogue pins a specific
+Hub commit and published safetensors SHA-256. Model files are never committed to
+this repository. The import command is plan-only unless explicitly executed.
+
+```bash
+python -m genesis.hf_import catalog
+python -m genesis.hf_import import  # no download
+# Optional: see docs/architecture/HUGGING_FACE_MODEL_IMPORT.md for the
+# reviewed download, verification and local inference commands.
+```
+
+This **does not** mean model weights have already been downloaded, attached to
+the live AWS service, evaluated as Genesis-trained weights or promoted to public
+beta. Aurora admission and execution authority remain separate. See
+[Hugging Face integration](docs/architecture/HUGGING_FACE_MODEL_IMPORT.md).
+
 ## Contributing
 
 Start with `CONTRIBUTING.md`. Architectural changes require an RFC. Contributions should preserve the Engine/Model authority boundary unless an RFC demonstrates a concrete defect in it.
