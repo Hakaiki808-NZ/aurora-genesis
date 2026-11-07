@@ -1,6 +1,7 @@
 """No-AWS-cost acceptance tests for Genesis's text-only neural adapter."""
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 from pathlib import Path
@@ -25,6 +26,13 @@ class FakeConverse:
 
 
 def run():
+    # The CloudFormation inline Lambda and source module must never drift.
+    root = Path(__file__).resolve().parents[1]
+    template = json.loads((root / "cloud/genesis-neural-gate/template.json").read_text(encoding="utf-8"))
+    gateway = template["Resources"]["GatewayFunction"]["Properties"]
+    assert gateway["Code"]["ZipFile"] == (root / "cloud/genesis-neural-gate/index.py").read_text(encoding="utf-8")
+    assert gateway["Environment"]["Variables"]["GENESIS_NEURAL_MODEL_ID"] == "openai.gpt-oss-120b-1:0"
+    assert template["Parameters"]["Enabled"]["Default"] == "0"
     # Feature gate is closed by default, even when a model ID is provided.
     mock = FakeConverse()
     backend = BedrockBackend(client=mock)
