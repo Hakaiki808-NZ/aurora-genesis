@@ -4,6 +4,8 @@ from typing import Any
 from .types import Candidate, Decision
 from .intent import IntentCapsule
 from .unit_rate import solve_unit_rate
+from .arithmetic_routing import parse_arithmetic
+from .epistemic import unsourced_exact_observation
 
 def _ingest_file(self,path:str)->tuple[str,bool]:
     tr=self.tools.call("read_text",path=path)
@@ -137,6 +139,24 @@ def deliberate(self,text:str,learned:list[dict[str,Any]])->Decision:
               "target_count":unit_rate.target_count,
               "computed_total":str(unit_rate.target_total),
               "currency":unit_rate.currency}],
+        ))
+
+    math_expression = parse_arithmetic(text)
+    if math_expression and not learned:
+        c.append(Candidate(
+            "calculate", "", 123,
+            "strictly parsed elementary arithmetic sent to the existing safe calculator",
+            [{"kind":"parsed_user_arithmetic","expression":math_expression}],
+            action={"type":"tool","name":"calculate",
+                    "args":{"expression":math_expression}},
+        ))
+
+    unsourced = unsourced_exact_observation(text)
+    if unsourced and not learned:
+        c.append(Candidate(
+            "unverifiable_measurement", unsourced, 123,
+            "no trusted observation data is available for a requested exact measurement",
+            [{"kind":"epistemic_abstention","basis":"user excluded external records"}],
         ))
 
     m=re.match(r"(?is)^\s*(?:calculate|compute)\s+(.+?)[.?]?\s*$",text)
