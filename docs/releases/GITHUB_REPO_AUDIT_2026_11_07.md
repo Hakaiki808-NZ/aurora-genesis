@@ -15,6 +15,20 @@
 | Issue #8: LS20 Level 6/7 | **Closed as duplicate**, explicitly **not resolved**; outstanding requirements tracked in #10 | https://github.com/Hakaiki808-NZ/aurora-genesis/issues/8 |
 | Issue #44: Genesis blind general-model evaluation | **Opened as P0 blocker**, with reproducible acceptance criteria | https://github.com/Hakaiki808-NZ/aurora-genesis/issues/44 |
 
+## Final consolidation addendum (after the initial 20-PR snapshot)
+
+The initial open-PR inventory below is intentionally a time-stamped snapshot, **not** the latest count.
+
+- **PR #45 merged:** authoritative README, project status and whole-repo audit refreshed; latest-head CI passed.
+- **PR #46 merged:** corrected a dormant/fallback `IntentCapsule.from_action` signature and added an authorization regression; latest-head CI passed.
+- **PR #2 closed as superseded, not merged:** its minimal, tested repair was extracted into #46 instead of merging conflicting old changes.
+- **Current open PR count after closing #2: 19**; the 19 remaining proposals are #42, #40, #36, #35, #33, #31, #23, #22, #20, #18, #15, #13, #12, #11, #9, #7, #5, #4 and #3.
+- **Current open issues:** #1, #6, #10, #30, #38 and #44 (six). #8 remains closed as a duplicate of #10.
+- **Final consolidation main commit at this addendum:** `c88fb2de394c988c985f032c369cb2865e865db2`. The documentation addendum itself will create a newer commit when merged.
+- Main CI immediately before this addendum: older main integration runs green; a newer complete-suite run was still executing when sampled. CI must be checked again after the addendum merge.
+
+**No release was published.** Public beta remains HOLD; no inference activation, training spend, Engine privilege expansion or branch deletion occurred.
+
 ## Current source-of-truth documents
 
 - [GCAB-1](../standards/GENESIS_COMMON_AI_BASELINE_V1.md): capability baseline, gap register and test protocol.
@@ -55,7 +69,7 @@
 | #5 | ARC-AGI-3 LS20 experiment | Experimental; official-game score is not a general AGI benchmark |
 | #4 | earlier AWS foundation | Reconcile with deployed/current infrastructure before selectively importing |
 | #3 | localhost Kyro alpha | Reconcile overlapping capabilities with V3 and preserve tests selectively |
-| #2 | intent-context regression | Verify whether bug/test remains missing on main, then merge selective fix |
+| #2 | intent-context regression | **Historical at initial audit only:** subsequently extracted into merged #46, then #2 closed as superseded |
 
 **Issue disposition:** #1 external review open; #6 game action API open; #10 LS20 win open; #30 browser acceptance open; #38 marketing and feedback open; #44 blind model qualification open. #8 closed as duplicate.
 
@@ -74,7 +88,8 @@
 - [x] Merge source for strictly disabled neural gateway.
 - [x] Close one demonstrable duplicate while retaining its owner issue.
 - [x] Create clear P0 issue for real model quality.
-- [ ] Selectively reconcile old draft stacks and competing Hugging Face backends after reviewing actual diffs.
+- [x] Extract obsolete #2 fallback intent-context fix into current main with explicit CI and close #2 as superseded.
+- [ ] Selectively reconcile remaining draft stacks and competing Hugging Face backends after reviewing actual diffs.
 - [ ] Run real GCAB-1 general-model evaluation and publish reproducible results.
 - [ ] Close #30 only after real browser and data-isolation evidence.
 - [ ] Complete beta security/operations gates and record formal go/no-go.
