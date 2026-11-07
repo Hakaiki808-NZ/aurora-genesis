@@ -1,0 +1,37 @@
+version: 0.2
+env:
+  shell: bash
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - |
+        set -Eeuo pipefail
+        python3 -m pip install -q --disable-pip-version-check --no-cache-dir torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+        python3 -m pip install -q --disable-pip-version-check --no-cache-dir transformers==4.51.3 peft==0.15.2 accelerate==1.6.0 huggingface_hub==0.36.0 safetensors==0.5.3
+  build:
+    commands:
+      - |
+        set -Eeuo pipefail
+        export OMP_NUM_THREADS=2 TOKENIZERS_PARALLELISM=false HF_HUB_DISABLE_TELEMETRY=1 TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1
+        test -n "${GENESIS_REPO_SHA:?}"
+        test -n "${GENESIS_ARTIFACT_BUCKET:?}"
+        test -n "${SHADOW_DATA_KEY:?}"
+        test -n "${SHADOW_DATA_SHA256:?}"
+        test -n "${SHADOW_RUN_ID:?}"
+        mkdir -p /tmp/genesis-shadow/repo /tmp/genesis-shadow/model /tmp/genesis-shadow/adapter /tmp/genesis-shadow/input
+        cd /tmp/genesis-shadow/repo
+        git init -q
+        git remote add origin https://github.com/Hakaiki808-NZ/aurora-genesis.git
+        git fetch -q --depth 1 origin "$GENESIS_REPO_SHA"
+        git checkout -q --detach "$GENESIS_REPO_SHA"
+        test "$(git rev-parse HEAD)" = "$GENESIS_REPO_SHA"
+        export PYTHONPATH=/tmp/genesis-shadow/repo
+        aws s3 sync "s3://$GENESIS_ARTIFACT_BUCKET/genesis/hf/qwen2p5-0p5b-instruct/model/" /tmp/genesis-shadow/model/ --no-progress
+        aws s3 sync "s3://$GENESIS_ARTIFACT_BUCKET/genesis/hf/qwen2p5-0p5b-instruct/training/cpu-lora-r2/adapter/" /tmp/genesis-shadow/adapter/ --no-progress
+        aws s3 cp "s3://$GENESIS_ARTIFACT_BUCKET/$SHADOW_DATA_KEY" /tmp/genesis-shadow/input/questions.jsonl --no-progress
+        test "$(sha256sum /tmp/genesis-shadow/input/questions.jsonl | cut -d' ' -f1)" = "$SHADOW_DATA_SHA256"
+        python3 -m genesis.training.shadow_evaluation --data /tmp/genesis-shadow/input/questions.jsonl --model-dir /tmp/genesis-shadow/model --adapter-dir /tmp/genesis-shadow/adapter --expected-sha256 "$SHADOW_DATA_SHA256" --max-new-tokens 80 --output /tmp/genesis-shadow/result.json
+        aws s3 cp /tmp/genesis-shadow/result.json "s3://$GENESIS_ARTIFACT_BUCKET/genesis/training/automation/shadow/runs/$SHADOW_RUN_ID/result.json" --sse AES256 --no-progress
+        echo "GENESIS_SHADOW_EVALUATION_ARTIFACT_SAVED"
