@@ -11,7 +11,7 @@
 ## Verified live foundation
 
 - Sydney AWS account: enabled Kyro CloudFront distribution and two HTTPS HTTP APIs.
-- Root research-chat user pool allows Cognito sign-up; V3 workspace pool remains admin-create-only.
+- Both the research-beta and private-workspace Cognito pools now require administrator-issued invitations (AWS change verified 7 November 2026).
 - Both APIs protect private routes with Cognito JWT authorizers.
 - Main V3 API stage throttled to 5 requests/second (burst 10); research API to 1 request/second (burst 3).
 - Active Aurora Controller/Angel/Motor, Kyro core and School Lambda services; C1-only Aurora.
@@ -49,3 +49,16 @@
 Keep current static CloudFront assets, JWT authorizers and restricted Aurora settings unchanged while gates are open. Use the existing S3 versioned/backup copies for rollback, but **test** recovery before relying on it. Public beta promotion requires a recorded go/no-go decision after the gates above, not a version-label change alone.
 
 Source-control snapshot: `cloud/public-beta-web/`. It captures browser assets only, not the backend source or protected AURORA code.
+
+## 7 November 2026 — invite-only AWS beta cutover audit
+
+Verified in the connected Sydney AWS account:
+- The research beta Cognito pool was changed via CloudFormation change set `kyro-beta-invite-only-20261107`; only the `BetaUserPool.AdminCreateUserConfig` property changed. Stack returned `UPDATE_COMPLETE`, and `AllowAdminCreateUserOnly=true` was read back.
+- Public `/site/developers.html`, `/site/dev-login.html`, `/site/api.html`, and `/site/docs.html` now show an invitation-only notice. Public navigation was updated to beta sign-in. Previous S3 objects were copied under `backups/private-beta-cutover-20261107/site/` before editing.
+- CloudFront invalidation `ICDF6Q11P6Y4GWYJCNKLICFX5P` returned `Completed`. GitHub source change `484a2c896af65399df302d8c0145ff46de9f97d9` passed the public-site and general tests.
+- Cognito authorizer/client mappings match for the research-root and private V3 apps, and the Kyro V3 health Lambda returned an operational reference-mode response. These are not substitutes for real browser PKCE tests or full authenticated end-to-end checks.
+- Bedrock Nova Micro Converse returned `ThrottlingException: Too many tokens per day`. External neural inference remains disabled; neither a model catalogue entry nor deployed Lambda proves successful live neural inference.
+- The bounded `genesis-controlled-cpu-lora-dev` CodeBuild job completed successfully and uploaded a candidate adapter under `genesis/training/automation/runs/20261107-904d9cd81259/`. Daily human-approved-dataset checks are enabled; candidate training is not automatic publication or promotion to a live model.
+- USD 1 monthly AWS Budget is an alert only; existing running EC2 instance `Server0` is outside this beta qualification and was not modified.
+
+**Launch decision remains HOLD** until browser sign-in, live authenticated chat, data isolation, privacy, incident alerts, rollback drills, inference quality and per-account spend safeguards are independently validated. AWS is the selected sandbox and deployment target, but the Aurora/Genesis/Kyro full product is not yet completely integrated or production-verified.
