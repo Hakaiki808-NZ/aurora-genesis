@@ -44,3 +44,30 @@ The temporary UI is invite-only because the API requires Cognito JWTs. The app
 does not store tokens in localStorage. Static files contain no secrets. Do not use
 this preview as a public production release without end-to-end authenticated testing,
 accessibility testing, security review and model verification.
+
+
+## Browser chat CORS fix (2026-11-07)
+
+The existing API Gateway HTTP API has an authenticated catch-all route,
+`ANY /api/v3/{proxy+}`. Browser calls with the Authorization header trigger
+unauthenticated CORS preflight requests. The authenticated catch-all route
+was returning HTTP 401 for requests matching its route.
+
+The live API Gateway `ces52hcf3e` now also has:
+`OPTIONS /api/v3/{proxy+}` with `AuthorizationType: NONE`
+and target `integrations/et2ylsh`. API Gateway's existing CORS config
+permits the CloudFront origin, authorization/content-type headers,
+GET/POST/PUT/OPTIONS. The `$default` stage auto-deployed the new route.
+
+**Carry this route into the CloudFormation/IaC ownership of the Kyro API.**
+A stack deployment that removes unmanaged API routes may reintroduce the bug.
+Do not remove JWT authentication from the ANY route.
+
+Smoke test completed by invoking the core Lambda with an isolated synthetic
+identity: create conversation returned 201, generate returned 200, and
+GET messages returned two records (user and assistant). This tests the core
+Lambda but not browser preflight, sign-in, or real network access. The real
+browser end-to-end scenario still requires a signed-in test.
+
+The current backend returns a research-reference answer; it does **not**
+establish live neural inference or streaming generation.
