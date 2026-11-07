@@ -5,7 +5,8 @@ ENV PYTHONUNBUFFERED=1 \
     HF_HUB_OFFLINE=1 \
     TRANSFORMERS_OFFLINE=1 \
     HF_HUB_DISABLE_TELEMETRY=1 \
-    TOKENIZERS_PARALLELISM=false
+    TOKENIZERS_PARALLELISM=false \
+    GENESIS_HF_CPU_DTYPE=bfloat16
 
 # CPU-only libraries; no remote model loading at runtime.
 RUN python -m pip install --disable-pip-version-check --no-cache-dir \
