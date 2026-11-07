@@ -107,7 +107,7 @@ def _validate(raw: dict[str, Any]) -> dict[str, Any]:
             raise KnowledgeModuleError("degree_track requires programme title, level, duration_years and units")
         title = _required_string(programme, "title", 180)
         level = programme["level"]
-        if level not in {"bachelor", "master", "doctoral"} or not isinstance(level, str):
+        if not isinstance(level, str) or level not in {"bachelor", "master", "doctoral"}:
             raise KnowledgeModuleError("unsupported programme reference level")
         years = programme["duration_years"]
         if isinstance(years, bool) or not isinstance(years, int) or not 1 <= years <= 8:
