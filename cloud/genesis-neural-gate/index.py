@@ -12,7 +12,7 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-MODEL_ID = os.environ.get("GENESIS_NEURAL_MODEL_ID", "apac.amazon.nova-micro-v1:0")
+MODEL_ID = os.environ.get("GENESIS_NEURAL_MODEL_ID", "openai.gpt-oss-120b-1:0")
 REGION = os.environ.get("AWS_REGION", "ap-southeast-2")
 BUDGET_TABLE = os.environ.get("GENESIS_NEURAL_BUDGET_TABLE", "")
 ISSUER = os.environ.get("GENESIS_INTERNAL_ISSUER", "")
