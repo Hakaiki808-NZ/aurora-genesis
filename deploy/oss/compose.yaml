@@ -1,0 +1,70 @@
+name: genesis-oss
+services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - private-model
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 8s
+      retries: 20
+
+  model-init:
+    image: ollama/ollama:latest
+    entrypoint: ["/bin/sh", "-euc"]
+    command: ["OLLAMA_HOST=http://ollama:11434 ollama pull \"$$MODEL_ID\""]
+    environment:
+      MODEL_ID: ${GENESIS_OSS_MODEL:-qwen2.5-coder:1.5b}
+    networks:
+      - private-model
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  genesis:
+    build:
+      context: ../..
+      dockerfile: deploy/oss/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      model-init:
+        condition: service_completed_successfully
+    environment:
+      GENESIS_GENERATOR: ollama
+      GENESIS_OLLAMA_MODEL: ${GENESIS_OSS_MODEL:-qwen2.5-coder:1.5b}
+      GENESIS_OLLAMA_BASE_URL: http://ollama:11434
+      GENESIS_OLLAMA_HEALTH_TIMEOUT: "5"
+      GENESIS_OLLAMA_GENERATION_TIMEOUT: "120"
+      GENESIS_OLLAMA_MAX_TOKENS: "256"
+      GENESIS_STATE_PATH: /state/genesis_state.sqlite3
+      GENESIS_WORKSPACE: /state/workspace
+      XDG_DATA_HOME: /state
+    volumes:
+      - genesis-state:/state
+    ports:
+      - "127.0.0.1:${GENESIS_OSS_PORT:-8877}:8766"
+    networks:
+      - private-model
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8766/health', timeout=4).read()"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ollama-models:
+  genesis-state:
+
+networks:
+  private-model:
