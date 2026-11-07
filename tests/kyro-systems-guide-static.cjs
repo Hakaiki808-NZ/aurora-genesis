@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const dir=path.join(__dirname,'..','cloud','public-site-v1');
+const html=fs.readFileSync(path.join(dir,'systems.html'),'utf8');
+const css=fs.readFileSync(path.join(dir,'systems.css'),'utf8');
+const site=fs.readFileSync(path.join(dir,'site.js'),'utf8');
+for(const key of ['Aurora','Genesis','Kyro','V1.02.102','v0.1 pre-alpha','noindex,nofollow','/v3/'])assert.ok(html.includes(key),key);
+assert.match(html,/href="\.\/systems\.css"/);
+assert.match(site,/href="\.\/systems\.html"/);
+assert.match(css,/@media/);
+assert.doesNotMatch(html,/<script/i);
+assert.doesNotMatch(html,/AKIA[0-9A-Z]{16}|BEGIN PRIVATE KEY|SECRET_ACCESS_KEY/);
+console.log('PASS: public architecture guide is linked, accessible and discloses stage/version boundaries.');

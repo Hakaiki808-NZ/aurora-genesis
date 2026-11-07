@@ -1,0 +1,27 @@
+name: Kyro public website checks
+on:
+  push:
+    paths:
+      - 'cloud/public-site-v1/**'
+      - 'tests/kyro-public-site-static.cjs'
+      - 'tests/kyro-systems-guide-static.cjs'
+      - '.github/workflows/kyro-public-site.yml'
+  pull_request:
+    paths:
+      - 'cloud/public-site-v1/**'
+      - 'tests/kyro-public-site-static.cjs'
+      - 'tests/kyro-systems-guide-static.cjs'
+      - '.github/workflows/kyro-public-site.yml'
+jobs:
+  public-site:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check cloud/public-site-v1/site.js
+      - run: node tests/kyro-public-site-static.cjs
+      - run: node tests/kyro-systems-guide-static.cjs

@@ -15,7 +15,14 @@ The public repository is intended for research, testing, interoperability work a
 
 The [Kyro launch-site candidate](cloud/kyro-launch/) showcases our two immediate differentiators: **free installable Genesis reference packs** and **role-based project collaboration** in the invite-only Kyro private-alpha workspace. Explore the [read-only workspace preview](https://d3j65cc3p66kzr.cloudfront.net/v3/preview.html#collab), the [free language and physics pack examples](examples/modules/), and [honest campaign messaging](docs/marketing/KYRO_CAMPAIGN.md).
 
-**Maturity note:** The static launch-site code is **not deployed**; self-service cloud installs, purchases, real-time co-editing, and general-public access are not currently offered. Public launch remains gated by [beta qualification](docs/releases/PUBLIC_BETA_GATE_2026_11_07.md).
+**Deployment note (7 November 2026):** Static research/pre-alpha website assets are present in AWS CloudFront/S3 at [public site](https://d3j65cc3p66kzr.cloudfront.net/site/index.html) and [discovery preview](https://d3j65cc3p66kzr.cloudfront.net/discover/index.html). This does **not** approve public onboarding or establish browser usability. Self-service cloud installs, purchases, real-time co-editing and public access to the private workspace are not offered. See [the systems guide](docs/architecture/SYSTEMS_PUBLIC_GUIDE.md) and [release gate](docs/releases/PUBLIC_BETA_GATE_2026_11_07.md).
+
+## Public information
+
+- [About Aurora, Genesis and Kyro](docs/architecture/SYSTEMS_PUBLIC_GUIDE.md)
+- [Latest consolidation and unmerged work inventory](docs/releases/CONSOLIDATION_2026_11_07.md)
+- [Public development version versus system pairing](docs/releases/VERSION_CROSSWALK.md)
+- [Public website source](cloud/public-site-v1/)
 
 ## Architectural rule
 
