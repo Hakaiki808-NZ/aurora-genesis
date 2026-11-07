@@ -74,6 +74,10 @@ Genesis now has a **data-only reference-pack prototype**. You can explicitly ins
 
 The knowledge-module system also includes two **free** starter language packs: [Spanish basics](examples/modules/spanish-basics.json) and [te reo Māori basics](examples/modules/te-reo-maori-basics.json). They are installable, removable, and searchable like physics references, with Unicode-aware retrieval and explicit language metadata. They are short demonstrations, **not** complete translation models or a public Kyro marketplace.
 
+## Experimental hierarchical memory (opt-in)
+
+The [Genesis memory-network prototype](docs/architecture/GENESIS_MEMORY_NETWORK_RFC_2026_11_07.md) provides consent-scoped transient, working, short-term and long-term typed memory with associative links, bounded FTS5 retrieval, and an optional loopback-only Ollama embedding adapter enabled using `GENESIS_MEMORY_ENCODER=ollama` (model defaults to `embeddinggemma` if the operator has already installed it). It does **not** train model weights, automatically enable persistence for user profiles, or expose a production memory API. It remains pre-alpha and requires review/testing before deployment.
+
 ## Contributing
 
 Start with `CONTRIBUTING.md`. Architectural changes require an RFC. Contributions should preserve the Engine/Model authority boundary unless an RFC demonstrates a concrete defect in it.
