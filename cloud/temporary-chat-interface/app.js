@@ -51,14 +51,14 @@ async function completeLogin(){
  const q=new URLSearchParams(location.search),code=q.get('code'),error=q.get('error');
  if(!code&&!error)return false;
  history.replaceState({},'',location.pathname);
- if(error)throw Error('Sign-in was not completed: '+error);
+ if(error)throw Error('Cognito sign-in could not finish: '+error+(q.get('error_description')?' — '+q.get('error_description'):'')+'.');
  const raw=sessionStorage.getItem('kyro-temp-chat-pkce');sessionStorage.removeItem('kyro-temp-chat-pkce');
  if(!raw)throw Error('Sign-in session was not found. Start a new sign-in.');
  const saved=JSON.parse(raw);
  if(q.get('state')!==saved.state||Date.now()-saved.created>600000)throw Error('Sign-in state expired or did not match.');
  const data=new URLSearchParams({grant_type:'authorization_code',client_id:CONFIG.client,code,redirect_uri:CONFIG.callback,code_verifier:saved.verifier});
  const res=await call(CONFIG.auth+'/oauth2/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:data},20000);
- if(!res.ok)throw Error('Cognito could not complete sign-in (HTTP '+res.status+').');
+ if(!res.ok){const d=await res.json().catch(()=>({}));throw Error('Cognito rejected the sign-in code (HTTP '+res.status+'): '+String(d.error||'unspecified_error')+'. Please start a NEW sign-in; old authorization codes can only be used once.');}
  const t=await res.json();if(!t.id_token)throw Error('No identity token was returned.');
  const claims=verifyIdentity(t.id_token,saved.nonce);
  S.token=t.id_token;S.refresh=t.refresh_token||null;S.expires=claims.exp*1000;setSignedIn(claims);return true;
@@ -77,7 +77,7 @@ async function api(path,method='GET',payload=null){
  if(!S.token)throw Error('Sign in to use Kyro.');
  if(Date.now()+60000>=S.expires)try{await renew();}catch(e){setSignedOut(e.message);throw e;}
  const response=await call(CONFIG.api+'/api/v3'+path,{method,headers:{Authorization:'Bearer '+S.token,...(payload===null?{}:{'Content-Type':'application/json'})},...(payload===null?{}:{body:JSON.stringify(payload)})});
- if(response.status===401){setSignedOut('Your session is no longer valid. Please sign in.');throw Error('Kyro sign-in expired.');}
+ if(response.status===401){setSignedOut('Kyro API returned HTTP 401: your Cognito session token was not accepted. Sign in again.');throw Error('Kyro API authorization failed (HTTP 401).');}
  const data=await response.json().catch(()=>({error:'Unexpected server response.'}));
  if(!response.ok)throw Error(data.error||data.message||'Kyro API error '+response.status);
  return data;
@@ -200,8 +200,41 @@ function dictate(){
  rec.onend=()=>{S.speech=null;$('dictateButton').textContent='♩';};
  try{rec.start();}catch{rec.onend();notify('Microphone could not start.');}
 }
+async function runDiagnostics(){
+ const b=$('runDiagnostics'),host=$('diagnosticResults'),copy=$('copyDiagnostics');
+ b.disabled=true;b.textContent='Checking connections…';host.classList.remove('hidden');host.textContent='Running safe checks. No credentials or authorization codes are included.';
+ const lines=['KYRO CHAT DIAGNOSTIC v2','UTC: '+new Date().toISOString(),'Site: '+location.origin,'Secure page: '+String(location.protocol==='https:')];
+ try{
+  if(!window.crypto||!crypto.subtle)lines.push('PKCE support: NOT AVAILABLE');else lines.push('PKCE support: OK');
+  const test='kyro-temp-diag-'+Date.now();sessionStorage.setItem(test,'ok');
+  lines.push('Tab session storage: '+(sessionStorage.getItem(test)==='ok'?'OK':'FAILED'));sessionStorage.removeItem(test);
+ }catch{lines.push('Browser storage: BLOCKED');}
+ const check=async(label,url,options,expected)=>{
+  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),11000);
+  try{
+   const r=await fetch(url,{...options,cache:'no-store',signal:ctl.signal});
+   const success=expected(r.status);
+   lines.push(label+': '+(success?'REACHABLE':'UNEXPECTED')+' (HTTP '+r.status+')');
+   return success;
+  }catch(e){
+   lines.push(label+': FAILED ('+(e?.name==='AbortError'?'timeout':'blocked / network / CORS')+')');
+   return false;
+  }finally{clearTimeout(timer);}
+ };
+ await check('Kyro public API',CONFIG.api+'/api/v3/health',{method:'GET'},s=>s===200);
+ await check('Kyro protected API (401 expected)',CONFIG.api+'/api/v3/conversations',{method:'GET'},s=>s===401);
+ await check('Cognito token endpoint (400 expected)',CONFIG.auth+'/oauth2/token',{
+  method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+  body:new URLSearchParams({grant_type:'refresh_token',client_id:CONFIG.client,refresh_token:'diagnostic-invalid-token'})
+ },s=>s===400);
+ lines.push('NOTE: These checks DO NOT attempt login or send any password.');
+ lines.push('If all endpoints are reachable but login fails, share the exact on-screen sign-in error.');
+ const report=lines.join('\n');host.textContent=report;copy.classList.remove('hidden');
+ copy.onclick=async()=>{try{await navigator.clipboard.writeText(report);notify('Diagnostic report copied.');}catch{notify('Copy blocked; select the report text instead.');}};
+ b.disabled=false;b.textContent='Run connection checks again';
+}
 function bindEvents(){
- $('authSignIn').onclick=beginLogin;$('newChat').onclick=startNewChat;$('newChatTop').onclick=startNewChat;
+ $('authSignIn').onclick=beginLogin;$('runDiagnostics').onclick=runDiagnostics;$('newChat').onclick=startNewChat;$('newChatTop').onclick=startNewChat;
  $('sidebarToggle').onclick=toggleSidebar;$('closeSidebar').onclick=closeMobile;$('mobileScrim').onclick=closeMobile;
  $('searchToggle').onclick=()=>{$('searchInput').classList.toggle('hidden');$('searchInput').focus();};
  $('searchInput').oninput=renderConversations;$('checkHealth').onclick=health;
@@ -221,9 +254,14 @@ function bindEvents(){
 async function init(){
  applyTheme();bindEvents();refreshSend();renderChat();renderConversations();
  health().catch(()=>{});setInterval(()=>health().catch(()=>{}),90000);
- try{
-  const ok=await completeLogin();
-  if(ok){await loadConversations();startNewChat();}
- }catch(err){setSignedOut(err.message);}
+ let authenticated=false;
+ try{authenticated=await completeLogin();}
+ catch(err){setSignedOut(err.message);return;}
+ if(authenticated){
+  try{await loadConversations();startNewChat();}
+  catch(err){
+   if(S.token){notify('Sign-in succeeded, but conversations could not load: '+err.message);renderConversations();}
+  }
+ }
 }
 document.addEventListener('DOMContentLoaded',init);
