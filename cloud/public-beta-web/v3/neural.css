@@ -1,0 +1,14 @@
+/* Isolated, light-mode research inference panel. Inherits Kyro V3 theme. */
+.neural-room{padding:clamp(18px,3vw,32px);max-width:920px}
+.neural-room h2{margin:.4rem 0 1rem;font-size:clamp(1.4rem,3vw,2rem)}
+.neural-room .neural-intro{color:var(--text-secondary,#5e6877);line-height:1.55;max-width:800px}
+.neural-badges{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0}
+.neural-badges span{display:inline-block;padding:7px 11px;border:1px solid #cbd3dc;border-radius:999px;font-size:.8rem;background:#f6f8fb;color:#3a4552}
+.neural-form{margin:12px 0;display:grid;gap:12px}
+.neural-form textarea{width:100%;min-height:112px;resize:vertical;background:#fff;color:#1c2734;padding:13px;border:1px solid #c3ceda;border-radius:13px;font:inherit}
+.neural-form textarea:focus{outline:2px solid #8499ad;outline-offset:2px}
+.neural-example-questions{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}
+.neural-example-questions button{border:1px solid #cbd3dc;border-radius:999px;background:#fff;padding:8px 12px;color:#344b62;cursor:pointer}
+.neural-answer{white-space:pre-wrap;overflow-wrap:anywhere;background:#f8fafc;border:1px solid #d7dfe7;border-radius:14px;padding:18px;min-height:80px;color:#223344;line-height:1.6}
+.neural-status{color:#4d5d6d;font-size:.9rem;min-height:25px;margin-top:10px}
+.neural-caution{margin-top:16px;border-top:1px solid #dfe5ec;padding-top:14px;font-size:.88rem;color:#586575;line-height:1.55}

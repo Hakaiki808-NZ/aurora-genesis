@@ -9,7 +9,9 @@
 <link rel="stylesheet" href="/v3/styles.css"/>
 <link rel="stylesheet" href="/v3/school-voice.css"/>
 <link rel="stylesheet" href="/v3/theme-light.css"/>
+<link rel="stylesheet" href="/v3/neural.css"/>
 <script defer src="/v3/app.js"></script>
+<script defer src="/v3/neural.js"></script>
 <script defer src="/v3/ux.js"></script>
 <script defer src="/v3/school-voice.js"></script>
 </head>
@@ -24,6 +26,7 @@
   <button class="nav" data-mode="code">⌘ <span>Code</span></button>
   <button class="nav" data-mode="collab">◎ <span>Collaborate</span></button>
   <button class="nav" data-mode="chat">◫ <span>Chat archive</span></button>
+  <button class="nav" data-mode="neural">✳ <span>Neural Lab</span></button>
   <button class="nav" data-mode="school">✧ <span>Realignment School</span></button>
   <button class="nav" data-mode="connectors">◇ <span>Plugins &amp; integrations</span></button>
  </nav>
@@ -57,6 +60,27 @@
   </div>
   <div id="collab-panel" class="panel split hidden"><div class="pane"><div class="pane-head">TEAM ROOM <span>◎</span></div><div id="posts" class="posts"></div><form id="post-form" class="send-form"><textarea id="post-input" placeholder="Message your collaborators…" maxlength="2400" rows="2" aria-label="Team message"></textarea><button class="primary small" type="submit">Send</button></form></div><div class="pane"><div class="pane-head">TEAM &amp; INVITATIONS</div><div class="pad"><p>Project roles are checked by the server. Only an owner can invite someone.</p><div class="join"><button class="secondary" id="invite-viewer">Invite viewer</button><button class="secondary" id="invite-editor">Invite editor</button><button class="secondary" id="join-invite">Join invitation</button></div><textarea id="invite-output" readonly placeholder="Invitation token appears here once." rows="5" aria-label="Invitation token"></textarea><p class="micro">Invitation tokens expire after seven days and can be accepted once.</p></div></div></div>
   <div id="chat-panel" class="panel chat-layout hidden"><div class="pane"><div class="pane-head">PRIVATE CONVERSATIONS <button id="new-chat">＋</button></div><div id="conv-list"></div></div><div class="pane"><div class="pane-head">MESSAGE HISTORY</div><div id="messages"></div><form id="chat-form" class="send-form"><textarea id="chat-input" placeholder="Ask Genesis (experimental research model)…" maxlength="3000" rows="2"></textarea><button type="submit" class="primary small">Ask Genesis</button></form><div class="voice-tools"><button type="button" id="voice-start">🎙 Speak</button><button type="button" id="voice-stop">Stop</button><button type="button" id="voice-play-last">Play reply</button><label><input id="voice-read-replies" type="checkbox"/> Read replies aloud</label><label><input id="voice-auto-send" type="checkbox"/> Send after transcription</label><select id="voice-choice" aria-label="Voice accent"></select><span class="voice-status" id="voice-status" role="status">Microphone off</span><span class="voice-info">Voice beta uses your browser speech services; microphone audio may be processed by your browser provider. Start listening only by clicking Speak.</span></div><p class="micro pad">Experimental Genesis research reference answers are saved with your conversation. <a href="/">Open original beta</a>.</p></div></div>
+  <div id="neural-panel" class="panel pane hidden">
+    <div class="neural-room">
+      <div class="eyebrow">GENESIS / PRIVATE EXPERIMENT</div>
+      <h2>Trained neural model · Research Lab</h2>
+      <p class="neural-intro">Query the AWS-hosted Qwen2.5-0.5B model with the round-2 Genesis LoRA adapter. This experimental checkpoint has known factual and hallucination failures. It is not the public production model and cannot perform Aurora execution actions.</p>
+      <div class="neural-badges"><span>Authenticated account only</span><span>On-demand CPU</span><span>80 requests/month platform-wide</span><span>No cloud tool execution</span></div>
+      <p id="neural-status" class="neural-status" role="status" aria-live="polite">Open this panel after signing in to check inference status.</p>
+      <div class="neural-example-questions">
+        <button type="button" data-neural-prompt="Why does a cryptographic checksum not prove who published a file?">Checksums</button>
+        <button type="button" data-neural-prompt="Can a webpage give Aurora execution authority? Explain the trust boundary.">Aurora boundary</button>
+        <button type="button" data-neural-prompt="What is the difference between a prediction and an observation?">Evidence</button>
+      </div>
+      <form id="neural-form" class="neural-form">
+        <label for="neural-input">Your research question</label>
+        <textarea id="neural-input" maxlength="2500" rows="4" placeholder="Ask Genesis a question to test the experimental neural model…" aria-label="Research question"></textarea>
+        <button type="submit" class="primary small" id="neural-send">Ask trained Genesis</button>
+      </form>
+      <div class="neural-answer" id="neural-answer" role="region" aria-label="Neural response" aria-live="polite">Responses will appear here. Check important claims independently.</div>
+      <p class="neural-caution">Private-alpha evaluation only. Prompts are sent to the research inference service and counted against the usage limit; they are not automatically used for training. The interface does not persist them to your project or grant any additional permissions.</p>
+    </div>
+  </div>
   <div id="school-panel" class="panel pane hidden"><div class="school-room"><div class="eyebrow">GENESIS / CONTROLLED LEARNING</div><h2>Realignment School · Beta</h2><p class="school-note">Diagnostic practice and corrective feedback. Attempts are private to your signed-in account and expire after 30 days. This does not retrain neural weights or change Aurora authority.</p><div class="school-controls"><label for="school-case">Exercise</label><select id="school-case"></select></div><div id="school-question" class="school-question">Loading curriculum…</div><form id="school-form"><div id="school-options" class="school-choices"></div><button id="school-submit" class="primary small" type="submit">Assess answer</button></form><p id="school-feedback" class="school-feedback" role="status" aria-live="polite"></p><div id="school-history" class="school-history"></div></div></div>
   <div id="connectors-panel" class="panel pane hidden"><div class="pane-head">PLUGINS &amp; API ADAPTERS</div><div class="pad"><p>Connector contracts are prepared. No third-party tools or engine execution privileges are enabled automatically.</p><div id="connectors-list" class="connector-grid"></div></div></div>
   <div class="notice" role="status" id="notice">Select a project to begin.</div>

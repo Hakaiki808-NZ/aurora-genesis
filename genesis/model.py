@@ -8,6 +8,8 @@ from typing import Any
 
 from .backends import GeneratorBackend, OllamaBackend
 from .bedrock_backend import BedrockBackend
+from .hf_backend import HuggingFaceBackend
+from .hf_import import default_models_dir
 from .cognition import CognitionEngine
 from .storage import Store
 from .tools import ToolRegistry
@@ -56,6 +58,23 @@ class Genesis:
                 enabled=os.environ.get("GENESIS_BEDROCK_ENABLE","").lower() in {"1","true","yes"},
                 max_output_tokens=int(os.environ.get("GENESIS_BEDROCK_MAX_TOKENS","256")),
                 max_calls=int(os.environ.get("GENESIS_BEDROCK_MAX_CALLS","8")),
+            )
+        if backend is None and generator_mode == "huggingface":
+            # Fully offline, explicit opt-in; no implicit Hub or AWS calls.
+            backend=HuggingFaceBackend(
+                model_dir=os.environ.get(
+                    "GENESIS_HF_MODEL_DIR",
+                    str(default_models_dir() / "qwen2.5-0.5b-instruct")
+                ),
+                enabled=os.environ.get("GENESIS_HF_ENABLE","").lower()
+                    in {"1","true","yes"},
+                adapter_enabled=os.environ.get(
+                    "GENESIS_HF_ADAPTER_EXPERIMENTAL_ENABLE",""
+                ).lower() in {"1","true","yes"},
+                adapter_dir=os.environ.get("GENESIS_HF_ADAPTER_DIR",""),
+                adapter_metrics=os.environ.get("GENESIS_HF_ADAPTER_METRICS",""),
+                max_output_tokens=int(os.environ.get("GENESIS_HF_MAX_TOKENS","128")),
+                max_calls=int(os.environ.get("GENESIS_HF_MAX_CALLS","8")),
             )
         if backend is None and use_ollama: backend=OllamaBackend(model=os.environ.get("GENESIS_OLLAMA_MODEL",ollama_model))
         self.cognition=CognitionEngine(self.store,self.identity,self.heritage,self.model_record,self.tools,backend,self.policy,self.guardians,self.capabilities,self.engine_boundary)

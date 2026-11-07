@@ -4,12 +4,40 @@ on:
     paths:
       - 'genesis/**'
       - 'tests/neural_backend.py'
+      - 'tests/huggingface_import.py'
+      - 'tests/unit_rate_verification.py'
+      - 'tests/hf_scoring.py'
+      - 'tests/cpu_lora_plan.py'
+      - 'tests/hf_adapter.py'
+      - 'tests/automatic_training.py'
+      - 'tests/neural_service.py'
+      - 'cloud/genesis-lora-inference/**'
+      - 'tools/aws/genesis_autotrain_controller.py'
+      - 'tools/aws/genesis_continuous_buildspec.yml'
+      - 'requirements_hf_adapter.txt'
+      - 'tests/reasoning_guardrails.py'
+      - 'tools/eval/**'
+      - 'requirements_hf.txt'
       - '.github/workflows/genesis-neural.yml'
       - 'verify.py'
   pull_request:
     paths:
       - 'genesis/**'
       - 'tests/neural_backend.py'
+      - 'tests/huggingface_import.py'
+      - 'tests/unit_rate_verification.py'
+      - 'tests/hf_scoring.py'
+      - 'tests/cpu_lora_plan.py'
+      - 'tests/hf_adapter.py'
+      - 'tests/automatic_training.py'
+      - 'tests/neural_service.py'
+      - 'cloud/genesis-lora-inference/**'
+      - 'tools/aws/genesis_autotrain_controller.py'
+      - 'tools/aws/genesis_continuous_buildspec.yml'
+      - 'requirements_hf_adapter.txt'
+      - 'tests/reasoning_guardrails.py'
+      - 'tools/eval/**'
+      - 'requirements_hf.txt'
       - '.github/workflows/genesis-neural.yml'
       - 'verify.py'
 permissions:
@@ -29,9 +57,18 @@ jobs:
       - name: Install API test dependencies
         run: python -m pip install -r requirements.txt
       - name: Python syntax and compile
-        run: python -m compileall -q genesis tests/neural_backend.py
+        run: python -m compileall -q genesis tests/neural_backend.py tests/huggingface_import.py tests/unit_rate_verification.py
       - name: Bounded neural backend tests (stubbed, no external calls)
-        run: python -m tests.neural_backend
+        run: |
+          python -m tests.neural_backend
+          python -m tests.huggingface_import
+          python -m tests.unit_rate_verification
+          python -m tests.hf_scoring
+          python -m tests.reasoning_guardrails
+          python -m tests.cpu_lora_plan
+          python -m tests.hf_adapter
+          python -m tests.automatic_training
+          python -m tests.neural_service
       - name: Existing behavior regression
         run: |
           python -m tests.regression

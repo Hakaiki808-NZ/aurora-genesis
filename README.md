@@ -70,6 +70,43 @@ Genesis now has a **data-only reference-pack prototype**. You can explicitly ins
 
 The knowledge-module system also includes two **free** starter language packs: [Spanish basics](examples/modules/spanish-basics.json) and [te reo Māori basics](examples/modules/te-reo-maori-basics.json). They are installable, removable, and searchable like physics references, with Unicode-aware retrieval and explicit language metadata. They are short demonstrations, **not** complete translation models or a public Kyro marketplace.
 
+## Hugging Face model weights (experimental)
+
+Genesis now has an **opt-in local Hugging Face import/inference adapter** for one approved
+open-weight baseline: Qwen2.5-0.5B-Instruct. The model catalogue pins a specific
+Hub commit and published safetensors SHA-256. Model files are never committed to
+this repository. The import command is plan-only unless explicitly executed.
+
+```bash
+python -m genesis.hf_import catalog
+python -m genesis.hf_import import  # no download
+# Optional: see docs/architecture/HUGGING_FACE_MODEL_IMPORT.md for the
+# reviewed download, verification and local inference commands.
+```
+
+**Verified real-weight status (2026-11-07):** The approved Qwen checkpoint has now
+been downloaded, hashed, and exercised in two isolated AWS CPU test runs. The
+unchanged pretrained weights and detailed results are stored in private encrypted
+S3, not in GitHub or the live Kyro service. On a small public 12-case smoke suite,
+strict automatic passes were **4/12 for raw Qwen**, **7/12 for Genesis before
+routing fixes**, and **10/12 after the fixes**. This is **not** a standardized
+reasoning or safety benchmark and does not establish generalization; one geography
+failure and one response needing human review remain. See the
+[real-weight hardening report](docs/research/GENESIS_REASONING_HARDENING_2026-11-07.md)
+and the [import guide](docs/architecture/HUGGING_FACE_MODEL_IMPORT.md).
+
+The system has also completed **two actual experimental CPU LoRA fine-tuning rounds**
+(8 + 48 optimiser steps) on original project instruction data, with distinct held-out
+loss measurements and versioned, checksum-verified private adapter checkpoints.
+The results and unresolved hallucination risks are documented in the
+[real LoRA training report](docs/research/GENESIS_REAL_LORA_TRAINING_2026-11-07.md).
+Experimental adapter loading remains explicitly opt-in and is **not** an Aurora
+execution permission or Kyro service deployment.
+
+Genesis is **not** continuously serving or training on AWS, and the new adapters
+have **not** been promoted to public beta. Aurora admission and execution authority
+remain separate.
+
 ## Contributing
 
 Start with `CONTRIBUTING.md`. Architectural changes require an RFC. Contributions should preserve the Engine/Model authority boundary unless an RFC demonstrates a concrete defect in it.

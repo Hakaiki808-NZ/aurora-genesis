@@ -26,6 +26,7 @@ from transformers import (
 )
 
 BASE_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
+BASE_REVISION = "c89bee90d9f811437d9735454613c35b4a3c4dc8"
 BASE_LICENSE = "Apache-2.0"
 SEED = 1907
 MAX_LENGTH = 384
@@ -119,7 +120,7 @@ def main():
     validation_rows, training_rows = rows[:validation_count], rows[validation_count:]
 
     set_seed(SEED)
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, trust_remote_code=False)
+    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL, revision=BASE_REVISION, trust_remote_code=False)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     quant = BitsAndBytesConfig(
@@ -130,6 +131,7 @@ def main():
     )
     model = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL,
+        revision=BASE_REVISION,
         quantization_config=quant,
         torch_dtype=torch.float16,
         device_map={"": 0},
@@ -189,6 +191,7 @@ def main():
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "status": "experimental",
         "base_model": BASE_MODEL,
+        "base_revision": BASE_REVISION,
         "base_license": BASE_LICENSE,
         "dataset_sha256": hashlib.sha256(raw_data).hexdigest(),
         "training_examples": len(train_dataset),

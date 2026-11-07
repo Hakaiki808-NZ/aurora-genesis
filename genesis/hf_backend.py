@@ -1,0 +1,146 @@
+"""Local-only, explicitly enabled Hugging Face text generation for Genesis.
+
+No remote inference, implicit downloads, tools, Aurora privileges or training.
+Imported content is untrusted model data. The backend is intentionally CPU-only.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from importlib.util import find_spec
+import os
+from pathlib import Path
+from threading import Lock
+from typing import Any
+
+from .backends import GeneratorBackend
+from .hf_models import ModelImportError, verify_local_model
+from .hf_adapter import AdapterAdmissionError, verify_local_adapter
+
+def normalize_disabled_qwen_sliding_window(config: Any) -> Any:
+    """Honor Qwen2's explicit use_sliding_window=false in Transformers 4.51.x.
+
+    The checkpoint contains a dormant numerical sliding_window=32768 setting.
+    Older Transformers versions warn based on that numerical field alone, even
+    though use_sliding_window is explicitly false. Set only the *in-memory*
+    configuration field to None, and only for Qwen2 with the explicit disable.
+    Never rewrite the SHA-256-verified upstream config.json or touch the weights.
+    """
+    if (getattr(config, "model_type", None) == "qwen2"
+            and getattr(config, "use_sliding_window", None) is False
+            and getattr(config, "sliding_window", None) is not None):
+        config.sliding_window = None
+    return config
+
+
+
+@dataclass
+class HuggingFaceBackend(GeneratorBackend):
+    model_dir: str = ""
+    enabled: bool = False
+    adapter_enabled: bool = False
+    adapter_dir: str = ""
+    adapter_metrics: str = ""
+    max_output_tokens: int = 128
+    max_calls: int = 8
+    name: str = "huggingface"
+    call_count: int = field(default=0, init=False)
+    last_error_code: str | None = field(default=None, init=False)
+    _lock: Lock = field(default_factory=Lock, init=False, repr=False)
+    _model: Any = field(default=None, init=False, repr=False)
+    _tokenizer: Any = field(default=None, init=False, repr=False)
+    _verified: bool = field(default=False, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if not 1 <= self.max_output_tokens <= 256:
+            raise ValueError("max_output_tokens must be between 1 and 256")
+        if not 1 <= self.max_calls <= 25:
+            raise ValueError("max_calls must be between 1 and 25")
+        if self.adapter_enabled and not (self.adapter_dir and self.adapter_metrics):
+            raise ValueError("research adapter enabled without path and provenance")
+
+    def available(self) -> bool:
+        if not self.enabled or not self.model_dir or self.call_count >= self.max_calls:
+            return False
+        try:
+            manifest = verify_local_model(self.model_dir)
+            if self.adapter_enabled:
+                verify_local_adapter(self.adapter_dir, self.adapter_metrics,
+                                     manifest, check_hash=False)
+            return (find_spec("torch") is not None
+                    and find_spec("transformers") is not None
+                    and (not self.adapter_enabled or find_spec("peft") is not None))
+        except (AdapterAdmissionError, ModelImportError, ImportError, OSError, ValueError):
+            return False
+
+    def generate(self, prompt: str) -> str | None:
+        if not isinstance(prompt, str) or not prompt.strip():
+            return None
+        # Serialize generation to avoid races and unintended CPU memory growth.
+        with self._lock:
+            if not self.available():
+                self.last_error_code = "DISABLED_OR_UNAVAILABLE"
+                return None
+            self.call_count += 1
+            try:
+                if not self._verified:
+                    manifest = verify_local_model(self.model_dir, verify_hashes=True)
+                    if self.adapter_enabled:
+                        verify_local_adapter(self.adapter_dir, self.adapter_metrics,
+                                             manifest, check_hash=True)
+                    self._verified = True
+                if self._model is None:
+                    import torch
+                    from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+                    path = str(Path(self.model_dir).resolve())
+                    self._tokenizer = AutoTokenizer.from_pretrained(
+                        path, local_files_only=True, trust_remote_code=False
+                    )
+                    config = AutoConfig.from_pretrained(
+                        path, local_files_only=True, trust_remote_code=False
+                    )
+                    config = normalize_disabled_qwen_sliding_window(config)
+                    # Opt-in lower-memory runtime for restricted CPU-only hosts.
+                    # Defaults to the already-validated FP32 reference path.
+                    dtype_name = os.environ.get("GENESIS_HF_CPU_DTYPE", "float32")
+                    if dtype_name not in ("float32", "bfloat16"):
+                        raise ValueError("Unsupported GENESIS_HF_CPU_DTYPE")
+                    load_dtype = getattr(torch, dtype_name)
+                    self._model = AutoModelForCausalLM.from_pretrained(
+                        path, config=config,
+                        local_files_only=True, trust_remote_code=False,
+                        use_safetensors=True, torch_dtype=load_dtype,
+                        low_cpu_mem_usage=True,
+                        attn_implementation="eager"
+                    )
+                    if self.adapter_enabled:
+                        from peft import PeftModel
+                        self._model = PeftModel.from_pretrained(
+                            self._model,
+                            str(Path(self.adapter_dir).resolve()),
+                            is_trainable=False
+                        )
+                    self._model.eval()
+                import torch
+                messages = [{"role": "user", "content": prompt[:6000]}]
+                tokens = self._tokenizer.apply_chat_template(
+                    messages, tokenize=True, add_generation_prompt=True,
+                    return_tensors="pt"
+                )
+                with torch.inference_mode():
+                    outputs = self._model.generate(
+                        input_ids=tokens,
+                        attention_mask=torch.ones_like(tokens),
+                        max_new_tokens=self.max_output_tokens,
+                        do_sample=False,
+                        temperature=1.0, top_p=1.0, top_k=50,
+                        pad_token_id=self._tokenizer.eos_token_id
+                    )
+                answer = self._tokenizer.decode(
+                    outputs[0][tokens.shape[-1]:], skip_special_tokens=True
+                ).strip()
+                self.last_error_code = None if answer else "EMPTY_MODEL_OUTPUT"
+                return answer[:4096] if answer else None
+            except Exception as exc:
+                # Do not expose source prompts, arbitrary exception messages or paths.
+                self.last_error_code = type(exc).__name__[:80]
+                return None
