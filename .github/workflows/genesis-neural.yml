@@ -4,12 +4,16 @@ on:
     paths:
       - 'genesis/**'
       - 'tests/neural_backend.py'
+      - 'tests/oss_backend.py'
+      - 'deploy/oss/**'
       - '.github/workflows/genesis-neural.yml'
       - 'verify.py'
   pull_request:
     paths:
       - 'genesis/**'
       - 'tests/neural_backend.py'
+      - 'tests/oss_backend.py'
+      - 'deploy/oss/**'
       - '.github/workflows/genesis-neural.yml'
       - 'verify.py'
 permissions:
@@ -32,6 +36,10 @@ jobs:
         run: python -m compileall -q genesis tests/neural_backend.py
       - name: Bounded neural backend tests (stubbed, no external calls)
         run: python -m tests.neural_backend
+      - name: Self-hosted OSS backend tests (mocked; no downloads)
+        run: python -m tests.oss_backend
+      - name: Validate private OSS Docker Compose syntax
+        run: docker compose -f deploy/oss/compose.yaml config --quiet
       - name: Existing behavior regression
         run: |
           python -m tests.regression
