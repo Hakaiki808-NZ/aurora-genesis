@@ -19,6 +19,7 @@ from .realignment import RealignmentSchool
 from .knowledge_modules import KnowledgeModuleStore
 from .task_assurance import TaskLedger
 from .user_capabilities import UserCapabilityServices
+from .memory_network import MemoryNetwork
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -41,6 +42,7 @@ class Genesis:
         self.knowledge_modules=KnowledgeModuleStore(self.store)
         self.assurance=TaskLedger(self.store)
         self.user_capabilities=UserCapabilityServices(self.store,profile_id)
+        self.memory=MemoryNetwork(self.store,profile_id)  # opt-in; does not write until consent
         self.policy=PolicyEngine(cfg/"model_constitution.json",self.tools,self.store)
         self.guardians=GuardianCouncil()
         self.realignment_school=RealignmentSchool()
@@ -178,7 +180,9 @@ class Genesis:
     # episode storage (which requires separate privacy migration).
     def ux_consents(self)->dict[str,bool]: return self.user_capabilities.consents()
     def ux_set_consent(self,scope:str,enabled:bool)->dict[str,Any]:
-        return self.user_capabilities.consent(scope,enabled)
+        result=self.user_capabilities.consent(scope,enabled)
+        if scope=="memory" and not enabled: self.memory.clear_volatile()
+        return result
     def ux_remember(self,kind:str,key:str,value:str,*,source:str="user_explicit",
                     expires_at:str|None=None)->dict[str,Any]:
         return self.user_capabilities.remember(kind,key,value,source=source,expires_at=expires_at)
@@ -199,7 +203,10 @@ class Genesis:
                            options:list[dict[str,Any]])->dict[str,Any]:
         return self.user_capabilities.compare_options(criteria,options)
     def ux_export_profile(self)->dict[str,Any]: return self.user_capabilities.export_profile()
-    def ux_erase_profile(self)->dict[str,Any]: return self.user_capabilities.erase_profile()
+    def ux_erase_profile(self)->dict[str,Any]:
+        result=self.user_capabilities.erase_profile()
+        self.memory.clear_volatile()
+        return result
 
     def close(self)->None:self.store.close()
     def __enter__(self):return self
