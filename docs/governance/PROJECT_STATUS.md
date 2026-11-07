@@ -25,6 +25,9 @@
 - PR #41 **merged**: protected Core and data-only academic sample catalogue.
 - PR #37 **merged**: disabled-by-default private cloud neural gateway source.
 - PR #43 **merged**: GCAB-1 AI standard, implementation gap register and eval protocol.
+- PR #45 **merged**: comprehensive GitHub repository audit, project-status update and README links.
+- PR #46 **merged**: fallback intent-capsule signature repair and active authorization regression.
+- Legacy PR #2 **closed as superseded** by #46; no broad old branch merge.
 - Issue #8 **closed as duplicate** of #10, not as solved.
 - Issue #44 **opened** for verified neural inference and independent evaluation.
 
