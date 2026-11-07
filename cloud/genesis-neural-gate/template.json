@@ -91,9 +91,8 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/apac.amazon.nova-micro-v1:0"
-                    },
-                    "arn:aws:bedrock:*::foundation-model/amazon.nova-micro-v1:0"
+                      "Fn::Sub": "arn:aws:bedrock:${AWS::Region}::foundation-model/openai.gpt-oss-120b-1:0"
+                    }
                   ]
                 },
                 {
@@ -148,7 +147,7 @@
             "GENESIS_NEURAL_ENABLED": {
               "Ref": "Enabled"
             },
-            "GENESIS_NEURAL_MODEL_ID": "apac.amazon.nova-micro-v1:0",
+            "GENESIS_NEURAL_MODEL_ID": "openai.gpt-oss-120b-1:0",
             "GENESIS_NEURAL_BUDGET_TABLE": {
               "Ref": "BudgetTable"
             },
