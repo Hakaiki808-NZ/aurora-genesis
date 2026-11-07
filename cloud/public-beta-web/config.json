@@ -1,1 +1,6 @@
-{"apiUrl": "https://mex7yuj2j2.execute-api.ap-southeast-2.amazonaws.com", "cognitoDomain": "https://agk-beta-179502447662.auth.ap-southeast-2.amazoncognito.com", "clientId": "2rbd0ud63cnvdl11h2h5s3mf9d", "redirectUri": "https://d3j65cc3p66kzr.cloudfront.net/"}
+{
+  "apiUrl": "https://mex7yuj2j2.execute-api.ap-southeast-2.amazonaws.com",
+  "cognitoDomain": "https://kyro-v4-private-179502447662.auth.ap-southeast-2.amazoncognito.com",
+  "clientId": "7le2ihp8hcee5gptqjis49ovau",
+  "redirectUri": "https://d3j65cc3p66kzr.cloudfront.net/"
+}
