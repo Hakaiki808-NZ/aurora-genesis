@@ -84,13 +84,13 @@ async function finishLogin(){
  const payload=checkIdentity(result.id_token,data.nonce);
  state.token=result.id_token;state.refreshToken=result.refresh_token||null;state.expiresAt=payload.exp*1000;clearSigninError();notice('Signed in. Loading your private workspace…');return true;
 }
-async function api(path,method='GET',body=null){
+async function api(path,method='GET',body=null,timeout=45000){
  if(!state.token)throw new Error('Sign in required');
  if(state.expiresAt && Date.now()+60000>=state.expiresAt){
   try{await renewSession();}catch(e){showSignedOut(e.message);throw e;}
  }
  const opts={method,headers:{Authorization:'Bearer '+state.token,...(body!==null?{'content-type':'application/json'}:{})},...(body!==null?{body:JSON.stringify(body)}:{})};
- let res=await request(CONFIG.api+'/api/v3'+path,opts,45000);
+ let res=await request(CONFIG.api+'/api/v3'+path,opts,timeout);
  if(res.status===401){
   // A failed JWT must never be retried with the same credentials.
   showSignedOut('Your login is no longer valid. Sign in again.');
@@ -102,10 +102,10 @@ async function api(path,method='GET',body=null){
 }
 const safe=async fn=>{try{return await fn();}catch(e){notice(e.message||String(e));return null;}};
 function show(mode){state.mode=mode;for(const el of document.querySelectorAll('[data-mode]'))el.classList.toggle('active',el.dataset.mode===mode);
- for(const name of ['overview','code','collab','chat','connectors','school'])$(name+'-panel').classList.toggle('hidden',name!==mode);
- const info={overview:['OVERVIEW','YOUR WORKSPACE','Welcome to Kyro.','Everything in one focused workspace.'],code:['CODE','CODE WORKSPACE','Build with intelligence.','Versioned source files. Approved and auditable changes.'],collab:['COLLABORATE','SHARED WORKSPACE','Better work, together.','Discuss work and share access by project role.'],chat:['CHAT ARCHIVE','PRIVATE CONVERSATIONS','Keep your thinking.','Conversation history and deterministic Genesis reference responses (experimental).'],connectors:['PLUGINS','CONNECTORS & APIs','Connect with control.','Adapters are registered; integrations are disabled until authorized.'],school:['REALIGNMENT SCHOOL','CONTROLLED LEARNING','Learn from mistakes.','Diagnosis, feedback and safe correction exercises.']};
+ for(const name of ['overview','code','collab','chat','neural','connectors','school'])$(name+'-panel').classList.toggle('hidden',name!==mode);
+ const info={overview:['OVERVIEW','YOUR WORKSPACE','Welcome to Kyro.','Everything in one focused workspace.'],code:['CODE','CODE WORKSPACE','Build with intelligence.','Versioned source files. Approved and auditable changes.'],collab:['COLLABORATE','SHARED WORKSPACE','Better work, together.','Discuss work and share access by project role.'],chat:['CHAT ARCHIVE','PRIVATE CONVERSATIONS','Keep your thinking.','Conversation history and deterministic Genesis reference responses (experimental).'],neural:['NEURAL LAB','RESEARCH INFERENCE','Test the trained Genesis model.','Private on-demand neural inference with no Aurora execution authority.'],connectors:['PLUGINS','CONNECTORS & APIs','Connect with control.','Adapters are registered; integrations are disabled until authorized.'],school:['REALIGNMENT SCHOOL','CONTROLLED LEARNING','Learn from mistakes.','Diagnosis, feedback and safe correction exercises.']};
  const [name,label,title,blurb]=info[mode];$('mode-title').textContent=name;$('section-label').textContent=label;$('section-title').textContent=title;$('section-blurb').textContent=blurb;
- if(mode==='school' && window.kyroSchoolLoad) safe(()=>window.kyroSchoolLoad());if(mode==='overview'){const m=$('metric-projects');if(m)m.textContent=String(state.projects.length);const p=state.projects.find(x=>x.id===state.project);const a=$('metric-active');if(a)a.textContent=p?p.name:'None selected';}if(mode==='collab')safe(loadPosts);if(mode==='chat')safe(loadConversations);if(mode==='connectors')safe(loadConnectors);if(mode==='code')safe(loadFiles);
+ if(mode==='school' && window.kyroSchoolLoad) safe(()=>window.kyroSchoolLoad());if(mode==='neural' && window.kyroNeuralLoad) safe(()=>window.kyroNeuralLoad());if(mode==='overview'){const m=$('metric-projects');if(m)m.textContent=String(state.projects.length);const p=state.projects.find(x=>x.id===state.project);const a=$('metric-active');if(a)a.textContent=p?p.name:'None selected';}if(mode==='collab')safe(loadPosts);if(mode==='chat')safe(loadConversations);if(mode==='connectors')safe(loadConnectors);if(mode==='code')safe(loadFiles);
 }
 async function boot(){
  $('login').onclick=()=>safe(beginLogin);
