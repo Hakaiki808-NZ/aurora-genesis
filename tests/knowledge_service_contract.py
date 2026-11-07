@@ -84,7 +84,8 @@ class KnowledgeContract(unittest.TestCase):
         }):
             rows = self.service._remote("crossref", "research", 1)
         self.assertEqual(len(rows), 1)
-        self.assertNotIn("abstract", json.dumps(rows))
+        self.assertNotIn("abstract", rows[0])
+        self.assertNotIn("DO NOT PERSIST", json.dumps(rows))
         self.assertFalse(rows[0]["training_eligible"])
 
     def test_live_search_is_bounded_and_cached(self):
