@@ -1,6 +1,6 @@
 # Genesis memory network — design and deployment gate
 
-Status: **pre-alpha prototype, not cloud deployed**. Full runnable source and standalone tests are provided with the 7 November 2026 ChatGPT prototype artifact.
+Status: **pre-alpha prototype, not cloud deployed**. Source is committed on the isolated feature branch as `genesis/memory_network.py`, with tests in `tests/memory_network.py`. It is not a deployed cloud capability.
 
 ## Architecture
 
@@ -21,7 +21,7 @@ Kyro must authenticate profile IDs server-side, never allow arbitrary profile se
 
 Memory-derived procedural text is **data only**, never an authorization to call an Aurora Engine action or change Guardians. Neural search is optional and requires a configured, versioned embedding encoder; a graph link is not a neural weight.
 
-## Work completed outside repository
+## Work committed to the feature branch
 
 - Prototype implementation `genesis/memory_network.py`
 - Standalone SQLite contract tests for consent, cross-profile isolation, TTLs, versioning, link traversal, promotion, deletion and vector hook
@@ -29,7 +29,7 @@ Memory-derived procedural text is **data only**, never an authorization to call 
 
 ## Gates before merge/deployment
 
-1. Import complete prototype into repository, run native CI against current Genesis `Store` and `Genesis` integration.
+1. Run native CI against current Genesis `Store` and `Genesis` integration; fix failures before merge.
 2. Validate consent/revoke triggers and complete cleanup of process-local memory.
 3. Benchmark on representative recall and latency tasks; compare against current BM25 and long context.
 4. Add approved authenticated Kyro memory API and isolate multi-worker caches.
