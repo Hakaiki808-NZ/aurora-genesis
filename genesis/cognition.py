@@ -140,7 +140,15 @@ class CognitionEngine:
             action.setdefault("external_side_effect",spec.external_side_effect); action.setdefault("irreversible",spec.irreversible); action.setdefault("sensitive_data",spec.sensitive_data); action.setdefault("policy_declared",spec.policy_declared)
             flags=set(action.get("policy_flags",[])); flags.update(spec.policy_flags); action["policy_flags"]=sorted(flags)
         cap=self.capabilities.evaluate(action,human_approved=human_approved)
-        capsule=IntentCapsule.from_action(action,required_capability=cap.required_level,authorization_basis=("explicit human approval" if human_approved else "delegated/model-internal"),evidence_present=bool(candidate_evidence),source_trust=source_trust)
+        # IntentCapsule.from_action accepts a single structured context, not keyword overrides.
+        capsule=IntentCapsule.from_action(action, {
+            "required_capability": cap.required_level,
+            "authorization_basis": "explicit_human" if human_approved else "delegated",
+            "human_approved": human_approved,
+            "candidate_evidence": candidate_evidence or [],
+            "source_trust": source_trust,
+            "tool_spec": spec,
+        })
         return {"human_approved":human_approved,"source_trust":source_trust,"candidate_evidence":candidate_evidence or [],"capability_decision":cap,"intent_capsule":capsule,"effective_action":action,"trajectory":[]}
 
     @staticmethod
