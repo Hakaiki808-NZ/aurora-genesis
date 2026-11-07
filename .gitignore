@@ -14,3 +14,9 @@ build/
 .DS_Store
 .idea/
 .vscode/
+
+# Do not commit imported third-party model weights or local hub cache.
+*.safetensors
+*.gguf
+models/
+.huggingface/
