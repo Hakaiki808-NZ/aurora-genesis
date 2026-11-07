@@ -134,7 +134,6 @@
         "Runtime": "python3.12",
         "Timeout": 20,
         "MemorySize": 256,
-        "ReservedConcurrentExecutions": 1,
         "Role": {
           "Fn::GetAtt": [
             "GatewayRole",
