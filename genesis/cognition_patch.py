@@ -3,6 +3,7 @@ import re
 from typing import Any
 from .types import Candidate, Decision
 from .intent import IntentCapsule
+from .unit_rate import solve_unit_rate
 
 def _ingest_file(self,path:str)->tuple[str,bool]:
     tr=self.tools.call("read_text",path=path)
@@ -123,6 +124,20 @@ def deliberate(self,text:str,learned:list[dict[str,Any]])->Decision:
     if m:c.append(Candidate("cancel_goal","",124,f"cancel goal {m.group(1)}",action={"type":"cancel_goal","goal_id":int(m.group(1))}))
     if re.match(r"(?is)^\s*list\s+goals\s*$",text):
         goals=self.store.active_goals(); resp="No active goals." if not goals else "\n".join(f"{g['id']}: {g['goal']} [{g['status']}]" for g in goals); c.append(Candidate("list_goals",resp,116,"goal state requested"))
+
+    # This strict, source-attributed arithmetic verifier never executes tools,
+    # mutates memory or lets model-generated text claim Engine authority.
+    unit_rate = solve_unit_rate(text)
+    if unit_rate and not learned:
+        c.append(Candidate(
+            "verified_unit_rate", unit_rate.answer(), 122,
+            "deterministic unit-price calculation from the user's stated quantities",
+            [{"kind":"user_input_arithmetic","source_count":unit_rate.source_count,
+              "source_total":str(unit_rate.source_total),
+              "target_count":unit_rate.target_count,
+              "computed_total":str(unit_rate.target_total),
+              "currency":unit_rate.currency}],
+        ))
 
     m=re.match(r"(?is)^\s*(?:calculate|compute)\s+(.+?)[.?]?\s*$",text)
     if m:c.append(Candidate("calculate","",121,"safe calculator tool",action={"type":"tool","name":"calculate","args":{"expression":m.group(1).strip().rstrip(".?")}}))
