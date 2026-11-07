@@ -18,6 +18,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
+import torch
 from genesis import Genesis
 from genesis.hf_backend import HuggingFaceBackend
 from genesis.hf_models import verify_local_model
@@ -37,6 +38,7 @@ def main() -> None:
     parser.add_argument("--cases",default="tools/eval/genesis_hf_probe_v1.json")
     args=parser.parse_args()
 
+    torch.set_num_threads(2)
     path=Path(args.model_dir)
     manifest=verify_local_model(path,verify_hashes=True)
     suite=json.loads(Path(args.cases).read_text(encoding="utf-8"))
