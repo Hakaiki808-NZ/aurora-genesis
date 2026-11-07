@@ -1,5 +1,13 @@
 # Genesis neural inference adapter — quota-gated AWS prototype
 
+## Selected inference model (8 November 2026)
+
+**Target:** OpenAI GPT-OSS 120B, Bedrock model ID `openai.gpt-oss-120b-1:0`, region `ap-southeast-2`. The model is ACTIVE in the Sydney Bedrock catalogue with ON_DEMAND inference. The private gateway template now grants invocation only to the target model ARN. This is a **target model selection**, not an assertion that live inference works.
+
+**Live validation blocker:** A short direct Bedrock Converse call on 2026-11-08 returned `ThrottlingException: Too many tokens per day`. Sydney Service Quotas returned 0 on-demand RPM and TPM for GPT OSS 120B, with both quota entries marked non-adjustable. The existing `GENESIS_NEURAL_ENABLED=0` gate, per-day attempted-call budget and restricted routing remain in place. Do **not** enable the gateway or route Kyro production chat to it until a successful authorised model smoke test and regression checks pass. See [the selection record](../../docs/research/GENESIS_GPT_OSS_120B_SELECTION_2026_11_08.md).
+
+The historical Nova Micro findings below describe the previous candidate model and do not establish GPT-OSS 120B availability for inference.
+
 This is a private **development-only** adapter for the existing Kyro → Genesis
 Lambda invocation contract. It uses a real *pretrained external* neural model
 on Bedrock when enabled; it does not run Genesis-owned Qwen weights or alter
