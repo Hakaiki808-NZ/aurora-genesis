@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "engine": "Genesis",
+  "catalogue_status": "reference_only",
+  "entries": [
+    {
+      "id": "genesis-core",
+      "title": "Genesis Core",
+      "kind": "core",
+      "tier": "bundled",
+      "state": "always_on",
+      "installable": false,
+      "uninstallable": false,
+      "summary": "Built-in conversation, memory interface, retrieval, safety-boundary and add-on lifecycle capabilities",
+      "source": "genesis/addons.py"
+    },
+    {
+      "id": "physics-foundations",
+      "title": "Physics Foundations",
+      "kind": "knowledge",
+      "tier": "free",
+      "state": "installable",
+      "installable": true,
+      "uninstallable": true,
+      "summary": "Classical mechanics short references",
+      "source": "examples/modules/physics-foundations.json"
+    },
+    {
+      "id": "spanish-basics",
+      "title": "Spanish Basics",
+      "kind": "language",
+      "tier": "free",
+      "state": "installable",
+      "installable": true,
+      "uninstallable": true,
+      "summary": "Beginner Spanish reference examples",
+      "source": "examples/modules/spanish-basics.json"
+    },
+    {
+      "id": "te-reo-maori-basics",
+      "title": "Te Reo Māori Basics",
+      "kind": "language",
+      "tier": "free",
+      "state": "installable",
+      "installable": true,
+      "uninstallable": true,
+      "summary": "Introductory te reo Māori examples; speaker review required before public learning release",
+      "source": "examples/modules/te-reo-maori-basics.json"
+    },
+    {
+      "id": "physics-bsc-starter",
+      "title": "Physics BSc Starter Curriculum",
+      "kind": "university_curriculum",
+      "tier": "free",
+      "state": "installable",
+      "installable": true,
+      "uninstallable": true,
+      "summary": "Sample 3-year topic map with original physics reference chapters; not an accredited course or degree",
+      "source": "examples/addons/physics-bsc-starter.json"
+    },
+    {
+      "id": "computer-science-bsc-starter",
+      "title": "Computer Science BSc Starter Curriculum",
+      "kind": "university_curriculum",
+      "tier": "free",
+      "state": "installable",
+      "installable": true,
+      "uninstallable": true,
+      "summary": "Sample 3-year topic map with original computer science reference chapters; not an accredited course or degree",
+      "source": "examples/addons/computer-science-bsc-starter.json"
+    }
+  ]
+}
