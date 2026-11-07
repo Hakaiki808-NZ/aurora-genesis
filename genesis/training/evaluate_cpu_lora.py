@@ -19,10 +19,14 @@ def main() -> None:
     parser.add_argument("--model-dir",required=True)
     parser.add_argument("--adapter-dir",required=True)
     parser.add_argument("--metrics",required=True)
+    parser.add_argument("--baseline-adapter",default=None)
+    parser.add_argument("--baseline-metrics",default=None)
     parser.add_argument("--output",required=True)
     parser.add_argument("--data",default="genesis/training/data/genesis_sft_v0.jsonl")
     parser.add_argument("--public-eval",default="tools/eval/genesis_hf_probe_v1.json")
     args=parser.parse_args()
+    if bool(args.baseline_adapter)!=bool(args.baseline_metrics):
+        raise ValueError("baseline adapter requires matching metrics")
 
     import torch
     from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
@@ -61,11 +65,26 @@ def main() -> None:
         attn_implementation="eager"
     )
     base.eval()
+    baseline=base
+    if args.baseline_adapter:
+        parent=json.loads(Path(args.baseline_metrics).read_text(encoding="utf-8"))
+        parent_weight=Path(args.baseline_adapter)/"adapter_model.safetensors"
+        if (metrics.get("parent_adapter_sha256")!=parent.get("adapter_sha256")
+                or parent.get("base_weight_sha256")!=manifest["weight_sha256"]
+                or sha256_file(parent_weight)!=parent.get("adapter_sha256")):
+            raise RuntimeError("parent LoRA provenance or checksum differs")
+        baseline=PeftModel.from_pretrained(
+            base,args.baseline_adapter,adapter_name="baseline",is_trainable=False
+        )
+        baseline.load_adapter(str(adapter),adapter_name="adapted",is_trainable=False)
+        baseline.set_adapter("baseline")
+        baseline.eval()
     out={"date_utc":datetime.now(timezone.utc).isoformat(),
          "evaluation_type":"8 original operator prompts, 5 validation questions and 3 control questions",
          "base_checkpoint":manifest["weight_sha256"],
          "adapter_checkpoint":metrics["adapter_sha256"],
          "promotion":"blocked_pending_independent_evaluation",
+         "baseline_kind":"round1_adapter" if args.baseline_adapter else "base_model",
          "examples":[]}
     outfile=Path(args.output)
     outfile.parent.mkdir(parents=True,exist_ok=True)
@@ -90,14 +109,16 @@ def main() -> None:
 
     for row in samples:
         result={"question":row["instruction"],"reference":row["response"],
-                "base":predict(base,row["instruction"])}
+                "baseline":predict(baseline,row["instruction"])}
         out["examples"].append(result)
         outfile.write_text(json.dumps(out,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
-        print("BASE_EXAMPLE",len(out["examples"]),result["base"]["answer"][:350],flush=True)
+        print("BASELINE_EXAMPLE",len(out["examples"]),result["baseline"]["answer"][:350],flush=True)
 
-    adapted=PeftModel.from_pretrained(
-        base,str(adapter),is_trainable=False
-    )
+    if args.baseline_adapter:
+        adapted=baseline
+        adapted.set_adapter("adapted")
+    else:
+        adapted=PeftModel.from_pretrained(base,str(adapter),is_trainable=False)
     adapted.eval()
     for i,row in enumerate(samples):
         result=out["examples"][i]
