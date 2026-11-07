@@ -53,7 +53,7 @@ class Genesis:
         if backend is None and generator_mode == "bedrock":
             # Explicit two-switch opt-in. No implicit AWS usage in auto mode.
             backend=BedrockBackend(
-                model=os.environ.get("GENESIS_BEDROCK_MODEL_ID","apac.amazon.nova-micro-v1:0"),
+                model=os.environ.get("GENESIS_BEDROCK_MODEL_ID","openai.gpt-oss-120b-1:0"),
                 region=os.environ.get("GENESIS_BEDROCK_REGION","ap-southeast-2"),
                 enabled=os.environ.get("GENESIS_BEDROCK_ENABLE","").lower() in {"1","true","yes"},
                 max_output_tokens=int(os.environ.get("GENESIS_BEDROCK_MAX_TOKENS","256")),
