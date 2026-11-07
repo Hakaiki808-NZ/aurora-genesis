@@ -3,7 +3,7 @@ import subprocess, sys, platform, json
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
-TESTS=['tests.acceptance','tests.regression','tests.refinement','tests.hardening','tests.api_test','tests.constitutional','tests.constitution_stress','tests.guardian_hardening','tests.phases.phase2_integration','tests.phases.phase3_adversarial','tests.phases.phase4_recovery_integration','tests.neural_backend','tests.huggingface_import','tests.question_routing','tests.unit_rate_verification','tests.hf_scoring','tests.reasoning_guardrails','tests.cpu_lora_plan','tests.hf_adapter','tests.realignment_school','tests.knowledge_modules','tests.language_modules','tests.task_assurance','tests.user_capabilities','tests.kyro_capabilities_lambda','tests.kyro_marketing']
+TESTS=['tests.acceptance','tests.regression','tests.refinement','tests.hardening','tests.api_test','tests.constitutional','tests.constitution_stress','tests.guardian_hardening','tests.phases.phase2_integration','tests.phases.phase3_adversarial','tests.phases.phase4_recovery_integration','tests.neural_backend','tests.huggingface_import','tests.question_routing','tests.unit_rate_verification','tests.hf_scoring','tests.reasoning_guardrails','tests.cpu_lora_plan','tests.hf_adapter','tests.automatic_training','tests.realignment_school','tests.knowledge_modules','tests.language_modules','tests.task_assurance','tests.user_capabilities','tests.kyro_capabilities_lambda','tests.kyro_marketing']
 
 def main():
     results=[]
