@@ -35,6 +35,8 @@ def run():
             assert g.list_knowledge_modules() == []
 
             rejected(lambda: g.uninstall_addon("genesis-core"))
+            rejected(lambda: g.uninstall_knowledge_module("genesis-core"))
+            rejected(lambda: g.enable_knowledge_module("genesis-core", False))
             rejected(lambda: g.set_addon_enabled("genesis-core", False))
             rejected(lambda: g.install_addon({**DEGREE, "id": "genesis-core"}))
             rejected(lambda: g.install_knowledge_module({**DEGREE, "id": "genesis-core"}))
