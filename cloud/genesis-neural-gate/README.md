@@ -42,3 +42,24 @@ exist in a private S3 artifact bucket; they are **not** hosted for real-time
 Kyro chat. Serving them requires a separate inference container/endpoint with
 measured CPU memory and latency. Prior smoke tests were not standardized
 accuracy benchmarks.
+
+## AWS deployment and tests (2026-11-07)
+
+- CloudFormation stack: `genesis-neural-gateway-dev` (**UPDATE_COMPLETE**).
+- Private AWS Lambda: `genesis-neural-gateway-dev` (**Active**, no public API route).
+- DynamoDB budget table: `genesis-neural-budget-dev`, on-demand.
+- `action=status` returned 200, reporting the neural gate **disabled**.
+- Synthetic chat invocation returned 503 (`neural_gate_closed`) with no Bedrock call.
+- Atomic DynamoDB counter syntax was corrected to
+  `SET expires = :ttl ADD attempts :one`, then the update succeeded.
+- AWS Lambda reserved concurrency 1 was rejected because of the account's
+  unreserved-concurrency minimum; the stack was redeployed **without**
+  reserved concurrency. The DynamoDB atomic daily attempt cap is retained.
+- Quota increase request status is now **CASE_OPENED**. The effective
+  cross-region Nova Micro TPM quota and model daily token quota both remain
+  **0**. The daily token quota is not adjustable through Service Quotas.
+
+**Unresolved blocker:** AWS must grant usable Nova Micro quotas (including
+daily tokens), or a separate CPU inference endpoint must be built for the
+existing Qwen/LoRA artifacts. Until a successful real-model invocation,
+leave `Enabled=0`. No claim of live neural chat.
