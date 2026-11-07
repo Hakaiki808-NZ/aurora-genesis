@@ -88,9 +88,17 @@ failure and one response needing human review remain. See the
 [real-weight hardening report](docs/research/GENESIS_REASONING_HARDENING_2026-11-07.md)
 and the [import guide](docs/architecture/HUGGING_FACE_MODEL_IMPORT.md).
 
-The model is **not** continuously running on AWS, has not been fine-tuned in this
-programme, and has not been promoted to public beta. Aurora admission and
-execution authority remain separate.
+The system has also completed **two actual experimental CPU LoRA fine-tuning rounds**
+(8 + 48 optimiser steps) on original project instruction data, with distinct held-out
+loss measurements and versioned, checksum-verified private adapter checkpoints.
+The results and unresolved hallucination risks are documented in the
+[real LoRA training report](docs/research/GENESIS_REAL_LORA_TRAINING_2026-11-07.md).
+Experimental adapter loading remains explicitly opt-in and is **not** an Aurora
+execution permission or Kyro service deployment.
+
+Genesis is **not** continuously serving or training on AWS, and the new adapters
+have **not** been promoted to public beta. Aurora admission and execution authority
+remain separate.
 
 ## Contributing
 
