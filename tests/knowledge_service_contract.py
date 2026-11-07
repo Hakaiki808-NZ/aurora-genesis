@@ -114,7 +114,7 @@ class KnowledgeContract(unittest.TestCase):
         self.assertEqual(table["BillingMode"], "PAY_PER_REQUEST")
         self.assertTrue(table["PointInTimeRecoverySpecification"]["PointInTimeRecoveryEnabled"])
         self.assertTrue(table["TimeToLiveSpecification"]["Enabled"])
-        self.assertEqual(resources["KnowledgeFunction"]["Properties"]["ReservedConcurrentExecutions"], 2)
+        self.assertNotIn("ReservedConcurrentExecutions", resources["KnowledgeFunction"]["Properties"])
 
 
 if __name__ == "__main__":
