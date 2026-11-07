@@ -76,7 +76,7 @@ The knowledge-module system also includes two **free** starter language packs: [
 
 ## Experimental hierarchical memory (opt-in)
 
-The [Genesis memory-network prototype](docs/architecture/GENESIS_MEMORY_NETWORK_RFC_2026_11_07.md) provides consent-scoped transient, working, short-term and long-term typed memory with associative links, bounded FTS5 retrieval, and an optional embedding-encoder interface. It does **not** train model weights, automatically enable persistence for user profiles, or expose a production memory API. It remains pre-alpha and requires review/testing before deployment.
+The [Genesis memory-network prototype](docs/architecture/GENESIS_MEMORY_NETWORK_RFC_2026_11_07.md) provides consent-scoped transient, working, short-term and long-term typed memory with associative links, bounded FTS5 retrieval, and an optional loopback-only Ollama embedding adapter enabled using `GENESIS_MEMORY_ENCODER=ollama` (model defaults to `embeddinggemma` if the operator has already installed it). It does **not** train model weights, automatically enable persistence for user profiles, or expose a production memory API. It remains pre-alpha and requires review/testing before deployment.
 
 ## Contributing
 
