@@ -58,6 +58,8 @@ def _principal(event):
 def _backend():
     global _MODEL
     if _MODEL is None:
+        import torch
+        torch.set_num_threads(2)
         from genesis.hf_backend import HuggingFaceBackend
         base=HuggingFaceBackend(
             model_dir="/var/task/model",
@@ -100,7 +102,7 @@ def _charge_quota(subject):
             ddb.update_item(
                 TableName=table,
                 Key={"pk":{"S":pk},"sk":{"S":sk}},
-                UpdateExpression="ADD requests :increment SET expires_at=:expiry",
+                UpdateExpression="SET expires_at=:expiry ADD requests :increment",
                 ConditionExpression="attribute_not_exists(requests) OR requests < :cap",
                 ExpressionAttributeValues={
                     ":increment":{"N":"1"},
