@@ -89,6 +89,9 @@
       <button type="button" id="authSignIn" class="auth-primary">Continue with secure sign-in <span>→</span></button>
       <p class="auth-note">Invite-only access · AWS Cognito sign-in · Conversations saved to Kyro</p>
       <p id="authError" class="auth-error hidden" role="alert"></p>
+      <button type="button" class="diagnostic-button" id="runDiagnostics">Check login and API connections</button>
+      <div class="diagnostic-results hidden" id="diagnosticResults" role="status" aria-live="polite"></div>
+      <button type="button" class="diagnostic-copy hidden" id="copyDiagnostics">Copy diagnostic report</button>
       <div class="auth-footer"><a href="/v3/index.html">Open full Kyro workspace</a><span>Temporary interface · Private research preview</span></div>
     </div>
   </div>
