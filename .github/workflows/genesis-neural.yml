@@ -4,12 +4,16 @@ on:
     paths:
       - 'genesis/**'
       - 'tests/neural_backend.py'
+      - 'tests/huggingface_import.py'
+      - 'requirements_hf.txt'
       - '.github/workflows/genesis-neural.yml'
       - 'verify.py'
   pull_request:
     paths:
       - 'genesis/**'
       - 'tests/neural_backend.py'
+      - 'tests/huggingface_import.py'
+      - 'requirements_hf.txt'
       - '.github/workflows/genesis-neural.yml'
       - 'verify.py'
 permissions:
@@ -29,9 +33,11 @@ jobs:
       - name: Install API test dependencies
         run: python -m pip install -r requirements.txt
       - name: Python syntax and compile
-        run: python -m compileall -q genesis tests/neural_backend.py
+        run: python -m compileall -q genesis tests/neural_backend.py tests/huggingface_import.py
       - name: Bounded neural backend tests (stubbed, no external calls)
-        run: python -m tests.neural_backend
+        run: |
+          python -m tests.neural_backend
+          python -m tests.huggingface_import
       - name: Existing behavior regression
         run: |
           python -m tests.regression
