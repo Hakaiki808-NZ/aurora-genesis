@@ -11,6 +11,9 @@ Status: **pre-alpha prototype, not cloud deployed**. Source is committed on the 
 - L4: persisted long-term **semantic**, **episodic**, and **procedural** records.
 - Associations: directed, typed weighted links, one-hop spreading activation from the five strongest direct hits, max eight edges each.
 - Query paths: exact normalized key, FTS5 lexical shortlist, optional embedding encoder, association expansion, bounded top-K retrieval.
+- Optional **local neural** encoder: `genesis/memory_encoders.py` uses an independently installed Ollama `/api/embed` model on `127.0.0.1:11434` only. This adapter remains OFF by default, makes no requests on Genesis startup, and never installs/pulls a model.
+- Enable deliberately for testing with `GENESIS_MEMORY_ENCODER=ollama` and optionally `GENESIS_MEMORY_EMBEDDING_MODEL=embeddinggemma`. Pre-install the named Ollama embedding model separately and check local loopback availability. This is a synchronous adapter; its failures surface as explicit errors, not silent fallback.
+- Model tags are not immutable identifiers. Replacing the model under the same tag requires invalidating and recomputing existing vectors. Corpus-scale ANN, rerankers, and neural-network weight training are not included.
 - Safe consolidation: explicit `promote` only; no autonomous conversion of untrusted data to long-term facts.
 
 Existing Genesis: `storage.py` has persisted episodes/facts/rules, `retrieval.py` offers BM25-style knowledge search, `user_capabilities.py` provides per-profile consent records. This is a supplementary typed memory subsystem using the existing SQLite Store and consent scope; it does not replace them or train model weights.
