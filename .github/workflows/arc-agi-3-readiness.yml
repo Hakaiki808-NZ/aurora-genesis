@@ -1,0 +1,38 @@
+name: ARC-AGI-3 harness synthetic readiness
+on:
+  push:
+    paths:
+      - 'tools/benchmarks/**'
+      - 'tests/arc_agi_3_harness.py'
+      - 'docs/benchmarks/ARC_AGI_3_READINESS.md'
+      - '.github/workflows/arc-agi-3-readiness.yml'
+  pull_request:
+    paths:
+      - 'tools/benchmarks/**'
+      - 'tests/arc_agi_3_harness.py'
+      - 'docs/benchmarks/ARC_AGI_3_READINESS.md'
+      - '.github/workflows/arc-agi-3-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: python -m compileall -q tools/benchmarks/arc_agi_3.py tests/arc_agi_3_harness.py
+      - name: Synthetic ARC game and fail-closed agent tests
+        run: python -m tests.arc_agi_3_harness
+      - name: Ensure no benchmark starts automatically
+        run: |
+          set +e
+          python tools/benchmarks/arc_agi_3.py --output /tmp/arc-agi-3-not-run.json
+          result=$?
+          set -e
+          test "$result" -eq 2
+          python -c "import json; r=json.load(open('/tmp/arc-agi-3-not-run.json')); assert r['result']=='BLOCKED' and r['official_score'] is None"
