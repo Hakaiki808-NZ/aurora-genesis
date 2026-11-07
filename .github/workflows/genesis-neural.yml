@@ -9,6 +9,9 @@ on:
       - 'tests/hf_scoring.py'
       - 'tests/cpu_lora_plan.py'
       - 'tests/hf_adapter.py'
+      - 'tests/automatic_training.py'
+      - 'tools/aws/genesis_autotrain_controller.py'
+      - 'tools/aws/genesis_continuous_buildspec.yml'
       - 'requirements_hf_adapter.txt'
       - 'tests/reasoning_guardrails.py'
       - 'tools/eval/**'
@@ -24,6 +27,9 @@ on:
       - 'tests/hf_scoring.py'
       - 'tests/cpu_lora_plan.py'
       - 'tests/hf_adapter.py'
+      - 'tests/automatic_training.py'
+      - 'tools/aws/genesis_autotrain_controller.py'
+      - 'tools/aws/genesis_continuous_buildspec.yml'
       - 'requirements_hf_adapter.txt'
       - 'tests/reasoning_guardrails.py'
       - 'tools/eval/**'
@@ -57,6 +63,7 @@ jobs:
           python -m tests.reasoning_guardrails
           python -m tests.cpu_lora_plan
           python -m tests.hf_adapter
+          python -m tests.automatic_training
       - name: Existing behavior regression
         run: |
           python -m tests.regression
