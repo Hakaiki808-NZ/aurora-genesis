@@ -106,8 +106,8 @@ The current comparison below is conservative. A checked-in design is not an oper
 - An optional pretrained Amazon Bedrock text adapter exists behind two flags; the documented AWS inspection reported quota **zero** for Nova Micro, and no successful production Bedrock inference deployment was established.
 - Reference Engine hardening and tests are described separately from the restricted C1-only AWS cloud deployment. Do not conflate them.
 - Authenticated API-side tests are documented, while human browser login, account deletion/privacy, restore drills and public-beta qualification remained open in the release gate.
-- Example knowledge packs are retrieval material, **not** accredited degrees or validated expert reasoning. 
-- Unmerged hierarchical memory / specialist addon branches must be reviewed and qualified before included in a merged baseline.
+- Example knowledge and university curriculum packs are retrieval material, **not** accredited degrees or validated expert reasoning. 
+- The protected Core and university add-on catalogue was merged from PR #41. It remains prototype educational content, not validated expertise; the hierarchical memory branch PR #42 and other feature branches still require review and qualification.
 
 Local repository evidence:
 - README.md, MODEL_API.md
