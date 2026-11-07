@@ -11,7 +11,7 @@ The code is uploaded as CloudFormation inline Lambda source, with:
 - no tool execution and no engine authority;
 - atomic DynamoDB limit of 12 attempted model calls per UTC day;
 - explicit Bedrock `maxTokens=128` and 1,800-character prompt limit;
-- reserved Lambda concurrency 1, dedicated least-privilege IAM role;
+- DynamoDB-atomic cross-worker call cap and a dedicated least-privilege IAM role;
 - seven-day CloudWatch log retention; no prompt/response logging.
 
 **Activation gate (not met)**: Sydney account had an effective daily Bedrock
