@@ -1,0 +1,47 @@
+version: 0.2
+env:
+  shell: bash
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - |
+        set -Eeuo pipefail
+        python3 -m pip install --disable-pip-version-check -q --upgrade pip
+        python3 -m pip install --disable-pip-version-check -q --no-cache-dir torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+        python3 -m pip install --disable-pip-version-check -q --no-cache-dir transformers==4.51.3 peft==0.15.2 accelerate==1.6.0 huggingface_hub==0.36.0 safetensors==0.5.3
+  build:
+    commands:
+      - |
+        set -Eeuo pipefail
+        export OMP_NUM_THREADS=2
+        export TOKENIZERS_PARALLELISM=false
+        export HF_HUB_DISABLE_TELEMETRY=1
+        export PYTHONUNBUFFERED=1
+        test -n "$GENESIS_REPO_SHA"
+        test -n "$GENESIS_ARTIFACT_BUCKET"
+        test -n "$TRAIN_DATA_KEY"
+        test -n "$TRAIN_DATA_SHA"
+        test -n "$TRAIN_RUN_ID"
+        test -n "$TRAIN_STEPS"
+        case "$TRAIN_STEPS" in 1|2|3|4|5|6|7|8|9|10|11|12) ;; *) echo "TRAIN_STEP_CAP_REJECTED"; exit 1;; esac
+        mkdir -p /tmp/genesis-run/model /tmp/genesis-run/previous /tmp/genesis-run/data
+        git init -q /tmp/genesis-run/repo
+        cd /tmp/genesis-run/repo
+        git remote add origin https://github.com/Hakaiki808-NZ/aurora-genesis.git
+        git fetch --depth 1 origin "$GENESIS_REPO_SHA"
+        git checkout --detach "$GENESIS_REPO_SHA"
+        test "$(git rev-parse HEAD)" = "$GENESIS_REPO_SHA"
+        export PYTHONPATH="/tmp/genesis-run/repo"
+        aws s3 sync "s3://$GENESIS_ARTIFACT_BUCKET/genesis/hf/qwen2p5-0p5b-instruct/model/" /tmp/genesis-run/model --no-progress
+        aws s3 sync "s3://$GENESIS_ARTIFACT_BUCKET/genesis/hf/qwen2p5-0p5b-instruct/training/cpu-lora-r2/adapter/" /tmp/genesis-run/previous --no-progress
+        aws s3 cp "s3://$GENESIS_ARTIFACT_BUCKET/genesis/hf/qwen2p5-0p5b-instruct/training/cpu-lora-r2/metrics.json" /tmp/genesis-run/previous-metrics.json --no-progress
+        aws s3 cp "s3://$GENESIS_ARTIFACT_BUCKET/$TRAIN_DATA_KEY" /tmp/genesis-run/data/candidate.jsonl --no-progress
+        test "$(sha256sum /tmp/genesis-run/data/candidate.jsonl | cut -d' ' -f1)" = "$TRAIN_DATA_SHA"
+        echo "DATA_HASH_AND_GIT_REVISION_VERIFIED"
+        python3 -m genesis.training.finetune_cpu_lora --model-dir /tmp/genesis-run/model --data /tmp/genesis-run/data/candidate.jsonl --steps "$TRAIN_STEPS" --out /tmp/genesis-run/output --resume-adapter /tmp/genesis-run/previous --resume-metrics /tmp/genesis-run/previous-metrics.json
+        DEST="s3://$GENESIS_ARTIFACT_BUCKET/genesis/training/automation/runs/$TRAIN_RUN_ID"
+        aws s3 cp /tmp/genesis-run/output/metrics.json "$DEST/metrics.json" --sse AES256
+        aws s3 cp /tmp/genesis-run/output/adapter/ "$DEST/adapter/" --recursive --no-progress --sse AES256
+        echo "CANDIDATE_ONLY_TRAINING_RUN_COMPLETED"
