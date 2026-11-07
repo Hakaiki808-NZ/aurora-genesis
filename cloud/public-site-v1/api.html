@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en-NZ">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Kyro developer API reference and verified private-alpha endpoint status.">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f7f9fb">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://ces52hcf3e.execute-api.ap-southeast-2.amazonaws.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<link rel="stylesheet" href="./site.css"><script defer src="./api.js"></script>
+<title>Developer API · Kyro</title>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="ribbon"><span class="live-dot"></span><span>DEVELOPER REFERENCE</span><span class="slash">/</span><span>PRIVATE ALPHA</span></div>
+<header class="topbar"><div class="wrap nav">
+<a href="./index.html" class="brand" aria-label="Kyro home"><span class="logo">K<span>·</span></span><span><b>KYRO</b><small>DEVELOPER PLATFORM</small></span></a>
+<nav aria-label="Developer navigation"><a href="./developers.html">Developer portal</a><a href="./docs.html">Documentation</a><a href="./status.html">Release status</a></nav>
+<a class="login-link" href="./dev-login.html">Sign in ↗</a>
+</div></header>
+<main id="main">
+<section class="page-hero wrap"><div class="eyebrow">VERIFIED ROUTE CATALOGUE · 7 NOVEMBER 2026</div>
+<h1>Build with<br><em>clear boundaries.</em></h1>
+<p class="lead">An honest reference for Kyro's live AWS HTTP interfaces. Only the health route is public; everything else requires an approved Cognito session.</p>
+<p class="muted">Region: ap-southeast-2 (Sydney) · API version: v3 private alpha · Aurora high-consequence actions disabled · Not an independently trained AGI service</p></section>
+<section class="wrap section narrow-top">
+<div class="api-layout">
+<article class="login-card" aria-labelledby="status-title">
+<div class="eyebrow">LIVE CONNECTIVITY</div><h2 id="status-title">API health check</h2>
+<p>This sends one unauthenticated GET to the existing V3 health route. It does not attempt private operations or use your account credentials.</p>
+<button class="button primary" id="check-health" type="button">Run live health check</button>
+<p id="health-result" class="api-result" role="status" aria-live="polite">Not checked in this browser.</p>
+<p class="muted"><small>A successful health response confirms route reachability, not full platform readiness.</small></p>
+</article>
+<article class="login-card"><div class="eyebrow">ACCESS CONTROL</div><h2>One workspace identity</h2>
+<p>Developer login uses the existing invite-only Kyro V3 Cognito user pool and its OAuth 2.0 authorization-code + PKCE browser flow.</p>
+<a class="button primary" href="./dev-login.html">Open developer sign-in ↗</a>
+<p class="api-muted">The older root research chat still uses a separate legacy user pool. Full SSO migration is pending; no social identity provider is enabled.</p>
+</article>
+</div>
+</section>
+<section class="wrap section narrow-top" aria-labelledby="routes-title"><div class="eyebrow">V3 HTTP API · DEPLOYED ROUTES</div><h2 id="routes-title">Endpoint directory</h2>
+<div class="api-tablewrap"><table class="api-table"><thead><tr><th>Method</th><th>Path</th><th>Access</th><th>Function</th></tr></thead><tbody>
+<tr><td><code>GET</code></td><td><code>/api/v3/health</code></td><td>Public</td><td>Service health response</td></tr>
+<tr><td><code>ANY</code></td><td><code>/api/v3/{proxy+}</code></td><td>JWT</td><td>Core authenticated workspace API</td></tr>
+<tr><td><code>ANY</code></td><td><code>/api/v3/capabilities/{proxy+}</code></td><td>JWT</td><td>Bounded experimental capabilities</td></tr>
+<tr><td><code>ANY</code></td><td><code>/api/v3/realignment/{proxy+}</code></td><td>JWT</td><td>Research-only Realignment School</td></tr>
+<tr><td><code>ANY</code></td><td><code>/api/v3/aurora/{proxy+}</code></td><td>JWT</td><td>Restricted C1 control-plane operations</td></tr>
+</tbody></table></div>
+<p class="muted api-muted">ANY and {proxy+} are API Gateway routing patterns, not promises that every HTTP verb or subpath is implemented. Only documented application operations should be called.</p>
+</section>
+<section class="wrap section narrow-top" aria-labelledby="example-title"><div class="eyebrow">QUICK START</div><h2 id="example-title">Health endpoint example</h2>
+<div class="terminal"><div class="terminal-bar">PUBLIC · NO API KEY REQUIRED <span>GET</span></div><pre><code>curl --fail-with-body \
+  https://ces52hcf3e.execute-api.ap-southeast-2.amazonaws.com/api/v3/health</code></pre></div>
+<p class="muted api-muted">For authenticated calls, use the hosted Cognito PKCE login through Kyro. Do not place API tokens in URLs, Git repositories or pasted screenshots. An OAuth login does not grant Aurora Engine execution authority.</p>
+<div class="actions"><a class="button primary" href="./docs.html">Read model documentation ↗</a><a class="button secondary" href="https://github.com/Hakaiki808-NZ/aurora-genesis/blob/main/specifications/MODEL_API.md">Read canonical contract ↗</a></div></section>
+<section class="wrap section narrow-top"><div class="eyebrow">IDENTITY ROADMAP</div><h2>Social sign-in, prepared—not enabled.</h2>
+<p class="muted">Federation adapters for Google, Microsoft and GitHub are planned. No provider OAuth apps, client secrets or account-linking policy have been approved. The buttons below are intentionally disabled.</p>
+<div class="federation-actions" aria-label="Social sign-in roadmap"><button disabled type="button">Google · coming soon</button><button disabled type="button">Microsoft · coming soon</button><button disabled type="button">GitHub · coming soon</button></div></section>
+<section class="wrap section narrow-top"><div class="eyebrow">LEGACY INTEGRATION</div><h2>Research API (separate identity)</h2>
+<p class="muted">The earlier research beta exposes JWT-protected <code>GET /api/status</code> and <code>POST /api/chat</code> through a distinct Cognito user pool. These are not yet part of Kyro's unified developer sign-in and remain experimental.</p>
+<p><a class="text-link" href="./status.html">See release gates →</a></p></section>
+</main>
+<footer class="footer"><div class="wrap"><p><a href="./index.html">Kyro home</a> · <a href="./developers.html">Developer portal</a> · <a href="./privacy.html">Privacy &amp; terms</a></p><p class="muted">Research-stage implementation. Do not transmit sensitive data or enable high-consequence Engine operations.</p></div></footer>
+</body></html>
