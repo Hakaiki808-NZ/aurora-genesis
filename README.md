@@ -17,6 +17,10 @@ The [Kyro launch-site candidate](cloud/kyro-launch/) showcases our two immediate
 
 **Deployment note (7 November 2026):** Static research/pre-alpha website assets are present in AWS CloudFront/S3 at [public site](https://d3j65cc3p66kzr.cloudfront.net/site/index.html) and [discovery preview](https://d3j65cc3p66kzr.cloudfront.net/discover/index.html). This does **not** approve public onboarding or establish browser usability. Self-service cloud installs, purchases, real-time co-editing and public access to the private workspace are not offered. See [the systems guide](docs/architecture/SYSTEMS_PUBLIC_GUIDE.md) and [release gate](docs/releases/PUBLIC_BETA_GATE_2026_11_07.md).
 
+## Free prelaunch and community
+
+The project is gathering **public developer feedback and voluntary early interest**, not opening unrestricted Kyro accounts. See the [free prelaunch plan](docs/marketing/FREE_PRELAUNCH_PLAN_2026_11_07.md), [prepared public posts](docs/marketing/POSTS_READY_FOR_REVIEW.md), and [GitHub-based interest form](https://github.com/Hakaiki808-NZ/aurora-genesis/issues/new?template=early-access-interest.yml). GitHub issues are public: do not post personal contact details or secrets. The site remains `noindex` pending readiness review.
+
 ## Public information
 
 - [About Aurora, Genesis and Kyro](docs/architecture/SYSTEMS_PUBLIC_GUIDE.md)

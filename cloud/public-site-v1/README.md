@@ -14,6 +14,7 @@ A separate public information site for the existing Kyro private-alpha workspace
 - `modules.html`: planned language/specialist packs with filters and detail panel
 - `collaboration.html`: interactive role explorer
 - `roadmap.html`: filterable milestones
+- `community.html`: $0 research participation and GitHub-hosted public early-interest form (no email capture or user accounts)
 - `about.html`, `status.html`, `privacy.html`, `404.html`
 
 ## Release
@@ -26,4 +27,4 @@ Never overwrite the existing root research beta or private `/v3/` workspace as p
 `node --check cloud/public-site-v1/site.js`
 `node tests/kyro-public-site-static.cjs`
 
-Pages are `noindex,nofollow` until reviewed for public launch. The blog uses source-controlled posts rather than a CMS; the knowledge marketplace and paid installation are not active. The privacy page is preliminary; do not treat it as final service terms. Login is invite-only and is processed only by the existing Cognito flow; no passwords or user tokens are stored here.
+Pages are `noindex,nofollow` until reviewed for public launch. No automatic Google indexing is enabled. The community interest form uses a **public GitHub Issue Form**: participants should not enter personal contact details, and it does not grant private-alpha access. The file is in `.github/ISSUE_TEMPLATE/early-access-interest.yml`. Static sources need a separate controlled S3 deployment to reach CloudFront. The blog uses source-controlled posts rather than a CMS; the knowledge marketplace and paid installation are not active. The privacy page is preliminary; do not treat it as final service terms. Login is invite-only and is processed only by the existing Cognito flow; no passwords or user tokens are stored here.
