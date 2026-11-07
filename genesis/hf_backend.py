@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from importlib.util import find_spec
+import os
 from pathlib import Path
 from threading import Lock
 from typing import Any
@@ -98,10 +99,17 @@ class HuggingFaceBackend(GeneratorBackend):
                         path, local_files_only=True, trust_remote_code=False
                     )
                     config = normalize_disabled_qwen_sliding_window(config)
+                    # Opt-in lower-memory runtime for restricted CPU-only hosts.
+                    # Defaults to the already-validated FP32 reference path.
+                    dtype_name = os.environ.get("GENESIS_HF_CPU_DTYPE", "float32")
+                    if dtype_name not in ("float32", "bfloat16"):
+                        raise ValueError("Unsupported GENESIS_HF_CPU_DTYPE")
+                    load_dtype = getattr(torch, dtype_name)
                     self._model = AutoModelForCausalLM.from_pretrained(
                         path, config=config,
                         local_files_only=True, trust_remote_code=False,
-                        use_safetensors=True, torch_dtype=torch.float32,
+                        use_safetensors=True, torch_dtype=load_dtype,
+                        low_cpu_mem_usage=True,
                         attn_implementation="eager"
                     )
                     if self.adapter_enabled:
