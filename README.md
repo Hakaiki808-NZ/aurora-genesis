@@ -77,10 +77,20 @@ python -m genesis.hf_import import  # no download
 # reviewed download, verification and local inference commands.
 ```
 
-This **does not** mean model weights have already been downloaded, attached to
-the live AWS service, evaluated as Genesis-trained weights or promoted to public
-beta. Aurora admission and execution authority remain separate. See
-[Hugging Face integration](docs/architecture/HUGGING_FACE_MODEL_IMPORT.md).
+**Verified real-weight status (2026-11-07):** The approved Qwen checkpoint has now
+been downloaded, hashed, and exercised in two isolated AWS CPU test runs. The
+unchanged pretrained weights and detailed results are stored in private encrypted
+S3, not in GitHub or the live Kyro service. On a small public 12-case smoke suite,
+strict automatic passes were **4/12 for raw Qwen**, **7/12 for Genesis before
+routing fixes**, and **10/12 after the fixes**. This is **not** a standardized
+reasoning or safety benchmark and does not establish generalization; one geography
+failure and one response needing human review remain. See the
+[real-weight hardening report](docs/research/GENESIS_REASONING_HARDENING_2026-11-07.md)
+and the [import guide](docs/architecture/HUGGING_FACE_MODEL_IMPORT.md).
+
+The model is **not** continuously running on AWS, has not been fine-tuned in this
+programme, and has not been promoted to public beta. Aurora admission and
+execution authority remain separate.
 
 ## Contributing
 
