@@ -1,0 +1,82 @@
+{
+  "name": "Genesis Qwen CPU reasoning probe v1",
+  "version": 1,
+  "purpose": "Frozen public operator-authored, non-training probes. Not standardized, hidden or representative of general intelligence.",
+  "cases": [
+    {
+      "id": "rate_oranges",
+      "kind": "currency",
+      "expected": "$12",
+      "prompt": "Six oranges cost $9. What do eight oranges cost at the same rate?"
+    },
+    {
+      "id": "rate_notebooks",
+      "kind": "currency",
+      "expected": "£49",
+      "prompt": "8 notebooks cost £28. What do 14 notebooks cost?"
+    },
+    {
+      "id": "rate_markers",
+      "kind": "currency",
+      "expected": "$30",
+      "prompt": "3 markers cost $7.50. What do 12 markers cost?"
+    },
+    {
+      "id": "rate_berries",
+      "kind": "currency",
+      "expected": "€4",
+      "prompt": "Five berries cost €2. What do ten berries cost?"
+    },
+    {
+      "id": "multiply",
+      "kind": "exact_number",
+      "expected": "391",
+      "prompt": "What is 23 times 17? Give only the number."
+    },
+    {
+      "id": "division",
+      "kind": "exact_number",
+      "expected": "12",
+      "prompt": "Compute 144 divided by 12. Give only the number."
+    },
+    {
+      "id": "logic_negative",
+      "kind": "yes_no",
+      "expected": "no",
+      "prompt": "If every talin is a pern, and no pern is wet, could a talin be wet? Answer yes or no."
+    },
+    {
+      "id": "logic_exists",
+      "kind": "yes_no",
+      "expected": "yes",
+      "prompt": "If every zarp is a lemo and at least one zarp exists, must at least one lemo exist? Answer yes or no."
+    },
+    {
+      "id": "ocean",
+      "kind": "contains",
+      "terms": [
+        "Pacific",
+        "Ocean"
+      ],
+      "prompt": "Which ocean lies to the east of Australia? Answer in two words."
+    },
+    {
+      "id": "unknown_record",
+      "kind": "abstain",
+      "expected": "unknown",
+      "prompt": "Without looking up records, what was the exact humidity in Wellington at 10:12am on 13 June 2024? State if unknown."
+    },
+    {
+      "id": "format",
+      "kind": "exact_text",
+      "expected": "alpha beta gamma",
+      "prompt": "Reply with exactly this sequence in lowercase and nothing else: alpha beta gamma"
+    },
+    {
+      "id": "checksum",
+      "kind": "human_review",
+      "expected": "An intact checksum can detect unintended data changes",
+      "prompt": "In one sentence, why is a checksum useful when transferring files?"
+    }
+  ]
+}
