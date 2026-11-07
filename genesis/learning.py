@@ -27,7 +27,7 @@ class Learner:
                 m=re.match(r"(?is)^(?:avoid|do not choose|never choose)\s+(.+?)[.!]?$",sentence)
                 if m:
                     value=m.group(1).strip();learned.append(self.store.learn_fact(f"avoid option {value}",value,namespace="constraint",source=sentence));continue
-            if "?" not in sentence and not re.match(r"(?i)^(choose|tell|show|give|do|can|could|would|please|set goal|run goal|calculate|compute|ingest|use skill|learn skill)\b",sentence):
+            if "?" not in sentence and not re.match(r"(?i)^(choose|tell|show|give|do|can|could|would|please|what|why|how|where|when|who|which|explain|describe|summarize|compare|define|teach|set goal|run goal|calculate|compute|ingest|use skill|learn skill)\b",sentence):
                 m=re.match(r"(?is)^\s*(?:the\s+|my\s+)?(.+?)\s+(is|are|means|equals)\s+(.+?)[.!]?\s*$",sentence)
                 if m:
                     key=m.group(1).strip();verb=m.group(2).casefold();raw_value=m.group(3).strip().rstrip(".!?");value=re.sub(r"(?i)^(?:a|an)\s+","",raw_value).strip()
