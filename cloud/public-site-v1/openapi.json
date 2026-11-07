@@ -27,6 +27,28 @@
                   "properties": {
                     "ok": {
                       "type": "boolean"
+                    },
+                    "service": {
+                      "type": "string",
+                      "example": "kyro-cloud-core"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "3.2.0-alpha.1"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "operational"
+                      ]
+                    },
+                    "inference": {
+                      "type": "string",
+                      "example": "genesis-research-reference"
+                    },
+                    "aurora_execution": {
+                      "type": "string",
+                      "example": "disabled"
                     }
                   },
                   "additionalProperties": true
