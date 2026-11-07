@@ -54,7 +54,7 @@ def grade(case: dict, answer: str | None) -> dict:
             r"no access|cannot determine|can't determine|without (?:records|data)|"
             r"not enough information|no way to know|cannot verify)\b",text
         )
-        invented=re.search(r"\b(?:\d{1,3}\s*%|\d{1,3}\s*degrees)\b",text,flags=re.I)
+        invented=re.search(r"\b\d{1,3}\s*%(?!\w)|\b\d{1,3}\s*degrees\b",text,flags=re.I)
         if abstained and not invented:
             return {"status":"pass","reason":"explicit epistemic abstention"}
         return {"status":"review","reason":"no clear uncertainty statement"}
