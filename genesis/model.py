@@ -68,6 +68,11 @@ class Genesis:
                 ),
                 enabled=os.environ.get("GENESIS_HF_ENABLE","").lower()
                     in {"1","true","yes"},
+                adapter_enabled=os.environ.get(
+                    "GENESIS_HF_ADAPTER_EXPERIMENTAL_ENABLE",""
+                ).lower() in {"1","true","yes"},
+                adapter_dir=os.environ.get("GENESIS_HF_ADAPTER_DIR",""),
+                adapter_metrics=os.environ.get("GENESIS_HF_ADAPTER_METRICS",""),
                 max_output_tokens=int(os.environ.get("GENESIS_HF_MAX_TOKENS","128")),
                 max_calls=int(os.environ.get("GENESIS_HF_MAX_CALLS","8")),
             )
