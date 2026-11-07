@@ -13,6 +13,7 @@ from typing import Any
 
 from .backends import GeneratorBackend
 from .hf_models import ModelImportError, verify_local_model
+from .hf_adapter import AdapterAdmissionError, verify_local_adapter
 
 def normalize_disabled_qwen_sliding_window(config: Any) -> Any:
     """Honor Qwen2's explicit use_sliding_window=false in Transformers 4.51.x.
@@ -35,6 +36,9 @@ def normalize_disabled_qwen_sliding_window(config: Any) -> Any:
 class HuggingFaceBackend(GeneratorBackend):
     model_dir: str = ""
     enabled: bool = False
+    adapter_enabled: bool = False
+    adapter_dir: str = ""
+    adapter_metrics: str = ""
     max_output_tokens: int = 128
     max_calls: int = 8
     name: str = "huggingface"
@@ -50,14 +54,21 @@ class HuggingFaceBackend(GeneratorBackend):
             raise ValueError("max_output_tokens must be between 1 and 256")
         if not 1 <= self.max_calls <= 25:
             raise ValueError("max_calls must be between 1 and 25")
+        if self.adapter_enabled and not (self.adapter_dir and self.adapter_metrics):
+            raise ValueError("research adapter enabled without path and provenance")
 
     def available(self) -> bool:
         if not self.enabled or not self.model_dir or self.call_count >= self.max_calls:
             return False
         try:
-            verify_local_model(self.model_dir)
-            return find_spec("torch") is not None and find_spec("transformers") is not None
-        except (ModelImportError, ImportError, OSError, ValueError):
+            manifest = verify_local_model(self.model_dir)
+            if self.adapter_enabled:
+                verify_local_adapter(self.adapter_dir, self.adapter_metrics,
+                                     manifest, check_hash=False)
+            return (find_spec("torch") is not None
+                    and find_spec("transformers") is not None
+                    and (not self.adapter_enabled or find_spec("peft") is not None))
+        except (AdapterAdmissionError, ModelImportError, ImportError, OSError, ValueError):
             return False
 
     def generate(self, prompt: str) -> str | None:
@@ -71,7 +82,10 @@ class HuggingFaceBackend(GeneratorBackend):
             self.call_count += 1
             try:
                 if not self._verified:
-                    verify_local_model(self.model_dir, verify_hashes=True)
+                    manifest = verify_local_model(self.model_dir, verify_hashes=True)
+                    if self.adapter_enabled:
+                        verify_local_adapter(self.adapter_dir, self.adapter_metrics,
+                                             manifest, check_hash=True)
                     self._verified = True
                 if self._model is None:
                     import torch
@@ -90,6 +104,13 @@ class HuggingFaceBackend(GeneratorBackend):
                         use_safetensors=True, torch_dtype=torch.float32,
                         attn_implementation="eager"
                     )
+                    if self.adapter_enabled:
+                        from peft import PeftModel
+                        self._model = PeftModel.from_pretrained(
+                            self._model,
+                            str(Path(self.adapter_dir).resolve()),
+                            is_trainable=False
+                        )
                     self._model.eval()
                 import torch
                 messages = [{"role": "user", "content": prompt[:6000]}]
