@@ -15,7 +15,7 @@ for(const key of ['blog','developers','login','docs','modules','collaboration','
  assert.ok(js.includes(''+key), 'missing '+key+' route');
 }
 assert.match(js,/\/v3\/index\.html/,'links to real Cognito-protected workspace');
-assert.match(js,/early-access-interest\\.yml/,'public GitHub interest form exists in community page');
+assert.match(js,/early-access-interest\.yml/,'public GitHub interest form exists in community page');
 assert.match(js,/const community=/,'community content wired to router');
 assert.match(js,/data-blog-filter/);
 assert.match(js,/data-module-filter/);
