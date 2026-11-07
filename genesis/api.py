@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hmac
 import os
+import json
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Query, HTTPException, Header, Depends
@@ -108,6 +110,11 @@ def remove_module(module_id:str,
 # Public discovery is read-only; mutations reuse the private module admin gate.
 @app.get("/addons")
 def addons(): return {"addons":model.list_addons()}
+
+@app.get("/addons/catalog")
+def addons_catalog():
+    catalogue = Path(__file__).resolve().parent.parent / "examples" / "addons" / "catalog.json"
+    return json.loads(catalogue.read_text(encoding="utf-8"))
 
 @app.get("/addons/{addon_id}/syllabus")
 def addon_syllabus(addon_id:str):
