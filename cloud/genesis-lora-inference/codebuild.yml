@@ -23,7 +23,7 @@ phases:
         test "$(sha256sum .genesis-adapter/adapter_model.safetensors | cut -d' ' -f1)" = "4609faab268f63d9ba544d3431152b038ff9728cb729eeb78e8348342af29aeb"
         echo "PINNED_MODEL_AND_ADAPTER_HASHES_VERIFIED"
         aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin "$(echo "$GENESIS_INFERENCE_ECR_URI" | cut -d/ -f1)"
-        docker build --no-cache -t "$GENESIS_INFERENCE_ECR_URI:r2-candidate-20261107" -f cloud/genesis-lora-inference/Dockerfile .
-        docker push "$GENESIS_INFERENCE_ECR_URI:r2-candidate-20261107"
-        aws ecr describe-images --repository-name genesis-lora-inference-dev --image-ids imageTag=r2-candidate-20261107 --query 'imageDetails[0].imageDigest' --output text
+        docker build --no-cache -t "$GENESIS_INFERENCE_ECR_URI:r2-candidate-bf16-20261107" -f cloud/genesis-lora-inference/Dockerfile .
+        docker push "$GENESIS_INFERENCE_ECR_URI:r2-candidate-bf16-20261107"
+        aws ecr describe-images --repository-name genesis-lora-inference-dev --image-ids imageTag=r2-candidate-bf16-20261107 --query 'imageDetails[0].imageDigest' --output text
         echo "EXPERIMENTAL_PRIVATE_GENESIS_IMAGE_PUSHED"
