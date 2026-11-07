@@ -79,10 +79,15 @@ def main() -> None:
     p.add_argument("--model-dir", default=os.environ.get("GENESIS_HF_MODEL_DIR", ""))
     p.add_argument("--out", default="/opt/genesis-cpu-lora/out")
     p.add_argument("--steps", type=int, default=8)
+    p.add_argument("--resume-adapter", default=None)
+    p.add_argument("--resume-metrics", default=None)
     p.add_argument("--plan-only", action="store_true")
     args = p.parse_args()
-    if not 1 <= args.steps <= 12:
-        raise ValueError("steps must be between 1 and 12")
+    if not 1 <= args.steps <= 64:
+        raise ValueError("steps must be between 1 and 64")
+    if bool(args.resume_adapter) != bool(args.resume_metrics):
+        raise ValueError("resuming requires both an adapter and its provenance")
+
     plan = dataset_plan(args.data, args.public_eval)
     summary = {"dataset_sha256": plan["dataset_sha256"],
                "train_count": plan["train_count"],
@@ -98,7 +103,7 @@ def main() -> None:
     from genesis.hf_models import verify_local_model, sha256_file
     from genesis.hf_backend import normalize_disabled_qwen_sliding_window
     import torch
-    from peft import LoraConfig, get_peft_model
+    from peft import LoraConfig, PeftModel, get_peft_model
     from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
 
     start = time.monotonic()
@@ -140,12 +145,26 @@ def main() -> None:
     model.gradient_checkpointing_enable(
         gradient_checkpointing_kwargs={"use_reentrant": False}
     )
-    model = get_peft_model(
-        model, LoraConfig(
-            r=4, lora_alpha=8, lora_dropout=0.0, bias="none",
-            target_modules=["q_proj", "v_proj"], task_type="CAUSAL_LM",
+    if args.resume_adapter:
+        parent_metrics = json.loads(Path(args.resume_metrics).read_text(encoding="utf-8"))
+        parent_weight = Path(args.resume_adapter) / "adapter_model.safetensors"
+        if (parent_metrics.get("base_weight_sha256") != base_manifest["weight_sha256"]
+                or sha256_file(parent_weight) != parent_metrics.get("adapter_sha256")
+                or parent_metrics.get("promote") is not False):
+            raise RuntimeError("parent LoRA provenance or integrity not verified")
+        model = PeftModel.from_pretrained(
+            model, args.resume_adapter, is_trainable=True
         )
-    )
+        summary["parent_adapter_sha256"] = parent_metrics["adapter_sha256"]
+        summary["continuation"] = True
+    else:
+        model = get_peft_model(
+            model, LoraConfig(
+                r=4, lora_alpha=8, lora_dropout=0.0, bias="none",
+                target_modules=["q_proj", "v_proj"], task_type="CAUSAL_LM",
+            )
+        )
+        summary["continuation"] = False
     trainable = [p for p in model.parameters() if p.requires_grad]
     summary["trainable_parameters"] = sum(p.numel() for p in trainable)
     print("LORA_TRAINABLE_PARAMS", summary["trainable_parameters"], flush=True)
