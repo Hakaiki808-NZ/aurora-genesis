@@ -14,6 +14,22 @@ from typing import Any
 from .backends import GeneratorBackend
 from .hf_models import ModelImportError, verify_local_model
 
+def normalize_disabled_qwen_sliding_window(config: Any) -> Any:
+    """Honor Qwen2's explicit use_sliding_window=false in Transformers 4.51.x.
+
+    The checkpoint contains a dormant numerical sliding_window=32768 setting.
+    Older Transformers versions warn based on that numerical field alone, even
+    though use_sliding_window is explicitly false. Set only the *in-memory*
+    configuration field to None, and only for Qwen2 with the explicit disable.
+    Never rewrite the SHA-256-verified upstream config.json or touch the weights.
+    """
+    if (getattr(config, "model_type", None) == "qwen2"
+            and getattr(config, "use_sliding_window", None) is False
+            and getattr(config, "sliding_window", None) is not None):
+        config.sliding_window = None
+    return config
+
+
 
 @dataclass
 class HuggingFaceBackend(GeneratorBackend):
@@ -59,13 +75,18 @@ class HuggingFaceBackend(GeneratorBackend):
                     self._verified = True
                 if self._model is None:
                     import torch
-                    from transformers import AutoModelForCausalLM, AutoTokenizer
+                    from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
                     path = str(Path(self.model_dir).resolve())
                     self._tokenizer = AutoTokenizer.from_pretrained(
                         path, local_files_only=True, trust_remote_code=False
                     )
+                    config = AutoConfig.from_pretrained(
+                        path, local_files_only=True, trust_remote_code=False
+                    )
+                    config = normalize_disabled_qwen_sliding_window(config)
                     self._model = AutoModelForCausalLM.from_pretrained(
-                        path, local_files_only=True, trust_remote_code=False,
+                        path, config=config,
+                        local_files_only=True, trust_remote_code=False,
                         use_safetensors=True, torch_dtype=torch.float32,
                         attn_implementation="eager"
                     )
