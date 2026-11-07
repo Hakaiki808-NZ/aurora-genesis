@@ -59,7 +59,14 @@ class Genesis:
                 max_output_tokens=int(os.environ.get("GENESIS_BEDROCK_MAX_TOKENS","256")),
                 max_calls=int(os.environ.get("GENESIS_BEDROCK_MAX_CALLS","8")),
             )
-        if backend is None and use_ollama: backend=OllamaBackend(model=os.environ.get("GENESIS_OLLAMA_MODEL",ollama_model))
+        if backend is None and use_ollama:
+            backend=OllamaBackend(
+                model=os.environ.get("GENESIS_OLLAMA_MODEL",ollama_model),
+                base_url=os.environ.get("GENESIS_OLLAMA_BASE_URL","http://127.0.0.1:11434"),
+                timeout=float(os.environ.get("GENESIS_OLLAMA_HEALTH_TIMEOUT","2")),
+                generation_timeout=float(os.environ.get("GENESIS_OLLAMA_GENERATION_TIMEOUT","120")),
+                max_output_tokens=int(os.environ.get("GENESIS_OLLAMA_MAX_TOKENS","256")),
+            )
         self.cognition=CognitionEngine(self.store,self.identity,self.heritage,self.model_record,self.tools,backend,self.policy,self.guardians,self.capabilities,self.engine_boundary)
         self.cognition.knowledge_modules=self.knowledge_modules
         self.last_trace:dict[str,Any]|None=None
