@@ -33,7 +33,7 @@
 <article class="login-card"><div class="eyebrow">ACCESS CONTROL</div><h2>One workspace identity</h2>
 <p>Developer login uses the existing invite-only Kyro V3 Cognito user pool and its OAuth 2.0 authorization-code + PKCE browser flow.</p>
 <a class="button primary" href="./dev-login.html">Open developer sign-in ↗</a>
-<p class="api-muted">The older root research chat still uses a separate legacy user pool. Full SSO migration is pending; no social identity provider is enabled.</p>
+<p class="api-muted">The root research chat and V3 workspace now use the same invite-only Cognito identity pool. Real-browser SSO testing is pending; no social identity provider is enabled.</p>
 </article>
 </div>
 </section>
@@ -51,12 +51,12 @@
 <div class="terminal"><div class="terminal-bar">PUBLIC · NO API KEY REQUIRED <span>GET</span></div><pre><code>curl --fail-with-body \
   https://ces52hcf3e.execute-api.ap-southeast-2.amazonaws.com/api/v3/health</code></pre></div>
 <p class="muted api-muted">For authenticated calls, use the hosted Cognito PKCE login through Kyro. Do not place API tokens in URLs, Git repositories or pasted screenshots. An OAuth login does not grant Aurora Engine execution authority.</p>
-<div class="actions"><a class="button primary" href="./docs.html">Read model documentation ↗</a><a class="button secondary" href="https://github.com/Hakaiki808-NZ/aurora-genesis/blob/main/specifications/MODEL_API.md">Read canonical contract ↗</a></div></section>
+<div class="actions"><a class="button secondary" href="./openapi.json">OpenAPI JSON ↗</a><a class="button primary" href="./docs.html">Read model documentation ↗</a><a class="button secondary" href="https://github.com/Hakaiki808-NZ/aurora-genesis/blob/main/specifications/MODEL_API.md">Read canonical contract ↗</a></div></section>
 <section class="wrap section narrow-top"><div class="eyebrow">IDENTITY ROADMAP</div><h2>Social sign-in, prepared—not enabled.</h2>
 <p class="muted">Federation adapters for Google, Microsoft and GitHub are planned. No provider OAuth apps, client secrets or account-linking policy have been approved. The buttons below are intentionally disabled.</p>
 <div class="federation-actions" aria-label="Social sign-in roadmap"><button disabled type="button">Google · coming soon</button><button disabled type="button">Microsoft · coming soon</button><button disabled type="button">GitHub · coming soon</button></div></section>
-<section class="wrap section narrow-top"><div class="eyebrow">LEGACY INTEGRATION</div><h2>Research API (separate identity)</h2>
-<p class="muted">The earlier research beta exposes JWT-protected <code>GET /api/status</code> and <code>POST /api/chat</code> through a distinct Cognito user pool. These are not yet part of Kyro's unified developer sign-in and remain experimental.</p>
+<section class="wrap section narrow-top"><div class="eyebrow">LEGACY INTEGRATION</div><h2>Research API (shared identity)</h2>
+<p class="muted">The research beta exposes JWT-protected <code>GET /api/status</code> and <code>POST /api/chat</code> with the same Cognito user pool as V3, but a separate root-browser app client. Real-browser login is not yet qualified; the model remains experimental.</p>
 <p><a class="text-link" href="./status.html">See release gates →</a></p></section>
 </main>
 <footer class="footer"><div class="wrap"><p><a href="./index.html">Kyro home</a> · <a href="./developers.html">Developer portal</a> · <a href="./privacy.html">Privacy &amp; terms</a></p><p class="muted">Research-stage implementation. Do not transmit sensitive data or enable high-consequence Engine operations.</p></div></footer>
