@@ -1,0 +1,29 @@
+version: 0.2
+env:
+  shell: bash
+phases:
+  build:
+    commands:
+      - |
+        set -Eeuo pipefail
+        test -n "$GENESIS_INFERENCE_SOURCE_SHA"
+        test -n "$GENESIS_INFERENCE_ECR_URI"
+        test -n "$GENESIS_ARTIFACT_BUCKET"
+        mkdir -p /tmp/genesis-image
+        cd /tmp/genesis-image
+        git init -q .
+        git remote add origin https://github.com/Hakaiki808-NZ/aurora-genesis.git
+        git fetch --depth 1 origin "$GENESIS_INFERENCE_SOURCE_SHA"
+        git checkout --detach "$GENESIS_INFERENCE_SOURCE_SHA"
+        test "$(git rev-parse HEAD)" = "$GENESIS_INFERENCE_SOURCE_SHA"
+        aws s3 sync "s3://$GENESIS_ARTIFACT_BUCKET/genesis/hf/qwen2p5-0p5b-instruct/model/" .genesis-model/ --no-progress
+        aws s3 sync "s3://$GENESIS_ARTIFACT_BUCKET/genesis/hf/qwen2p5-0p5b-instruct/training/cpu-lora-r2/adapter/" .genesis-adapter/ --no-progress
+        aws s3 cp "s3://$GENESIS_ARTIFACT_BUCKET/genesis/hf/qwen2p5-0p5b-instruct/training/cpu-lora-r2/metrics.json" .genesis-adapter-metrics.json --no-progress
+        test "$(sha256sum .genesis-model/model.safetensors | cut -d' ' -f1)" = "fdf756fa7fcbe7404d5c60e26bff1a0c8b8aa1f72ced49e7dd0210fe288fb7fe"
+        test "$(sha256sum .genesis-adapter/adapter_model.safetensors | cut -d' ' -f1)" = "4609faab268f63d9ba544d3431152b038ff9728cb729eeb78e8348342af29aeb"
+        echo "PINNED_MODEL_AND_ADAPTER_HASHES_VERIFIED"
+        aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin "$(echo "$GENESIS_INFERENCE_ECR_URI" | cut -d/ -f1)"
+        docker build --no-cache -t "$GENESIS_INFERENCE_ECR_URI:r2-candidate-20261107" -f cloud/genesis-lora-inference/Dockerfile .
+        docker push "$GENESIS_INFERENCE_ECR_URI:r2-candidate-20261107"
+        aws ecr describe-images --repository-name genesis-lora-inference-dev --image-ids imageTag=r2-candidate-20261107 --query 'imageDetails[0].imageDigest' --output text
+        echo "EXPERIMENTAL_PRIVATE_GENESIS_IMAGE_PUSHED"
