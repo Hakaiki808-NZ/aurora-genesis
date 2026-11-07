@@ -15,7 +15,7 @@ from .backends import GeneratorBackend
 class BedrockBackend(GeneratorBackend):
     """A bounded Converse adapter for a pre-trained external foundation model."""
 
-    model: str = "apac.amazon.nova-micro-v1:0"
+    model: str = "openai.gpt-oss-120b-1:0"
     region: str = "ap-southeast-2"
     enabled: bool = False
     max_output_tokens: int = 256
