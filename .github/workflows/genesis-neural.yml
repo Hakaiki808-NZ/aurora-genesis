@@ -10,6 +10,8 @@ on:
       - 'tests/cpu_lora_plan.py'
       - 'tests/hf_adapter.py'
       - 'tests/automatic_training.py'
+      - 'tests/neural_service.py'
+      - 'cloud/genesis-lora-inference/**'
       - 'tools/aws/genesis_autotrain_controller.py'
       - 'tools/aws/genesis_continuous_buildspec.yml'
       - 'requirements_hf_adapter.txt'
@@ -28,6 +30,8 @@ on:
       - 'tests/cpu_lora_plan.py'
       - 'tests/hf_adapter.py'
       - 'tests/automatic_training.py'
+      - 'tests/neural_service.py'
+      - 'cloud/genesis-lora-inference/**'
       - 'tools/aws/genesis_autotrain_controller.py'
       - 'tools/aws/genesis_continuous_buildspec.yml'
       - 'requirements_hf_adapter.txt'
@@ -64,6 +68,7 @@ jobs:
           python -m tests.cpu_lora_plan
           python -m tests.hf_adapter
           python -m tests.automatic_training
+          python -m tests.neural_service
       - name: Existing behavior regression
         run: |
           python -m tests.regression
