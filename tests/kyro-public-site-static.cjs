@@ -2,12 +2,17 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const dir=path.join(__dirname,'..','cloud','public-site-v1');
-const routes=['index','blog','developers','dev-login','docs','modules','collaboration','roadmap','about','status','privacy','community','404'];
+const routes=['index','blog','modules','collaboration','roadmap','about','status','privacy','community','404'];
 for(const name of routes){
  const html=fs.readFileSync(path.join(dir,name+'.html'),'utf8');
  for(const token of ['id="main"','name="viewport"','content="noindex,nofollow"','./site.css','./site.js']){
   assert.ok(html.includes(token),name+' missing '+token);
  }
+}
+for(const name of ['developers','dev-login','docs','api']){
+ const html=fs.readFileSync(path.join(dir,name+'.html'),'utf8');
+ assert.match(html,/Public developer tools and documentation are not available/);
+ assert.doesNotMatch(html,/<script\\b/i);
 }
 const js=fs.readFileSync(path.join(dir,'site.js'),'utf8');
 const css=fs.readFileSync(path.join(dir,'site.css'),'utf8');
