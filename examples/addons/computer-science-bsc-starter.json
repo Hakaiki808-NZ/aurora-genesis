@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "id": "computer-science-bsc-starter",
+  "title": "Computer Science BSc — Starter Curriculum Reference",
+  "version": "0.1.0",
+  "publisher": "Aurora / Genesis reference project",
+  "license": "Apache-2.0",
+  "distribution": "open",
+  "category": "degree_track",
+  "subject": "bachelor-level computer science algorithms programming databases networking security",
+  "programme": {
+    "title": "Computer Science BSc — Sample Programme (not accredited)",
+    "level": "bachelor",
+    "duration_years": 3,
+    "units": [
+      {
+        "code": "CSC101",
+        "title": "Programming and data structures",
+        "year": 1,
+        "chapter_ids": [
+          "programming-basics",
+          "data-structures"
+        ]
+      },
+      {
+        "code": "CSC201",
+        "title": "Algorithms and complexity",
+        "year": 2,
+        "chapter_ids": [
+          "algorithms-complexity"
+        ]
+      },
+      {
+        "code": "CSC202",
+        "title": "Databases and computer networks",
+        "year": 2,
+        "chapter_ids": [
+          "relational-databases",
+          "computer-networks"
+        ]
+      },
+      {
+        "code": "CSC301",
+        "title": "Software security and systems",
+        "year": 3,
+        "chapter_ids": [
+          "systems-security"
+        ]
+      },
+      {
+        "code": "CSC302",
+        "title": "Machine learning fundamentals",
+        "year": 3,
+        "chapter_ids": [
+          "machine-learning"
+        ]
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "id": "programming-basics",
+      "title": "Programming functions, invariants and testing",
+      "content": "Functions organize reusable computations around inputs, outputs and explicit side effects. Program correctness often depends on invariants, preconditions and postconditions. Tests demonstrate selected behavior but are not a proof that all possible inputs are handled correctly.",
+      "source": "Original Genesis computer science teaching note."
+    },
+    {
+      "id": "data-structures",
+      "title": "Lists, trees and hash maps",
+      "content": "Arrays provide indexed access. Linked lists support structural updates but often have slower random access. Balanced search trees commonly support logarithmic search, while hash tables have expected constant-time lookup under reasonable hashing and load assumptions.",
+      "source": "Original Genesis computer science teaching note."
+    },
+    {
+      "id": "algorithms-complexity",
+      "title": "Algorithms and asymptotic complexity",
+      "content": "Big O bounds an algorithm's growth rate asymptotically. Binary search on sorted data takes logarithmic comparisons. Merge sort runs in O(n log n) comparisons in its usual implementation, while an implementation's space cost depends on design choices.",
+      "source": "Original Genesis computer science teaching note."
+    },
+    {
+      "id": "relational-databases",
+      "title": "Relational databases and transactions",
+      "content": "A relational database stores data in relations and uses constraints to preserve integrity. SQL joins combine related records. Transactions have ACID properties—atomicity, consistency, isolation and durability—although isolation levels may differ.",
+      "source": "Original Genesis computer science teaching note."
+    },
+    {
+      "id": "computer-networks",
+      "title": "Networking layers and reliable delivery",
+      "content": "Network systems split responsibilities across protocol layers. IP provides datagram addressing and forwarding, while TCP provides ordered reliable byte-stream transport over IP through sequencing, acknowledgements and retransmission. Transport security requires additional protocols such as TLS.",
+      "source": "Original Genesis computer science teaching note."
+    },
+    {
+      "id": "systems-security",
+      "title": "Least privilege and secure software design",
+      "content": "Least privilege grants only capabilities needed for an operation. A secure service validates inputs, isolates trust boundaries, protects credentials and uses defense in depth. Authentication proves identity; authorization decides whether a particular operation is permitted.",
+      "source": "Original Genesis computer science teaching note."
+    },
+    {
+      "id": "machine-learning",
+      "title": "Model generalization and evaluation",
+      "content": "A machine learning model is evaluated on data not used to fit its parameters. Data leakage can inflate scores. Generalization should be assessed using suitable held-out tests, calibration and out-of-distribution evaluation. Installing a knowledge reference is not equivalent to training model weights.",
+      "source": "Original Genesis computer science teaching note."
+    }
+  ]
+}
