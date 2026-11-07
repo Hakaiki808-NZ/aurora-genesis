@@ -1,0 +1,210 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Fail-closed experimental Genesis neural text adapter, external Bedrock pretrained model, not connected to Aurora.",
+  "Parameters": {
+    "InternalIssuer": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Expected private internal adapter issuer"
+    },
+    "InternalAudience": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Expected private internal adapter audience"
+    },
+    "Enabled": {
+      "Type": "String",
+      "Default": "0",
+      "AllowedValues": [
+        "0",
+        "1"
+      ],
+      "Description": "Must remain 0 until Bedrock quotas and safety/evaluation gates pass"
+    }
+  },
+  "Resources": {
+    "BudgetTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "genesis-neural-budget-dev",
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "day",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "day",
+            "KeyType": "HASH"
+          }
+        ],
+        "TimeToLiveSpecification": {
+          "AttributeName": "expires",
+          "Enabled": true
+        },
+        "SSESpecification": {
+          "SSEEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "Genesis"
+          },
+          {
+            "Key": "Stage",
+            "Value": "dev"
+          }
+        ]
+      }
+    },
+    "GatewayRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ],
+        "Policies": [
+          {
+            "PolicyName": "TextOnlyBedrockAndBoundedDDB",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "SelectedModelOnly",
+                  "Effect": "Allow",
+                  "Action": [
+                    "bedrock:InvokeModel"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/apac.amazon.nova-micro-v1:0"
+                    },
+                    "arn:aws:bedrock:*::foundation-model/amazon.nova-micro-v1:0"
+                  ]
+                },
+                {
+                  "Sid": "BudgetCounterOnly",
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:UpdateItem"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "BudgetTable",
+                      "Arn"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "Genesis"
+          },
+          {
+            "Key": "Stage",
+            "Value": "dev"
+          }
+        ]
+      }
+    },
+    "GatewayFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": "genesis-neural-gateway-dev",
+        "Description": "Disabled-by-default pretrained Bedrock neural text adapter; no engine execution",
+        "Handler": "index.handler",
+        "Runtime": "python3.12",
+        "Timeout": 20,
+        "MemorySize": 256,
+        "ReservedConcurrentExecutions": 1,
+        "Role": {
+          "Fn::GetAtt": [
+            "GatewayRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "ZipFile": "\"\"\"Experimental Genesis neural text adapter for the private Kyro AWS workspace.\n\nThis calls a *pretrained external* Bedrock model, not a Genesis-trained\nfoundation model. No tools or Aurora execution are exposed. Disabled by default.\n\"\"\"\nimport json\nimport os\nimport time\nfrom datetime import datetime, timezone\n\nimport boto3\nfrom botocore.config import Config\nfrom botocore.exceptions import ClientError\n\nMODEL_ID = os.environ.get(\"GENESIS_NEURAL_MODEL_ID\", \"apac.amazon.nova-micro-v1:0\")\nREGION = os.environ.get(\"AWS_REGION\", \"ap-southeast-2\")\nBUDGET_TABLE = os.environ.get(\"GENESIS_NEURAL_BUDGET_TABLE\", \"\")\nISSUER = os.environ.get(\"GENESIS_INTERNAL_ISSUER\", \"\")\nAUDIENCE = os.environ.get(\"GENESIS_INTERNAL_AUDIENCE\", \"\")\nMAX_ATTEMPTS = max(1, min(24, int(os.environ.get(\"GENESIS_NEURAL_MAX_ATTEMPTS\", \"12\"))))\nMAX_TOKENS = max(8, min(256, int(os.environ.get(\"GENESIS_NEURAL_MAX_TOKENS\", \"128\"))))\nENABLED = os.environ.get(\"GENESIS_NEURAL_ENABLED\") == \"1\"\n\n\ndef reply(status, data):\n    return {\"statusCode\": status,\n            \"headers\": {\"content-type\": \"application/json; charset=utf-8\",\n                        \"cache-control\": \"no-store\",\n                        \"x-content-type-options\": \"nosniff\"},\n            \"body\": json.dumps(data, ensure_ascii=False, separators=(\",\", \":\"))}\n\n\ndef budget_attempt():\n    if not BUDGET_TABLE:\n        return False\n    day = datetime.now(timezone.utc).strftime(\"%Y-%m-%d\")\n    ttl = int(time.time()) + 3 * 86400\n    try:\n        # Count attempted calls, including model failures. Cross-invocation\n        # atomic check stops parallel or recycled workers from bypassing caps.\n        boto3.client(\"dynamodb\", region_name=REGION).update_item(\n            TableName=BUDGET_TABLE,\n            Key={\"day\": {\"S\": day}},\n            UpdateExpression=\"ADD attempts :one SET expires :ttl\",\n            ConditionExpression=\"attribute_not_exists(attempts) OR attempts < :cap\",\n            ExpressionAttributeValues={\n                \":one\": {\"N\": \"1\"},\n                \":cap\": {\"N\": str(MAX_ATTEMPTS)},\n                \":ttl\": {\"N\": str(ttl)},\n            },\n        )\n        return True\n    except ClientError:\n        return False\n\n\ndef handler(event, context):\n    if not isinstance(event, dict):\n        return reply(400, {\"error\": \"invalid_event\"})\n    if event.get(\"action\") == \"status\":\n        return reply(200, {\n            \"adapter\": \"genesis-neural-text-v0\",\n            \"enabled\": ENABLED,\n            \"model\": MODEL_ID,\n            \"source\": \"external_pretrained_bedrock\",\n            \"max_output_tokens\": MAX_TOKENS,\n            \"max_daily_attempts\": MAX_ATTEMPTS,\n            \"aurora_execution\": \"not_attached\",\n        })\n    if not ENABLED:\n        return reply(503, {\"error\": \"neural_gate_closed\", \"reason\": \"Bedrock quota and cost gates are not yet cleared\"})\n    if event.get(\"version\") != \"2.0\" or event.get(\"rawPath\") != \"/api/chat\":\n        return reply(403, {\"error\": \"invalid_internal_request\"})\n    rc = event.get(\"requestContext\") or {}\n    if (rc.get(\"http\") or {}).get(\"method\") != \"POST\":\n        return reply(405, {\"error\": \"method_not_allowed\"})\n    claims = (((rc.get(\"authorizer\") or {}).get(\"jwt\") or {}).get(\"claims\") or {})\n    if (not ISSUER or not AUDIENCE or claims.get(\"iss\") != ISSUER or\n            claims.get(\"aud\") != AUDIENCE or claims.get(\"token_use\") != \"id\" or\n            not str(claims.get(\"sub\", \"\")).startswith(\"private-alpha:\")):\n        return reply(403, {\"error\": \"invalid_internal_context\"})\n    try:\n        body = event.get(\"body\") or \"\"\n        if not isinstance(body, str) or len(body.encode(\"utf-8\")) > 8000:\n            return reply(413, {\"error\": \"message_too_large\"})\n        data = json.loads(body)\n        prompt = data.get(\"message\")\n        if not isinstance(prompt, str) or not 1 <= len(prompt.strip()) <= 1800:\n            return reply(422, {\"error\": \"message_must_be_1_to_1800_characters\"})\n    except (TypeError, ValueError):\n        return reply(400, {\"error\": \"invalid_json\"})\n    if not budget_attempt():\n        return reply(429, {\"error\": \"daily_attempt_limit_or_budget_store_unavailable\"})\n    try:\n        client = boto3.client(\n            \"bedrock-runtime\", region_name=REGION,\n            config=Config(connect_timeout=2, read_timeout=14,\n                          retries={\"mode\": \"standard\", \"max_attempts\": 1}),\n        )\n        value = client.converse(\n            modelId=MODEL_ID,\n            system=[{\"text\": \"You are the experimental neural text component of Genesis. \"\n                      \"You are a pretrained external model, not a trained Genesis foundation model. \"\n                      \"Answer carefully; say when you do not know. You have no tools or execution authority.\"}],\n            messages=[{\"role\": \"user\", \"content\": [{\"text\": prompt.strip()}]}],\n            inferenceConfig={\"maxTokens\": MAX_TOKENS, \"temperature\": 0.2},\n        )\n        blocks = value.get(\"output\", {}).get(\"message\", {}).get(\"content\", [])\n        answer = \"\\n\".join(b[\"text\"] for b in blocks if isinstance(b, dict) and isinstance(b.get(\"text\"), str)).strip()\n        if not answer:\n            return reply(503, {\"error\": \"empty_model_response\"})\n        return reply(200, {\n            \"answer\": answer[:4096],\n            \"model\": MODEL_ID,\n            \"source\": \"external_pretrained_bedrock\",\n            \"experimental\": True,\n        })\n    except Exception:\n        # No user prompt, token or exception details are logged.\n        return reply(503, {\"error\": \"model_inference_unavailable\"})\n"
+        },
+        "Environment": {
+          "Variables": {
+            "GENESIS_NEURAL_ENABLED": {
+              "Ref": "Enabled"
+            },
+            "GENESIS_NEURAL_MODEL_ID": "apac.amazon.nova-micro-v1:0",
+            "GENESIS_NEURAL_BUDGET_TABLE": {
+              "Ref": "BudgetTable"
+            },
+            "GENESIS_NEURAL_MAX_ATTEMPTS": "12",
+            "GENESIS_NEURAL_MAX_TOKENS": "128",
+            "GENESIS_INTERNAL_ISSUER": {
+              "Ref": "InternalIssuer"
+            },
+            "GENESIS_INTERNAL_AUDIENCE": {
+              "Ref": "InternalAudience"
+            }
+          }
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "Genesis"
+          },
+          {
+            "Key": "Stage",
+            "Value": "dev"
+          }
+        ]
+      }
+    },
+    "GatewayLogs": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/genesis-neural-gateway-dev",
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "Genesis"
+          },
+          {
+            "Key": "Stage",
+            "Value": "dev"
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "NeuralGatewayArn": {
+      "Description": "Private optional neural text adapter; never publicly routed",
+      "Value": {
+        "Fn::GetAtt": [
+          "GatewayFunction",
+          "Arn"
+        ]
+      }
+    },
+    "State": {
+      "Value": "DISABLED_PENDING_BEDROCK_QUOTA"
+    }
+  }
+}
