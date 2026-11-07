@@ -4,18 +4,18 @@
   "assets": [
     {
       "path": "app.js",
-      "bytes": 5321,
-      "etag": "\"ceaccd146c2e0c223765f1305fa94882\""
+      "bytes": 5291,
+      "etag": "\"c9fa3da2b8db84b59b433b6b7cfa803c\""
     },
     {
       "path": "config.json",
       "bytes": 260,
-      "etag": "\"8b83513406d25e1f48e762f77192dc31\""
+      "etag": "\"3cc45a80f07fdfa57e37f9d544159a9f\""
     },
     {
       "path": "index.html",
-      "bytes": 2257,
-      "etag": "\"9b33dcbe6f6155ce64c5ad65493bd898\""
+      "bytes": 2260,
+      "etag": "\"ce24ed5dc533801643c01ef1ffffd1e7\""
     },
     {
       "path": "style.css",
