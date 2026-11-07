@@ -7,6 +7,7 @@ on:
       - 'tests/huggingface_import.py'
       - 'tests/unit_rate_verification.py'
       - 'tests/hf_scoring.py'
+      - 'tests/reasoning_guardrails.py'
       - 'tools/eval/**'
       - 'requirements_hf.txt'
       - '.github/workflows/genesis-neural.yml'
@@ -18,6 +19,7 @@ on:
       - 'tests/huggingface_import.py'
       - 'tests/unit_rate_verification.py'
       - 'tests/hf_scoring.py'
+      - 'tests/reasoning_guardrails.py'
       - 'tools/eval/**'
       - 'requirements_hf.txt'
       - '.github/workflows/genesis-neural.yml'
@@ -46,6 +48,7 @@ jobs:
           python -m tests.huggingface_import
           python -m tests.unit_rate_verification
           python -m tests.hf_scoring
+          python -m tests.reasoning_guardrails
       - name: Existing behavior regression
         run: |
           python -m tests.regression
