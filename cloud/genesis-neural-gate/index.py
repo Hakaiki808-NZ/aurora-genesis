@@ -41,7 +41,7 @@ def budget_attempt():
         boto3.client("dynamodb", region_name=REGION).update_item(
             TableName=BUDGET_TABLE,
             Key={"day": {"S": day}},
-            UpdateExpression="ADD attempts :one SET expires :ttl",
+            UpdateExpression="SET expires = :ttl ADD attempts :one",
             ConditionExpression="attribute_not_exists(attempts) OR attempts < :cap",
             ExpressionAttributeValues={
                 ":one": {"N": "1"},
