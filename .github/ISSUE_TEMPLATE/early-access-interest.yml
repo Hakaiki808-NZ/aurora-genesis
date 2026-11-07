@@ -1,0 +1,41 @@
+name: Kyro early-access interest (public)
+description: Express interest in research feedback or a future invitation. This is a public GitHub issue, NOT a user account.
+title: "[Kyro interest] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in Kyro. This is a **public expression of interest only**; it does not create a Kyro account, guarantee an invitation, or open self-registration.
+        
+        GitHub issues are public. **Do not include your email address, phone number, school/student details, workplace confidential information, credentials, or sensitive personal data.** Your public GitHub username is sufficient for a potential future reply.
+        
+        You can withdraw your interest by closing this issue. GitHub's public history/retention policies may still apply.
+  - type: dropdown
+    id: interest
+    attributes:
+      label: Area of interest
+      description: What would you like to explore?
+      options:
+        - Developer tools and architecture
+        - Collaborative projects
+        - Free knowledge and language reference packs
+        - Business collaboration concepts
+        - Education concepts (adult feedback only)
+        - General product feedback
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Intended use (optional)
+      description: Describe a general use case. Please do not share private data.
+      placeholder: "For example: evaluate whether shared projects help a small development team."
+    validations:
+      required: false
+  - type: checkboxes
+    id: acknowledgement
+    attributes:
+      label: Public issue acknowledgement
+      options:
+        - label: I understand this information will appear publicly on GitHub and is not an application for an active Kyro account.
+          required: true
