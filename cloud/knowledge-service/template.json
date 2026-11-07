@@ -1,0 +1,255 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Invite-only Genesis public-metadata cache and retrieval on the existing Kyro HTTP API (no model weights training)",
+  "Parameters": {
+    "ApiId": {
+      "Type": "String",
+      "Description": "Existing Kyro v3 API ID"
+    },
+    "JwtAuthorizerId": {
+      "Type": "String",
+      "Description": "Existing Kyro v3 Cognito JWT authorizer ID"
+    }
+  },
+  "Resources": {
+    "KnowledgeTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "TableName": {
+          "Fn::Sub": "${AWS::StackName}-store"
+        },
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "pk",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "sk",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "pk",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "sk",
+            "KeyType": "RANGE"
+          }
+        ],
+        "SSESpecification": {
+          "SSEEnabled": true
+        },
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "TimeToLiveSpecification": {
+          "AttributeName": "expires_at",
+          "Enabled": true
+        },
+        "Tags": [
+          {
+            "Key": "System",
+            "Value": "Genesis"
+          },
+          {
+            "Key": "DataClass",
+            "Value": "PublicMetadata"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          }
+        ]
+      }
+    },
+    "KnowledgeLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-knowledge"
+        },
+        "RetentionInDays": 7
+      }
+    },
+    "KnowledgeRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "KnowledgeMetadataStoreAccess",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:Query",
+                    "dynamodb:BatchWriteItem",
+                    "dynamodb:UpdateItem"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "KnowledgeTable",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-knowledge:*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "KnowledgeFunction": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": [
+        "KnowledgeLogGroup"
+      ],
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-knowledge"
+        },
+        "Runtime": "python3.12",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "KnowledgeRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "ZipFile": "INJECT_FROM_INDEX_PY"
+        },
+        "Timeout": 20,
+        "MemorySize": 256,
+        "Environment": {
+          "Variables": {
+            "KNOWLEDGE_TABLE": {
+              "Ref": "KnowledgeTable"
+            }
+          }
+        },
+        "Tags": [
+          {
+            "Key": "System",
+            "Value": "Genesis"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          }
+        ]
+      }
+    },
+    "KnowledgeIntegration": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "ApiId"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "KnowledgeFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 20000
+      }
+    },
+    "KnowledgeRoute": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "ApiId"
+        },
+        "RouteKey": "GET /api/v3/knowledge/{proxy+}",
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "JwtAuthorizerId"
+        },
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "KnowledgeIntegration"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "KnowledgeInvokePermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "KnowledgeFunction"
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": [
+            "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiId}/*/GET/api/v3/knowledge/*",
+            {
+              "ApiId": {
+                "Ref": "ApiId"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "TableName": {
+      "Value": {
+        "Ref": "KnowledgeTable"
+      }
+    },
+    "FunctionName": {
+      "Value": {
+        "Ref": "KnowledgeFunction"
+      }
+    },
+    "LiveSourceCount": {
+      "Value": "3"
+    },
+    "APIPath": {
+      "Value": "/api/v3/knowledge/{proxy+}"
+    }
+  }
+}
