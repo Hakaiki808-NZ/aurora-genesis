@@ -1,6 +1,6 @@
 # Genesis Hugging Face model/weights integration (experimental)
 
-**Status:** opt-in import and offline CPU inference implementation; NOT downloaded or deployed by this change.
+**Status (2026-11-07):** approved base weights downloaded, SHA-256-verified and exercised on isolated temporary AWS CPU instances; checkpoint archived privately in encrypted S3. No persistent model-serving instance, Kyro integration or production deployment.
 
 ## Standards supported and deliberately distinct
 
@@ -43,7 +43,11 @@ The inference backend stays off until both `GENESIS_GENERATOR=huggingface` and `
 
 **Aurora:** retains execution authority, resource containment, admission, accounting and rollback; production acceptance must be implemented independently of Genesis model output.
 
-**Unfinished gates:** full model download and real CPU generation smoke test, resource measurements, signed model admission, per-tenant model isolation, license review, adapter compatibility checks and held-out quality/security evaluations. No AWS deployment, GPU training or inference spending is authorized by this change.
+**Verified test milestones:** base model download, immutable revision pin, local SHA-256 verification, private S3 archive, real CPU inference, two supervised short-lived AWS experiments and measured preliminary reasoning probes. In-memory Qwen2 attention normalization removes the observed false-positive sliding-window warning without changing source files; real benchmark logs recorded zero occurrences.
+
+**Open production gates:** signed model admission, tenant isolation, independent quality and safety review, model-adapter compatibility, truly unseen benchmark coverage, factual retrieval grounding, concurrency tests, authenticated Kyro model service and deployment rollback. The [2026-11-07 reasoning hardening report](../research/GENESIS_REASONING_HARDENING_2026-11-07.md) records **4/12 raw**, **7/12 original Genesis**, and **10/12 hardened Genesis** strict passes on the *same small public test suite*, with serious residual weaknesses. This does **not** establish transferable intelligence, a newly trained foundation model or public-beta readiness.
+
+**Billing:** temporary AWS tests can incur small EC2/S3 charges; AWS Budgets are alerts, not hard cost limits. No persistent paid instance is required to read this repository or run its offline mock tests.
 
 ## Source material
 
