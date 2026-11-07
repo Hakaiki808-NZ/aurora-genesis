@@ -43,6 +43,8 @@ def run():
     denied(lambda:validate_manifest({**manifest,"dataset_sha256":"abc"},prefix=prefix,now=now))
     denied(lambda:cost_gate("19.8","10.0"))
     denied(lambda:cost_gate("not-a-cost","10.0"))
+    assert cost_gate("-0.0000000033","10.0")=="0"
+    denied(lambda:cost_gate("-3.0","10.0"))
     assert cost_gate("0.5","10.0")=="0.5"
     print("AUTOMATIC_TRAINING_PLAN=PASS")
 
