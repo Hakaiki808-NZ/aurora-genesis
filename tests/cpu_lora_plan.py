@@ -21,6 +21,13 @@ def run():
     assert ids.isdisjoint(x["instruction"] for x in a["heldout"])
     prompts=json.loads(benchmark.read_text())["cases"]
     assert ids.isdisjoint(x["prompt"] for x in prompts)
+    safety_data = root / "genesis/training/data/genesis_provenance_authorization_v1.jsonl"
+    safety = dataset_plan(safety_data, benchmark)
+    assert safety["train_count"] >= 50
+    assert safety["heldout_count"] >= 12
+    assert set(r["instruction"] for r in safety["train"]).isdisjoint(
+        r["instruction"] for r in safety["heldout"]
+    )
 
     with tempfile.TemporaryDirectory() as tmp:
         p=Path(tmp)/"bad.jsonl"
