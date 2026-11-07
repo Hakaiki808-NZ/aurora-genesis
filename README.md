@@ -70,6 +70,17 @@ tools/            development utilities
 
 Genesis now has a **data-only reference-pack prototype**. You can explicitly install, search, disable, replace or uninstall subject packs without changing its core weights. See [Knowledge Modules](docs/architecture/KNOWLEDGE_MODULES.md) and the [Physics Foundations demo](examples/modules/physics-foundations.json). This is **not** a degree, verified expertise, paid marketplace, or production entitlement system.
 
+## Protected Core and university curriculum add-ons (development branch)
+
+A Genesis add-on layer is under development: a built-in, non-uninstallable
+**Genesis Core**, plus optional reference packs and university-level
+**sample curricula**. The starter examples map Physics and Computer Science
+topics to year/unit/chapter outlines; installation can change the reference
+material retrieved on the next response, but it does **not** confer a degree,
+demonstrate specialist competence, or modify neural weights. See
+[Genesis Add-ons](docs/architecture/GENESIS_ADDONS.md) and the
+[reference catalogue](examples/addons/catalog.json).
+
 ## Free language packs
 
 The knowledge-module system also includes two **free** starter language packs: [Spanish basics](examples/modules/spanish-basics.json) and [te reo Māori basics](examples/modules/te-reo-maori-basics.json). They are installable, removable, and searchable like physics references, with Unicode-aware retrieval and explicit language metadata. They are short demonstrations, **not** complete translation models or a public Kyro marketplace.
