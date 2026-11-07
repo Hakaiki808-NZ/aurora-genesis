@@ -17,6 +17,7 @@ from .capabilities import CapabilityController
 from .engine_boundary import EngineBoundary, EngineReceipt
 from .realignment import RealignmentSchool
 from .knowledge_modules import KnowledgeModuleStore
+from .addons import AddonManager
 from .task_assurance import TaskLedger
 from .user_capabilities import UserCapabilityServices
 
@@ -39,6 +40,7 @@ class Genesis:
         workspace=workspace or os.environ.get("GENESIS_WORKSPACE") or data_dir/"workspace"
         self.store=Store(state_path); self.tools=ToolRegistry(workspace)
         self.knowledge_modules=KnowledgeModuleStore(self.store)
+        self.addons=AddonManager(self.knowledge_modules)
         self.assurance=TaskLedger(self.store)
         self.user_capabilities=UserCapabilityServices(self.store,profile_id)
         self.policy=PolicyEngine(cfg/"model_constitution.json",self.tools,self.store)
@@ -77,7 +79,7 @@ class Genesis:
         answer=self.respond(text); return {"answer":answer,"trace":self.last_trace}
 
     def state(self)->dict[str,Any]:
-        return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"knowledge_modules":self.knowledge_modules.list(),"realignment_school":{"version":self.realignment_school.VERSION,"cases":len(self.realignment_school.curriculum()),"autonomous_updates":False},"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"health":self.self_check()}
+        return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"knowledge_modules":self.knowledge_modules.list(),"addons":self.addons.list(),"realignment_school":{"version":self.realignment_school.VERSION,"cases":len(self.realignment_school.curriculum()),"autonomous_updates":False},"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"health":self.self_check()}
 
     def self_check(self)->dict[str,Any]:
         checks={}
@@ -152,6 +154,27 @@ class Genesis:
     def uninstall_knowledge_module(self, module_id:str)->dict[str,Any]:
         with self._turn_lock:
             return self.knowledge_modules.uninstall(module_id)
+
+    # Add-on facade: the locked Core is code-owned and always available.
+    # Optional references take effect on the next turn via knowledge retrieval;
+    # this does not train or modify neural weights.
+    def list_addons(self)->list[dict[str,Any]]:
+        return self.addons.list()
+
+    def install_addon(self,package:dict[str,Any],replace:bool=False)->dict[str,Any]:
+        with self._turn_lock:
+            return self.addons.install(package,replace=replace)
+
+    def set_addon_enabled(self,addon_id:str,enabled:bool)->dict[str,Any]:
+        with self._turn_lock:
+            return self.addons.set_enabled(addon_id,enabled)
+
+    def uninstall_addon(self,addon_id:str)->dict[str,Any]:
+        with self._turn_lock:
+            return self.addons.uninstall(addon_id)
+
+    def addon_syllabus(self,addon_id:str)->dict[str,Any]:
+        return self.addons.syllabus(addon_id)
 
     # Outcome assurance is observational. These operations never dispatch tools or
     # grant Aurora execution privileges. No task is complete without an explicit

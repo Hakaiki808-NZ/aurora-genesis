@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "id": "physics-bsc-starter",
+  "title": "Physics BSc — Starter Curriculum Reference",
+  "version": "0.1.0",
+  "publisher": "Aurora / Genesis reference project",
+  "license": "Apache-2.0",
+  "distribution": "open",
+  "category": "degree_track",
+  "subject": "bachelor-level physics curriculum reference: mechanics calculus electromagnetism thermodynamics quantum",
+  "programme": {
+    "title": "Physics BSc — Sample Programme (not accredited)",
+    "level": "bachelor",
+    "duration_years": 3,
+    "units": [
+      {
+        "code": "PHY101",
+        "title": "Classical mechanics",
+        "year": 1,
+        "chapter_ids": [
+          "mechanics-vectors",
+          "mechanics-newton"
+        ]
+      },
+      {
+        "code": "MAT101",
+        "title": "Mathematical methods",
+        "year": 1,
+        "chapter_ids": [
+          "math-calculus"
+        ]
+      },
+      {
+        "code": "PHY201",
+        "title": "Electromagnetism and waves",
+        "year": 2,
+        "chapter_ids": [
+          "electric-fields",
+          "wave-equation"
+        ]
+      },
+      {
+        "code": "PHY202",
+        "title": "Thermodynamics and statistical physics",
+        "year": 2,
+        "chapter_ids": [
+          "thermodynamics-first",
+          "statistical-physics"
+        ]
+      },
+      {
+        "code": "PHY301",
+        "title": "Introduction to quantum mechanics",
+        "year": 3,
+        "chapter_ids": [
+          "quantum-state"
+        ]
+      },
+      {
+        "code": "PHY302",
+        "title": "Experimental practice and uncertainty",
+        "year": 3,
+        "chapter_ids": [
+          "lab-uncertainty"
+        ]
+      }
+    ]
+  },
+  "chapters": [
+    {
+      "id": "mechanics-vectors",
+      "title": "Vector position, velocity and acceleration",
+      "content": "Position, velocity and acceleration are vectors. Velocity is the time derivative of position; acceleration is the time derivative of velocity. In Cartesian components, vectors combine componentwise. Equations of motion need reference frames and initial conditions.",
+      "source": "Original Genesis educational note; introductory physics reference."
+    },
+    {
+      "id": "mechanics-newton",
+      "title": "Newton's laws and conservation of momentum",
+      "content": "For a particle of constant mass in an inertial frame, the net external force equals mass multiplied by acceleration, F = ma. In an isolated system total linear momentum is conserved. Momentum is p = mv in nonrelativistic mechanics.",
+      "source": "Original Genesis educational note; introductory physics reference."
+    },
+    {
+      "id": "math-calculus",
+      "title": "Calculus for physical systems",
+      "content": "A derivative measures local rate of change; an integral accumulates a quantity over a domain. The fundamental theorem of calculus connects differentiation and integration. Physical models often use differential equations to express time evolution.",
+      "source": "Original Genesis educational note; introductory mathematical methods."
+    },
+    {
+      "id": "electric-fields",
+      "title": "Electric fields and Gauss's law",
+      "content": "Electric field E is force per unit positive test charge. Gauss's law states that the total electric flux through a closed surface equals the enclosed charge divided by vacuum permittivity, in SI units. Symmetry helps calculate fields for some charge distributions.",
+      "source": "Original Genesis educational note; introductory electromagnetism."
+    },
+    {
+      "id": "wave-equation",
+      "title": "Waves, wavelength and frequency",
+      "content": "A sinusoidal travelling wave has speed equal to frequency multiplied by wavelength, v = f λ, for the propagation medium and mode considered. Interference arises through superposition when the system is linear. Boundary conditions determine allowed standing-wave modes.",
+      "source": "Original Genesis educational note; introductory wave physics."
+    },
+    {
+      "id": "thermodynamics-first",
+      "title": "First law of thermodynamics and entropy",
+      "content": "The first law is energy conservation: change in a system's internal energy equals heat added minus work done by the system, for a conventional sign choice. Entropy is a state function; the second law constrains total entropy change for an isolated system.",
+      "source": "Original Genesis educational note; introductory thermodynamics."
+    },
+    {
+      "id": "statistical-physics",
+      "title": "Statistical mechanics and microscopic states",
+      "content": "Statistical mechanics relates macroscopic temperature and pressure to ensembles of microscopic states. In a microcanonical description, Boltzmann entropy is S = k_B ln Ω, where Ω counts accessible microstates under appropriate assumptions.",
+      "source": "Original Genesis educational note; introductory statistical physics."
+    },
+    {
+      "id": "quantum-state",
+      "title": "Quantum states, observables and measurement",
+      "content": "A quantum state can be represented by a normalized vector in Hilbert space or a density operator. Observables correspond to self-adjoint operators, and measurement outcome probabilities follow the Born rule. A state vector alone does not guarantee a definite outcome for every observable.",
+      "source": "Original Genesis educational note; introductory quantum mechanics."
+    },
+    {
+      "id": "lab-uncertainty",
+      "title": "Measurement uncertainty and reproducibility",
+      "content": "Experimental reports should distinguish accuracy from precision, propagate uncertainty when combining measured quantities, document calibration and controls, and state assumptions. Reproducibility depends on transparent methods and appropriate data stewardship.",
+      "source": "Original Genesis educational note; laboratory practice."
+    }
+  ]
+}

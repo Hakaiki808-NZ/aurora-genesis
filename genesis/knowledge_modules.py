@@ -45,13 +45,15 @@ def _validate(raw: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise KnowledgeModuleError("package must be a JSON object")
     allowed = {"schema_version", "id", "title", "version", "publisher",
-               "license", "distribution", "subject", "chapters", "category", "language_tag"}
+               "license", "distribution", "subject", "chapters", "category", "language_tag", "programme"}
     if set(raw) - allowed:
         raise KnowledgeModuleError("unknown package fields (executable capabilities are not supported)")
     if raw.get("schema_version") != 1 or isinstance(raw.get("schema_version"), bool):
         raise KnowledgeModuleError("unsupported knowledge-module schema")
     module_id = _required_string(raw, "id", 64)
     version = _required_string(raw, "version", 40)
+    if module_id == "genesis-core":
+        raise KnowledgeModuleError("Genesis Core is reserved and cannot be installed as data")
     if not _ID.fullmatch(module_id) or not _VERSION.fullmatch(version):
         raise KnowledgeModuleError("invalid module id or semantic version")
     distribution = raw.get("distribution", "open")
@@ -70,7 +72,7 @@ def _validate(raw: dict[str, Any]) -> dict[str, Any]:
     }
     if "category" in raw or "language_tag" in raw:
         category = raw.get("category", "knowledge")
-        if not isinstance(category, str) or category not in {"knowledge", "language"}:
+        if not isinstance(category, str) or category not in {"knowledge", "language", "degree_track"}:
             raise KnowledgeModuleError("unsupported category")
         if category == "language":
             language_tag = _required_string(raw, "language_tag", 35)
@@ -81,7 +83,7 @@ def _validate(raw: dict[str, Any]) -> dict[str, Any]:
         else:
             if "language_tag" in raw:
                 raise KnowledgeModuleError("language_tag requires category=language")
-            normalized["category"] = "knowledge"
+            normalized["category"] = category
     chapters = raw.get("chapters")
     if not isinstance(chapters, list) or not 1 <= len(chapters) <= _MAX_CHAPTERS:
         raise KnowledgeModuleError(f"chapters must contain 1 to {_MAX_CHAPTERS} entries")
@@ -99,6 +101,44 @@ def _validate(raw: dict[str, Any]) -> dict[str, Any]:
             "content": _required_string(chapter, "content", 12000),
             "source": _required_string(chapter, "source", 320),
         })
+    if normalized.get("category") == "degree_track":
+        programme = raw.get("programme")
+        if not isinstance(programme, dict) or set(programme) != {"title", "level", "duration_years", "units"}:
+            raise KnowledgeModuleError("degree_track requires programme title, level, duration_years and units")
+        title = _required_string(programme, "title", 180)
+        level = programme["level"]
+        if not isinstance(level, str) or level not in {"bachelor", "master", "doctoral"}:
+            raise KnowledgeModuleError("unsupported programme reference level")
+        years = programme["duration_years"]
+        if isinstance(years, bool) or not isinstance(years, int) or not 1 <= years <= 8:
+            raise KnowledgeModuleError("duration_years must be 1 to 8")
+        units = programme["units"]
+        if not isinstance(units, list) or not 1 <= len(units) <= 40:
+            raise KnowledgeModuleError("programme must include 1 to 40 units")
+        chapter_ids = {c["id"] for c in normalized["chapters"]}
+        seen_units = set()
+        checked_units = []
+        for unit in units:
+            if not isinstance(unit, dict) or set(unit) != {"code", "title", "year", "chapter_ids"}:
+                raise KnowledgeModuleError("invalid programme unit")
+            code = _required_string(unit, "code", 24)
+            unit_title = _required_string(unit, "title", 160)
+            year = unit["year"]
+            refs = unit["chapter_ids"]
+            if (code in seen_units or isinstance(year, bool) or not isinstance(year, int)
+                    or not 1 <= year <= years or not isinstance(refs, list)
+                    or not refs or len(refs) > 100 or not all(
+                        isinstance(x, str) and x in chapter_ids for x in refs)):
+                raise KnowledgeModuleError("duplicate unit, invalid year or unknown chapter reference")
+            if len(set(refs)) != len(refs):
+                raise KnowledgeModuleError("duplicate chapter reference")
+            seen_units.add(code)
+            checked_units.append({"code": code, "title": unit_title, "year": year,
+                                  "chapter_ids": refs})
+        normalized["programme"] = {"title": title, "level": level,
+                                    "duration_years": years, "units": checked_units}
+    elif "programme" in raw:
+        raise KnowledgeModuleError("programme is allowed only for degree_track")
     raw_bytes = json.dumps(normalized, sort_keys=True, ensure_ascii=False,
                            separators=(",", ":")).encode("utf-8")
     if len(raw_bytes) > _MAX_BYTES:
@@ -126,6 +166,7 @@ class KnowledgeModuleStore:
                     subject TEXT NOT NULL,
                     category TEXT NOT NULL DEFAULT 'knowledge',
                     language_tag TEXT,
+                    programme_json TEXT,
                     sha256 TEXT NOT NULL,
                     enabled INTEGER NOT NULL DEFAULT 1,
                     installed_at TEXT NOT NULL
@@ -148,6 +189,8 @@ class KnowledgeModuleStore:
                 db.execute("ALTER TABLE knowledge_modules ADD COLUMN category TEXT NOT NULL DEFAULT 'knowledge'")
             if "language_tag" not in columns:
                 db.execute("ALTER TABLE knowledge_modules ADD COLUMN language_tag TEXT")
+            if "programme_json" not in columns:
+                db.execute("ALTER TABLE knowledge_modules ADD COLUMN programme_json TEXT")
 
     def list(self) -> list[dict[str, Any]]:
         with self.store._lock:
@@ -156,7 +199,10 @@ class KnowledgeModuleStore:
                     WHERE c.module_id=m.module_id) AS chapters
                     FROM knowledge_modules m ORDER BY m.module_id"""
             ).fetchall()
-        return [dict(r) | {"enabled": bool(r["enabled"]), "distribution": "open", "is_free": True} for r in rows]
+        return [{k: v for k, v in dict(r).items() if k != "programme_json"} | {"enabled": bool(r["enabled"]), "distribution": "open",
+                           "is_free": True} |
+                ({"programme": json.loads(r["programme_json"])} if r["programme_json"] else {})
+                for r in rows]
 
     def install(self, package: dict[str, Any], *, replace: bool = False) -> dict[str, Any]:
         payload = _validate(package)
@@ -175,16 +221,19 @@ class KnowledgeModuleStore:
             enabled = int(existing["enabled"]) if existing else 1
             # Replace metadata and chapters in one transaction; disabled stays disabled.
             db.execute("""INSERT INTO knowledge_modules
-                (module_id,title,version,publisher,license,subject,category,language_tag,sha256,enabled,installed_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                (module_id,title,version,publisher,license,subject,category,language_tag,programme_json,sha256,enabled,installed_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
                 ON CONFLICT(module_id) DO UPDATE SET
                 title=excluded.title,version=excluded.version,publisher=excluded.publisher,
                 license=excluded.license,subject=excluded.subject,category=excluded.category,
-                language_tag=excluded.language_tag,sha256=excluded.sha256,
+                language_tag=excluded.language_tag,programme_json=excluded.programme_json,
+                sha256=excluded.sha256,
                 enabled=excluded.enabled,installed_at=excluded.installed_at""",
                 (module_id,payload["title"],payload["version"],payload["publisher"],
                  payload["license"],payload["subject"],payload.get("category","knowledge"),
-                 payload.get("language_tag"),digest,enabled,
+                 payload.get("language_tag"),
+                 json.dumps(payload.get("programme")) if payload.get("programme") else None,
+                 digest,enabled,
                  datetime.now(timezone.utc).isoformat()))
             db.execute("DELETE FROM knowledge_module_chapters WHERE module_id=?", (module_id,))
             db.executemany("""INSERT INTO knowledge_module_chapters
@@ -195,6 +244,8 @@ class KnowledgeModuleStore:
                 "status": "replaced" if existing else "installed", "sha256": digest}
 
     def set_enabled(self, module_id: str, enabled: bool) -> dict[str, Any]:
+        if module_id == "genesis-core":
+            raise KnowledgeModuleError("Genesis Core cannot be managed as a knowledge module")
         with self.store.tx() as db:
             row = db.execute("UPDATE knowledge_modules SET enabled=? WHERE module_id=?",
                              (int(enabled), module_id))
@@ -203,6 +254,8 @@ class KnowledgeModuleStore:
         return {"id": module_id, "enabled": enabled}
 
     def uninstall(self, module_id: str) -> dict[str, Any]:
+        if module_id == "genesis-core":
+            raise KnowledgeModuleError("Genesis Core cannot be uninstalled")
         with self.store.tx() as db:
             row = db.execute("DELETE FROM knowledge_modules WHERE module_id=?", (module_id,))
             if row.rowcount == 0:
