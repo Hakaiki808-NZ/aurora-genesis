@@ -25,7 +25,7 @@
     const url=new URL(config.cognitoDomain+'/oauth2/authorize');
     url.searchParams.set('client_id',config.clientId);
     url.searchParams.set('response_type','code');
-    url.searchParams.set('scope','openid email profile aws.cognito.signin.user.admin');
+    url.searchParams.set('scope','openid email profile');
     url.searchParams.set('redirect_uri',config.redirectUri);
     url.searchParams.set('code_challenge_method','S256');
     url.searchParams.set('code_challenge',await challenge(verifier));
