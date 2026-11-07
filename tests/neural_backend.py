@@ -34,7 +34,7 @@ def run():
     active = BedrockBackend(client=mock, enabled=True, max_output_tokens=24, max_calls=2)
     assert active.available()
     assert active.generate("What is 6 times 7?") == "The answer is 42."
-    assert mock.calls[0]["modelId"] == "apac.amazon.nova-micro-v1:0"
+    assert mock.calls[0]["modelId"] == "openai.gpt-oss-120b-1:0"
     assert mock.calls[0]["inferenceConfig"]["maxTokens"] == 24
     assert not any("toolConfig" in c for c in mock.calls)
     assert active.generate("Hello again")
