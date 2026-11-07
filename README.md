@@ -25,6 +25,9 @@ The project is gathering **public developer feedback and voluntary early interes
 
 - [About Aurora, Genesis and Kyro](docs/architecture/SYSTEMS_PUBLIC_GUIDE.md)
 - [Latest consolidation and unmerged work inventory](docs/releases/CONSOLIDATION_2026_11_07.md)
+- [Current GitHub repository audit, open PR triage and release gates](docs/releases/GITHUB_REPO_AUDIT_2026_11_07.md)
+- [Current authoritative project status](docs/governance/PROJECT_STATUS.md)
+- [Genesis Common AI Baseline 1.0 (GCAB-1)](docs/standards/GENESIS_COMMON_AI_BASELINE_V1.md)
 - [Public development version versus system pairing](docs/releases/VERSION_CROSSWALK.md)
 - [Public website source](cloud/public-site-v1/)
 
@@ -33,6 +36,10 @@ The project is gathering **public developer feedback and voluntary early interes
 > Genesis governs cognition. AURORA governs execution.
 
 The Model cannot grant itself Engine authority. Engine-side safety, admission and operational controls remain independent of Model reasoning.
+
+## Current GitHub consolidation (7 November 2026)
+
+Merged PRs [#41](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/41), [#37](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/37), and [#43](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/43) preserve a tested add-on reference, disabled neural gateway source, and evidence-based GCAB-1 standard. The default neural inference path has **not** been enabled, Aurora cloud execution remains restricted, and public beta is **on hold**. The top unresolved blockers are [real Genesis model evaluation](https://github.com/Hakaiki808-NZ/aurora-genesis/issues/44) and [real-browser authenticated Kyro acceptance](https://github.com/Hakaiki808-NZ/aurora-genesis/issues/30). See the [full repository audit](docs/releases/GITHUB_REPO_AUDIT_2026_11_07.md) for retained draft branches and release policy.
 
 ## What is public in v0.1
 
@@ -70,7 +77,7 @@ tools/            development utilities
 
 Genesis now has a **data-only reference-pack prototype**. You can explicitly install, search, disable, replace or uninstall subject packs without changing its core weights. See [Knowledge Modules](docs/architecture/KNOWLEDGE_MODULES.md) and the [Physics Foundations demo](examples/modules/physics-foundations.json). This is **not** a degree, verified expertise, paid marketplace, or production entitlement system.
 
-## Protected Core and university curriculum add-ons (development branch)
+## Protected Core and university curriculum add-ons (experimental reference)
 
 A Genesis add-on layer is under development: a built-in, non-uninstallable
 **Genesis Core**, plus optional reference packs and university-level
