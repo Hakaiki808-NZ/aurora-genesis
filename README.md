@@ -99,6 +99,31 @@ demonstrate specialist competence, or modify neural weights. See
 [Genesis Add-ons](docs/architecture/GENESIS_ADDONS.md) and the
 [reference catalogue](examples/addons/catalog.json).
 
+## Neurol neural core (experimental)
+
+Neurol v0.1 is a small, original Genesis-side recurrent neural core trained
+from random initialization. It provides a UTF-8 byte tokenizer, reset-before
+GRU, backpropagation through time, Adam optimization, held-out evaluation,
+JSON-only checkpoints, and an opt-in text-generation backend. It has no tool
+or Aurora execution authority, does not train during chat, and is disabled by
+default.
+
+Install its optional CPU dependency and run the bounded demonstration:
+
+```bash
+python -m pip install -r genesis/neurol/requirements.txt
+python -m genesis.neurol.train train \
+  --dataset examples/neurol/corpus.json \
+  --output artifacts/neurol/candidate.json \
+  --report artifacts/neurol/evaluation.json \
+  --steps 600
+```
+
+Activation requires all four explicit settings: `GENESIS_GENERATOR=neurol`,
+`GENESIS_NEUROL_ENABLE=1`, `GENESIS_NEUROL_CHECKPOINT` and the independently
+pinned `GENESIS_NEUROL_SHA256`. See the [design RFC](rfcs/0001-neurol.md) and
+[first evaluation](docs/research/NEUROL_V0_1_EVALUATION_2026_11_08.md).
+
 ## Free language packs
 
 The knowledge-module system also includes two **free** starter language packs: [Spanish basics](examples/modules/spanish-basics.json) and [te reo Māori basics](examples/modules/te-reo-maori-basics.json). They are installable, removable, and searchable like physics references, with Unicode-aware retrieval and explicit language metadata. They are short demonstrations, **not** complete translation models or a public Kyro marketplace.

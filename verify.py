@@ -3,7 +3,7 @@ import subprocess, sys, platform, json
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
-TESTS=['tests.acceptance','tests.regression','tests.refinement','tests.hardening','tests.api_test','tests.constitutional','tests.constitution_stress','tests.guardian_hardening','tests.phases.phase2_integration','tests.phases.phase3_adversarial','tests.phases.phase4_recovery_integration','tests.neural_backend','tests.realignment_school','tests.knowledge_modules','tests.addons','tests.language_modules','tests.task_assurance','tests.user_capabilities','tests.kyro_capabilities_lambda','tests.kyro_marketing','tests.intent_context_regression']
+TESTS=['tests.acceptance','tests.regression','tests.refinement','tests.hardening','tests.api_test','tests.constitutional','tests.constitution_stress','tests.guardian_hardening','tests.phases.phase2_integration','tests.phases.phase3_adversarial','tests.phases.phase4_recovery_integration','tests.neural_backend','tests.neurol','tests.realignment_school','tests.knowledge_modules','tests.addons','tests.language_modules','tests.task_assurance','tests.user_capabilities','tests.kyro_capabilities_lambda','tests.kyro_marketing','tests.intent_context_regression']
 
 def main():
     results=[]

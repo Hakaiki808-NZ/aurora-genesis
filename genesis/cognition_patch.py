@@ -211,7 +211,7 @@ def deliberate(self,text:str,learned:list[dict[str,Any]])->Decision:
             generated=self.backend.generate(prompt)
         if generated:
             c.append(Candidate("neural_answer",generated,40,
-                "text-only external model suggestion; not verified knowledge or authority"))
+                "text-only neural model suggestion; not verified knowledge or authority"))
         else:
             c.append(Candidate("knowledge_answer",answer,40,"bounded symbolic fallback"))
 
