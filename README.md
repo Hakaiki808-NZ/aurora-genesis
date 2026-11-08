@@ -1,7 +1,7 @@
 # AURORA / Genesis
 
-**Version:** v0.1  
-**Status:** Pre-alpha research and engineering release
+**Version:** v0.2.0-preview.1  
+**Status:** Development source preview — public beta and privileged Aurora release **HOLD**
 
 AURORA / Genesis is an experimental AI systems project built around a strict separation of responsibilities:
 
@@ -21,11 +21,19 @@ The [Kyro launch-site candidate](cloud/kyro-launch/) showcases our two immediate
 
 The project is gathering **public developer feedback and voluntary early interest**, not opening unrestricted Kyro accounts. See the [free prelaunch plan](docs/marketing/FREE_PRELAUNCH_PLAN_2026_11_07.md), [prepared public posts](docs/marketing/POSTS_READY_FOR_REVIEW.md), and [GitHub-based interest form](https://github.com/Hakaiki808-NZ/aurora-genesis/issues/new?template=early-access-interest.yml). GitHub issues are public: do not post personal contact details or secrets. The site remains `noindex` pending readiness review.
 
+## 8 November 2026: public-source security hardening
+
+This source milestone adds a tracked-file private-boundary/credential guard, standalone self-tests, and a GitHub Actions check. The [exposure audit](docs/releases/PUBLIC_REPOSITORY_AUDIT_2026_11_08.md) distinguishes confirmed findings, incomplete scans, and actions requiring private operators. The scan cannot establish that Git history or old public artifacts are safe.
+
+The current public repo is **not** a repository for private Aurora Engine implementations or operational secret material. See [security policy](SECURITY.md) and [public/private boundary](PUBLIC_PRIVATE_BOUNDARY.md).
+
+Run locally with `python3 tools/check_public_boundary.py --self-test` followed by `python3 tools/check_public_boundary.py`. A pass does not certify production readiness.
+
 ## Public information
 
 - [About Aurora, Genesis and Kyro](docs/architecture/SYSTEMS_PUBLIC_GUIDE.md)
-- [Latest consolidation and unmerged work inventory](docs/releases/CONSOLIDATION_2026_11_07.md)
-- [Current GitHub repository audit, open PR triage and release gates](docs/releases/GITHUB_REPO_AUDIT_2026_11_07.md)
+- [Historical consolidation and unmerged work inventory](docs/releases/CONSOLIDATION_2026_11_07.md)
+- [7 November GitHub repository audit (historical snapshot)](docs/releases/GITHUB_REPO_AUDIT_2026_11_07.md)
 - [Current authoritative project status](docs/governance/PROJECT_STATUS.md)
 - [Genesis Common AI Baseline 1.0 (GCAB-1)](docs/standards/GENESIS_COMMON_AI_BASELINE_V1.md)
 - [Public development version versus system pairing](docs/releases/VERSION_CROSSWALK.md)
@@ -37,11 +45,11 @@ The project is gathering **public developer feedback and voluntary early interes
 
 The Model cannot grant itself Engine authority. Engine-side safety, admission and operational controls remain independent of Model reasoning.
 
-## Current GitHub consolidation (7 November 2026)
+## Historical GitHub consolidation (7 November 2026)
 
 Merged PRs [#41](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/41), [#37](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/37), and [#43](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/43) preserve a tested add-on reference, disabled neural gateway source, and evidence-based GCAB-1 standard. Follow-up merges [#45](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/45) and [#46](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/46) consolidate the entire repository and repair a fallback intent-context bug. The default neural inference path has **not** been enabled, Aurora cloud execution remains restricted, and public beta is **on hold**. The top unresolved blockers are [real Genesis model evaluation](https://github.com/Hakaiki808-NZ/aurora-genesis/issues/44) and [real-browser authenticated Kyro acceptance](https://github.com/Hakaiki808-NZ/aurora-genesis/issues/30). See the [full repository audit](docs/releases/GITHUB_REPO_AUDIT_2026_11_07.md) for retained draft branches and release policy.
 
-## What is public in v0.1
+## What is public in v0.2.0-preview.1
 
 - Genesis reference implementation
 - public architecture documentation
@@ -58,19 +66,22 @@ Security-critical AURORA implementation internals, private signing material, pro
 
 ## Maturity
 
-v0.1 is a **pre-alpha reference baseline**. It is suitable for research, review and contribution, but it is not presented as production-secure software.
+v0.2.0-preview.1 is an **unreleased research-source preview**; it has not passed production or public beta acceptance. It is suitable for research, review and contribution, but it is not presented as production-secure software.
 
 ## Repository layout
 
 ```text
-.github/          GitHub templates and CI
-docs/             architecture, research and governance
-genesis/          public Genesis reference implementation
-specifications/   public contracts and interface specifications
-tests/            verification and regression tests
-examples/         usage examples
-rfcs/             architecture-change proposals
-tools/            development utilities
+.github/          public templates and CI guards
+cloud/            public cloud templates and static site source
+config/           reference model/identity metadata (no credentials)
+deploy/           self-hosted reference deployment templates
+docs/             architecture, research, evidence and governance
+genesis/          public reference Model code
+tests/            regression and qualification harnesses
+examples/         data-only sample knowledge modules
+rfcs/             architecture proposals
+tools/            public, non-privileged development utilities
+web/              Kyro frontend source
 ```
 
 ## Installable knowledge modules (experimental)
@@ -98,7 +109,7 @@ Start with `CONTRIBUTING.md`. Architectural changes require an RFC. Contribution
 
 ## Versioning
 
-The first public development line is **v0.1**. Earlier internal development labels are intentionally omitted from the public repository.
+The current public source milestone is **v0.2.0-preview.1**. The historical **v0.1** pre-alpha baseline remains distinct from Aurora and Genesis system identity. No GitHub release/tag or public deployment approval is implied.
 
 ## License
 

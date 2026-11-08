@@ -1,19 +1,26 @@
-# Versioning
+# Public source versioning
 
-The first public development release is **v0.1**.
+**Current repository source milestone: v0.2.0-preview.1 (8 November 2026).**
 
-Public version history begins here. Earlier internal development labels are intentionally excluded from the public repository and are not treated as public releases.
+This is an auditable **development-source preview**, not a GitHub Release, a general-public beta, an Aurora Engine certification, or an authority to deploy. The historical v0.1 pre-alpha baseline is retained in Git history.
 
-Until the project reaches a stable release policy:
+## Version classes
 
-- compatible development changes increment the development version;
-- breaking architectural changes require explicit review;
-- build identifiers and CI run numbers are metadata, not product versions.
+- `VERSION`: public source-tree milestone, separate from Aurora and Genesis product identity.
+- `v0.x.y-preview.n`: reviewable, incomplete development snapshots; higher numbers do **not** imply additional security assurance.
+- Official release tags and GitHub Releases: created only after tests, security review, build provenance and a signed go/no-go decision.
+- Build identifiers and CI run numbers: metadata, not model or Engine versions.
 
-No public changelog is included in the initial repository preparation package.
+Changes to public APIs/contracts need compatibility tests and a reviewed migration plan. Changes to protected Aurora source happen privately; do not commit it here to simplify versioning.
 
-## System-pairing design identity
+## System-pairing architecture (unchanged)
 
-The public GitHub source line remains `v0.1` (pre-alpha). The separately established Engine/Model architectural pairing is **Aurora V1.02 + Genesis V1.02 = V1.02.102**. Those identities describe different things: the public repository baseline versus the two-system pairing. The pairing is **not** a claim that the public repository or current AWS deployment contains a production-qualified V1.02 Engine.
+The Engine/Model architectural pairing remains **Aurora V1.02 + Genesis V1.02 = V1.02.102**. It is a separate system identity and does **not** assert that a complete production-qualified V1.02 Engine or Genesis model is present in this repository or deployment. The Kyro UI has its own build identifiers.
 
-See [version crosswalk](docs/releases/VERSION_CROSSWALK.md). A future release-tag or version bump requires its own tested release decision.
+See [version crosswalk](docs/releases/VERSION_CROSSWALK.md) and [project status](docs/governance/PROJECT_STATUS.md).
+
+## Promotion criteria
+
+A beta or production designation requires **evidence**, not a changed version string: authenticated real-browser Kyro acceptance, verified neural-model quality, tenant privacy controls, incident/rollback exercises, scoped Aurora security qualification, reproducible CI and a deliberate release approval. Until these gates pass, **public beta and privileged Aurora release remain HOLD**.
+
+Review [8 November source and exposure audit](docs/releases/PUBLIC_REPOSITORY_AUDIT_2026_11_08.md) and [public beta gate](docs/releases/PUBLIC_BETA_GATE_2026_11_07.md).

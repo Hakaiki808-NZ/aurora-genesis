@@ -4,12 +4,20 @@
 
 ## Architectural impact
 
-## Security impact
+## Security and public exposure
+- [ ] No protected Aurora Engine source, privileged operational details or internal runbooks added.
+- [ ] No credentials, tokens, personal information, logs, database contents, AWS state files or private keys added (including examples and comments).
+- [ ] Public browser endpoints/client IDs are intentional and protected APIs validate authorization.
+- [ ] I reviewed the full diff **and** any history/branch-specific exposure for this change.
+- [ ] Public-boundary CI guard passes; any flagged file was investigated without putting its secret value in logs.
 
-## Tests
+## Tests and verification (link actual CI results)
+
+## Release impact
+- [ ] This PR does **not** silently promote source-preview work to general beta or qualified Aurora production.
+- [ ] If versioning changed, CHANGELOG and release/qualification evidence explain why.
 
 ## Alternatives considered
 
 - [ ] I preserved the Engine/Model authority boundary, or linked an approved RFC explaining the change.
-- [ ] I added/updated tests where appropriate.
-- [ ] I did not add secrets, credentials or machine-specific state.
+- [ ] I added or updated tests where appropriate.

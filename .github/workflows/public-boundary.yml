@@ -1,0 +1,24 @@
+name: Public repository boundary and credential guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-boundary:
+    name: Guard tracked public files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check guard's negative and positive controls
+        run: python3 tools/check_public_boundary.py --self-test
+      - name: Audit every tracked file (no credential values in logs)
+        run: python3 tools/check_public_boundary.py
