@@ -165,10 +165,12 @@ class C2Sandbox:
         body = {k: v for k, v in grant.items() if k != "signature"}
         try:
             signature = hmac.new(self._key, _canonical(body), hashlib.sha256).hexdigest()
-            if not hmac.compare_digest(signature, grant["signature"]):
-                raise C2Denied("grant signature invalid")
+            submitted = grant["signature"]
+            valid = isinstance(submitted, str) and hmac.compare_digest(signature, submitted)
         except (TypeError, ValueError) as exc:
             raise C2Denied("invalid grant encoding") from exc
+        if not valid:
+            raise C2Denied("grant signature invalid")
         _validate_shape(
             scope=grant["scope"], key=grant["key"], epoch=grant["epoch"],
             subject=grant["subject"], session=grant["session"],
