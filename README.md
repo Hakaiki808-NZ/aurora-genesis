@@ -1,116 +1,34 @@
-# AURORA / Genesis
+# Aurora · Genesis · Kyro
 
-**Version:** v0.2.0-preview.1  
-**Status:** Development source preview — public beta and privileged Aurora release **HOLD**
+**Status:** Experimental development source. Not a production release.
 
-AURORA / Genesis is an experimental AI systems project built around a strict separation of responsibilities:
+This repository contains public research references, examples, compatibility contracts and the Kyro website source.
 
-- **AURORA** — execution/runtime authority.
-- **Genesis** — cognition, reasoning, planning, memory and semantic authorization.
-- **Kyro** — interface/embodiment layer (separate from Engine and Model).
+- **Aurora:** independent execution Engine (protected implementation is private).
+- **Genesis:** cognition/Model research and published reference code.
+- **Kyro:** user-facing Interface and website.
 
-The public repository is intended for research, testing, interoperability work and community contribution. It does **not** claim production readiness or machine consciousness.
+## Public resources
 
-## Kyro: build together. Grow with knowledge.
+- [Systems overview](docs/architecture/SYSTEMS_PUBLIC_GUIDE.md)
+- [Genesis public interfaces](MODEL_API.md)
+- [Genesis standards](docs/standards/GENESIS_COMMON_AI_BASELINE_V1.md)
+- [Examples](examples/)
+- [Kyro public website](cloud/public-site-v1/)
+- [Project maturity](docs/governance/PROJECT_STATUS.md)
+- [Security and disclosure](SECURITY.md)
+- [Public/private policy](PUBLIC_PRIVATE_BOUNDARY.md)
 
-The [Kyro launch-site candidate](cloud/kyro-launch/) showcases our two immediate differentiators: **free installable Genesis reference packs** and **role-based project collaboration** in the invite-only Kyro private-alpha workspace. Explore the [read-only workspace preview](https://d3j65cc3p66kzr.cloudfront.net/v3/preview.html#collab), the [free language and physics pack examples](examples/modules/), and [honest campaign messaging](docs/marketing/KYRO_CAMPAIGN.md).
+## Security and boundaries
 
-**Deployment note (7 November 2026):** Static research/pre-alpha website assets are present in AWS CloudFront/S3 at [public site](https://d3j65cc3p66kzr.cloudfront.net/site/index.html) and [discovery preview](https://d3j65cc3p66kzr.cloudfront.net/discover/index.html). This does **not** approve public onboarding or establish browser usability. Self-service cloud installs, purchases, real-time co-editing and public access to the private workspace are not offered. See [the systems guide](docs/architecture/SYSTEMS_PUBLIC_GUIDE.md) and [release gate](docs/releases/PUBLIC_BETA_GATE_2026_11_07.md).
+Public source does **not** grant access to protected runtime operations or imply that internal Engine implementations are open source. No production credentials, deployment inventories, incident evidence, operational security findings or private user data belong here.
 
-## Free prelaunch and community
+**Do not submit secrets or vulnerabilities in public issues or pull requests.**
 
-The project is gathering **public developer feedback and voluntary early interest**, not opening unrestricted Kyro accounts. See the [free prelaunch plan](docs/marketing/FREE_PRELAUNCH_PLAN_2026_11_07.md), [prepared public posts](docs/marketing/POSTS_READY_FOR_REVIEW.md), and [GitHub-based interest form](https://github.com/Hakaiki808-NZ/aurora-genesis/issues/new?template=early-access-interest.yml). GitHub issues are public: do not post personal contact details or secrets. The site remains `noindex` pending readiness review.
+Development and qualification are ongoing. Production readiness, broadly available accounts and high-consequence Engine execution are not established by the presence of reference code.
 
-## 8 November 2026: public-source security hardening
+## Development
 
-This source milestone adds a tracked-file private-boundary/credential guard, standalone self-tests, and a GitHub Actions check. The [exposure audit](docs/releases/PUBLIC_REPOSITORY_AUDIT_2026_11_08.md) distinguishes confirmed findings, incomplete scans, and actions requiring private operators. The scan cannot establish that Git history or old public artifacts are safe.
+Run `python3 verify.py` for the public reference test suite. Contribution and security rules are in [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
-The current public repo is **not** a repository for private Aurora Engine implementations or operational secret material. See [security policy](SECURITY.md) and [public/private boundary](PUBLIC_PRIVATE_BOUNDARY.md).
-
-Run locally with `python3 tools/check_public_boundary.py --self-test` followed by `python3 tools/check_public_boundary.py`. A pass does not certify production readiness.
-
-## Public information
-
-- [About Aurora, Genesis and Kyro](docs/architecture/SYSTEMS_PUBLIC_GUIDE.md)
-- [Historical consolidation and unmerged work inventory](docs/releases/CONSOLIDATION_2026_11_07.md)
-- [7 November GitHub repository audit (historical snapshot)](docs/releases/GITHUB_REPO_AUDIT_2026_11_07.md)
-- [Current authoritative project status](docs/governance/PROJECT_STATUS.md)
-- [Genesis Common AI Baseline 1.0 (GCAB-1)](docs/standards/GENESIS_COMMON_AI_BASELINE_V1.md)
-- [Public development version versus system pairing](docs/releases/VERSION_CROSSWALK.md)
-- [Public website source](cloud/public-site-v1/)
-
-## Architectural rule
-
-> Genesis governs cognition. AURORA governs execution.
-
-The Model cannot grant itself Engine authority. Engine-side safety, admission and operational controls remain independent of Model reasoning.
-
-## Historical GitHub consolidation (7 November 2026)
-
-Merged PRs [#41](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/41), [#37](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/37), and [#43](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/43) preserve a tested add-on reference, disabled neural gateway source, and evidence-based GCAB-1 standard. Follow-up merges [#45](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/45) and [#46](https://github.com/Hakaiki808-NZ/aurora-genesis/pull/46) consolidate the entire repository and repair a fallback intent-context bug. The default neural inference path has **not** been enabled, Aurora cloud execution remains restricted, and public beta is **on hold**. The top unresolved blockers are [real Genesis model evaluation](https://github.com/Hakaiki808-NZ/aurora-genesis/issues/44) and [real-browser authenticated Kyro acceptance](https://github.com/Hakaiki808-NZ/aurora-genesis/issues/30). See the [full repository audit](docs/releases/GITHUB_REPO_AUDIT_2026_11_07.md) for retained draft branches and release policy.
-
-## What is public in v0.2.0-preview.1
-
-- Genesis reference implementation
-- public architecture documentation
-- Model constitution and public API
-- public contracts/specifications
-- tests and verification harnesses
-- RFC process
-- research material
-- contributor documentation
-
-## What is intentionally not public
-
-Security-critical AURORA implementation internals, private signing material, protected recovery internals, containment internals and other operational mechanisms whose disclosure would weaken the trust boundary are excluded from this repository.
-
-## Maturity
-
-v0.2.0-preview.1 is an **unreleased research-source preview**; it has not passed production or public beta acceptance. It is suitable for research, review and contribution, but it is not presented as production-secure software.
-
-## Repository layout
-
-```text
-.github/          public templates and CI guards
-cloud/            public cloud templates and static site source
-config/           reference model/identity metadata (no credentials)
-deploy/           self-hosted reference deployment templates
-docs/             architecture, research, evidence and governance
-genesis/          public reference Model code
-tests/            regression and qualification harnesses
-examples/         data-only sample knowledge modules
-rfcs/             architecture proposals
-tools/            public, non-privileged development utilities
-web/              Kyro frontend source
-```
-
-## Installable knowledge modules (experimental)
-
-Genesis now has a **data-only reference-pack prototype**. You can explicitly install, search, disable, replace or uninstall subject packs without changing its core weights. See [Knowledge Modules](docs/architecture/KNOWLEDGE_MODULES.md) and the [Physics Foundations demo](examples/modules/physics-foundations.json). This is **not** a degree, verified expertise, paid marketplace, or production entitlement system.
-
-## Protected Core and university curriculum add-ons (experimental reference)
-
-A Genesis add-on layer is under development: a built-in, non-uninstallable
-**Genesis Core**, plus optional reference packs and university-level
-**sample curricula**. The starter examples map Physics and Computer Science
-topics to year/unit/chapter outlines; installation can change the reference
-material retrieved on the next response, but it does **not** confer a degree,
-demonstrate specialist competence, or modify neural weights. See
-[Genesis Add-ons](docs/architecture/GENESIS_ADDONS.md) and the
-[reference catalogue](examples/addons/catalog.json).
-
-## Free language packs
-
-The knowledge-module system also includes two **free** starter language packs: [Spanish basics](examples/modules/spanish-basics.json) and [te reo Māori basics](examples/modules/te-reo-maori-basics.json). They are installable, removable, and searchable like physics references, with Unicode-aware retrieval and explicit language metadata. They are short demonstrations, **not** complete translation models or a public Kyro marketplace.
-
-## Contributing
-
-Start with `CONTRIBUTING.md`. Architectural changes require an RFC. Contributions should preserve the Engine/Model authority boundary unless an RFC demonstrates a concrete defect in it.
-
-## Versioning
-
-The current public source milestone is **v0.2.0-preview.1**. The historical **v0.1** pre-alpha baseline remains distinct from Aurora and Genesis system identity. No GitHub release/tag or public deployment approval is implied.
-
-## License
-
-Public code in this repository is licensed under the **Apache License 2.0**. See `LICENSE`.
+Code explicitly distributed in this repository is under [Apache 2.0](LICENSE). This does not license undistributed proprietary Engine code.

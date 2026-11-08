@@ -28,7 +28,7 @@ For validation:
 
 ## Site deployment — NOT performed by this change
 
-The beta release gate in docs/releases/PUBLIC_BETA_GATE_2026_11_07.md is currently HOLD for public onboarding. The existing 2026-11-07 public-beta-web directory is an immutable evidence snapshot of S3 objects. **Do not overwrite that snapshot or alter its original ETags as if a Git commit were a live AWS deployment.**
+The beta release gate in docs/governance/PROJECT_STATUS.md is currently HOLD for public onboarding. The existing 2026-11-07 public-beta-web directory is an immutable evidence snapshot of S3 objects. **Do not overwrite that snapshot or alter its original ETags as if a Git commit were a live AWS deployment.**
 
 Proposed release path after review: upload this directory to a new versioned S3 prefix /discover/, with a CloudFront behaviour/correct content types and a bounded invalidation, then complete anonymous browser testing. Do not change root / or Cognito registration as part of a marketing copy release. Configure a CSP that permits self-hosted CSS/JS and external GitHub navigation (no inline JS needed). No build system or long-running server is required in production.
 
