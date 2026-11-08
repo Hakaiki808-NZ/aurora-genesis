@@ -164,6 +164,7 @@ def _verify(
             cose = cose.value
         _require(isinstance(cose, (list, tuple)) and len(cose) == 4, "COSE Sign1 shape")
         protected, unprotected, payload, signature = cose
+        print("AURORA_VERIFY_DEBUG_CBOR_TYPES", type(cose).__name__, [type(v).__name__ for v in cose], flush=True)
         _require(type(protected) is bytes and type(unprotected) is dict
                  and type(payload) is bytes and type(signature) is bytes
                  and len(signature) == 96, "COSE field shape")
