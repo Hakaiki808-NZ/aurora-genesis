@@ -40,7 +40,7 @@ function checkIdentity(token,nonce=null){
 async function renewSession(){
  if(!state.refreshToken)throw new Error('Your session has expired. Please sign in again.');
  const body=new URLSearchParams({grant_type:'refresh_token',client_id:CONFIG.client,refresh_token:state.refreshToken});
- const res=await request(CONFIG.auth+'/oauth2/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body},9000);
+ const res=await fetch(CONFIG.auth+'/oauth2/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body});
  if(!res.ok)throw new Error('Your session could not be renewed. Sign in again.');
  const result=await res.json();
  if(!result.id_token)throw new Error('Cognito did not issue a renewed identity token.');
@@ -118,10 +118,7 @@ async function boot(){
  $('join-invite').onclick=()=>safe(joinInvite);
  $('new-chat').onclick=()=>safe(newConversation);
  $('chat-form').onsubmit=e=>{e.preventDefault();safe(saveMessage)};
- // The advisory health probe must not delay OAuth callback or the login screen.
- request(CONFIG.api+'/api/v3/health',{},9000)
-  .then(r=>{$('api-status').textContent=r.ok?'Cloud API online':'Cloud API unavailable';})
-  .catch(()=>{$('api-status').textContent='Cloud API unavailable';});
+ try{const r=await request(CONFIG.api+'/api/v3/health',{},9000);$('api-status').textContent=r.ok?'Cloud API online':'Cloud API unavailable';}catch{$('api-status').textContent='Cloud API unavailable';}
  const params=new URLSearchParams(location.search);
  if(params.has('code')||params.has('error'))await safe(finishLogin);
  if(state.token){
@@ -139,13 +136,8 @@ async function loadProjects(){
 }
 async function newProject(){const name=prompt('Name the new project');if(!name||!name.trim())return;
  const data=await api('/projects','POST',{name:name.trim()});notice('Project created.');await loadProjects();await selectProject(data.id);}
-async function selectProject(id){state.project=id;state.file=null;state.etag=null;setProjectPermissions();loadProjectsUI();
- // Independent panel data loads concurrently instead of serially delaying navigation.
- const pending=[safe(loadJobs)];
- if(state.mode==='code')pending.push(safe(loadFiles));
- if(state.mode==='collab')pending.push(safe(loadPosts));
- await Promise.all(pending);
-}
+async function selectProject(id){state.project=id;state.file=null;state.etag=null;setProjectPermissions();await loadProjectsUI();
+ if(state.mode==='code')await safe(loadFiles);if(state.mode==='collab')await safe(loadPosts);await safe(loadJobs);}
 function setProjectPermissions(){
  const membership=state.projects.find(p=>p.id===state.project);
  const role=membership?.role||'none';
