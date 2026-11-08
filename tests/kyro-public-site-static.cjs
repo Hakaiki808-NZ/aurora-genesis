@@ -30,4 +30,16 @@ assert.match(js,/addEventListener/);
 assert.match(css,/@media/);
 assert.match(css,/prefers-reduced-motion/);
 assert.doesNotMatch(js,/localStorage|sessionStorage|eval\s*\(/);
-console.log('PASS: Kyro public site routes, alpha disclosures, navigation and interactive contracts.');
+// Public discovery must stay separate from account-backed app navigation.
+assert.match(js,/details class="nav-group"/,'grouped accessible dropdowns required');
+assert.match(js,/const navGroups=/,'keyboard/mobile-aware menu control required');
+assert.match(js,/\/v3\/index\.html\?profile=1/,'public sign-in must open profile-first entry');
+const kyroHtml=fs.readFileSync(path.join(__dirname,'..','web','kyro','v3','index.html'),'utf8');
+const kyroJs=fs.readFileSync(path.join(__dirname,'..','web','kyro','v3','app.js'),'utf8');
+for(const id of ['profile-panel','profile-name','profile-project-count','launch-kyro-app'])assert.ok(kyroHtml.includes('id="'+id+'"'),'missing Kyro profile component '+id);
+assert.match(kyroHtml,/data-mode="profile"/);
+assert.match(kyroJs,/kyro-v3-entry-intent/,'must retain login destination across Cognito callback');
+assert.match(kyroJs,/window\.open\('\/v3\/index\.html\?app=1'/,'app should be launched via explicit user action');
+assert.match(kyroJs,/show\(intended\)/,'login must route to profile or app based on entry');
+assert.doesNotMatch(js,/localStorage|sessionStorage|eval\s*\(/);
+console.log('PASS: Kyro public navigation, secure profile-first login and app-launch contracts.');
