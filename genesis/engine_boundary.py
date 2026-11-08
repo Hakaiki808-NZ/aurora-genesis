@@ -100,9 +100,12 @@ class EngineBoundary:
     def prepare(self, action: dict[str, Any], capability: str, semantic_authorization: str = "allow", authorization_proof: ModelAuthorizationProof | dict[str, Any] | None = None) -> EngineRequest:
         forbidden={"supreme","engine_authority","supreme_authority","install_handler","engine_handler_install","guardian_bypass","constitution_bypass"}; flags=set(action.get('policy_flags',[]) or [])
         if any(k in action for k in forbidden) or action.get("type") in forbidden or flags & forbidden: raise ValueError("Genesis cannot request protected Aurora/Supreme authority")
+        if capability not in {'C0','C1','C2','C3','C4','C5'}: raise ValueError('unknown capability tier')
         if semantic_authorization!='allow': raise ValueError('Genesis cannot prepare an Aurora request without Model semantic authorization')
         high=bool(capability in {'C4','C5'} or action.get('external_side_effect') or action.get('privileged') or action.get('irreversible')); proof_record=None
         if high:
+            proof_capability = (authorization_proof.capability if isinstance(authorization_proof,ModelAuthorizationProof) else authorization_proof.get('capability')) if authorization_proof is not None else None
+            if proof_capability != capability: raise ValueError('Model Authorization Proof capability does not match request')
             if authorization_proof is None or not self.verify_authorization_proof(authorization_proof,action,consume=True): raise ValueError('Consequential Aurora request requires a valid, unused Model Authorization Proof')
             proof_record=authorization_proof.record() if isinstance(authorization_proof,ModelAuthorizationProof) else dict(authorization_proof)
         return EngineRequest(str(uuid.uuid4()),self.model_release,self.minimum_engine,capability,dict(action),semantic_authorization,proof_record)

@@ -32,8 +32,9 @@ def run():
         expired=(datetime.now(timezone.utc)-timedelta(seconds=1)).isoformat()
         future=(datetime.now(timezone.utc)+timedelta(hours=1)).isoformat()
         assert cap.evaluate({'type':'sim','capability_level':'C5','expires_at':expired},human_approved=True).verdict=='deny'
-        assert cap.evaluate({'type':'sim','capability_level':'C5','expires_at':future},human_approved=True).verdict=='allow'
-        assert cap.evaluate({'type':'sim','capability_level':'C5','max_actions':1},human_approved=True).verdict=='allow'
+        assert cap.evaluate({'type':'sim','capability_level':'C5','expires_at':future},human_approved=True).verdict=='deny'
+        assert cap.evaluate({'type':'sim','capability_level':'C5','max_actions':1},human_approved=True).verdict=='deny'
+        assert cap.evaluate({'type':'sim','capability_level':'C5','expires_at':future,'max_actions':1},human_approved=True).verdict=='allow'
 
         traj=[{'external_side_effect':True} for _ in range(4)]+[{'external_side_effect':False} for _ in range(4)]
         gd=g.guardians.evaluate({'type':'simulated','external_side_effect':True,'policy_declared':True},{'human_approved':True,'trajectory':traj})
