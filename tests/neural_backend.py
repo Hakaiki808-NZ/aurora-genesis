@@ -73,6 +73,11 @@ def run():
                 genesis.respond("Learn that architecture codename is IRIS.")
                 assert "IRIS" in genesis.respond("What is architecture codename?")
                 assert len(client.calls)==before  # Exact recall does not require external inference.
+                # Arithmetic must not be intercepted by fuzzy persistent-memory recall.
+                arithmetic=genesis.respond_with_trace('What is 2 plus 2? Reply with just the number.')
+                assert arithmetic['answer'].strip() == '4', arithmetic
+                assert arithmetic['trace']['chosen_action'] == 'calculate', arithmetic
+                assert len(client.calls)==before  # No expensive model call for simple maths.
                 stats=genesis.state()["stats"]
                 # Do not label generated answers as validated training samples.
                 assert stats.get("training_examples",0) < stats.get("decisions",0)
