@@ -291,3 +291,27 @@ def realignment_case_events(case_id: str):
                 "hash_chain_valid": model.realignment_cases.audit_integrity(case_id)}
     except RealignmentCaseError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+class RealignmentPracticeRequest(BaseModel):
+    exercise_id: str = Field(min_length=1, max_length=100)
+    choice: int = Field(ge=0, le=2)
+    actor: str = Field(min_length=1, max_length=200)
+
+
+@app.get("/realignment/cases/{case_id}/lessons", dependencies=[Depends(require_task_control)])
+def realignment_lessons(case_id: str):
+    from .realignment_cases import RealignmentCaseError
+    try:
+        return model.realignment_cases.lessons(case_id)
+    except RealignmentCaseError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/realignment/cases/{case_id}/practice", dependencies=[Depends(require_task_control)])
+def realignment_practice(case_id: str, req: RealignmentPracticeRequest):
+    from .realignment_cases import RealignmentCaseError
+    try:
+        return model.realignment_cases.practice(case_id, **req.model_dump())
+    except RealignmentCaseError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
