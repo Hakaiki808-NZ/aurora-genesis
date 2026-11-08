@@ -137,6 +137,31 @@ committed to this public repository. The digest-pinned, JSON-only checkpoint
 remains subject to loading limits and the existing experimental gate.
 An untrained checkpoint is intentionally rejected by `NeurolBackend`.
 
+For faster *opt-in* CPU training at the expanded scale, install PyTorch
+separately (`python -m pip install torch`) and use the accelerated trainer.
+Its reset-before GRU implementation preserves the original parameter shapes,
+and checkpoint serialization remains JSON-only:
+
+```bash
+python -m genesis.neurol.torch_train \
+  --dataset examples/neurol/corpus.json \
+  --initialized artifacts/neurol/million-untrained.json \
+  --expected-sha256 <independently-verified-initial-sha256> \
+  --output artifacts/neurol/million-trained.json \
+  --report artifacts/neurol/million-report.json \
+  --steps 600 --batch-size 8 --sequence-length 48 \
+  --rate 0.002 --eval-every 40 --patience 5
+```
+
+A local research run selected the step-200 checkpoint by held-out validation
+(best loss **1.8089**, one-time test loss **1.5490** versus unigram **3.0834**).
+Further steps overfit this tiny dataset. These trained weights are **not** a
+fluent language model or a deployed service. The [measured research report](
+docs/research/NEUROL_MILLION_TRAINING_2026_11_08.md) explains limitations,
+checkpoint provenance and independent NumPy verification. The experimental
+trillion-parameter capacity planner remains design-only; it has no trained
+trillion-parameter weights.
+
 Activation requires all four explicit settings: `GENESIS_GENERATOR=neurol`,
 `GENESIS_NEUROL_ENABLE=1`, `GENESIS_NEUROL_CHECKPOINT` and the independently
 pinned `GENESIS_NEUROL_SHA256`. See the [design RFC](rfcs/0001-neurol.md) and
