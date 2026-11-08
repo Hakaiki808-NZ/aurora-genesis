@@ -164,16 +164,15 @@ def _verify(
             cose = cose.value
         _require(isinstance(cose, (list, tuple)) and len(cose) == 4, "COSE Sign1 shape")
         protected, unprotected, payload, signature = cose
-        print("AURORA_VERIFY_DEBUG_CBOR_TYPES", type(cose).__name__, [type(v).__name__ for v in cose], flush=True)
-        _require(type(protected) is bytes and type(unprotected) is dict
+        _require(type(protected) is bytes and isinstance(unprotected, Mapping)
                  and type(payload) is bytes and type(signature) is bytes
                  and len(signature) == 96, "COSE field shape")
         hdr = _decode_one(protected)
-        _require(type(hdr) is dict and hdr.get(1) == -35,
+        _require(isinstance(hdr, Mapping) and hdr.get(1) == -35,
                  "only COSE ES384 accepted")
         _require(1 not in unprotected, "algorithm cannot be overridden")
         data = _decode_one(payload)
-        _require(type(data) is dict and data.get("digest") == "SHA384",
+        _require(isinstance(data, Mapping) and data.get("digest") == "SHA384",
                  "invalid Nitro payload")
         ts = data.get("timestamp")
         _require(type(ts) is int and abs(now_ms - ts) <= MAX_AGE_MS,
@@ -188,7 +187,7 @@ def _verify(
         _require(type(pub) is bytes and hmac.compare_digest(pub, expected_public_key),
                  "Angel session key mismatch")
         pcrs = data.get("pcrs")
-        _require(type(pcrs) is dict, "PCR map missing")
+        _require(isinstance(pcrs, Mapping), "PCR map missing")
         for key in REQUIRED_PCRS:
             value = pcrs.get(key)
             _require(type(value) is bytes and len(value) == 48 and any(value),
@@ -199,7 +198,7 @@ def _verify(
         _require(type(module_id) is str and 1 <= len(module_id) <= 256,
                  "invalid Nitro module identity")
         leaf_der, bundle = data.get("certificate"), data.get("cabundle")
-        _require(type(leaf_der) is bytes and type(bundle) is list
+        _require(type(leaf_der) is bytes and isinstance(bundle, (list, tuple))
                  and all(type(v) is bytes for v in bundle),
                  "certificate chain missing")
         # Verify chain at the verifier's wall clock, not at the untrusted
