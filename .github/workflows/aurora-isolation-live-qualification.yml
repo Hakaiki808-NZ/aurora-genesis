@@ -1,0 +1,64 @@
+name: Aurora Linux cgroup v2 live isolation qualification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/aurora-isolation-live-qualification.yml'
+      - 'tools/aurora_host_c1_reference.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aurora-isolation-live-qualification.yml'
+      - 'tools/aurora_host_c1_reference.py'
+
+permissions:
+  contents: read
+
+jobs:
+  live-linux-boundaries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Provision disposable unprivileged runner user
+        run: |
+          sudo useradd --system --no-create-home --shell /usr/sbin/nologin aurora-worker
+      - name: Require genuine kernel cgroup v2 prerequisites
+        run: |
+          python tools/aurora_host_c1_reference.py --check-host
+      - name: Execute SHA256-pinned service inside real systemd cgroup
+        run: |
+          sudo python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          from tools.aurora_host_c1_reference import Limits, execute_c1, AdmissionDenied
+          program = Path('/usr/bin/true')
+          digest = hashlib.sha256(program.read_bytes()).hexdigest()
+          limits = Limits(cpu_percent=20, memory_bytes=67108864, tasks=4, runtime_seconds=5, io_weight=100)
+          receipt = execute_c1([str(program)], limits, binary_sha256=digest)
+          assert receipt["status"] == "EXITED", receipt
+          assert receipt["returncode"] == 0
+          print("PASSED: systemd-run C1 service with kernel-enforced cgroup settings")
+          PY
+      - name: Verify real deadline kills a slow C1 service
+        run: |
+          sudo python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          from tools.aurora_host_c1_reference import Limits, execute_c1, AdmissionDenied
+          program = Path('/usr/bin/sleep')
+          digest = hashlib.sha256(program.read_bytes()).hexdigest()
+          limits = Limits(cpu_percent=20, memory_bytes=67108864, tasks=4, runtime_seconds=2, io_weight=100)
+          try:
+              execute_c1([str(program), '12'], limits, binary_sha256=digest)
+          except AdmissionDenied:
+              print("PASSED: deadline overrun produced no successful receipt")
+          else:
+              raise AssertionError("Deadline overrun incorrectly issued success")
+          PY
