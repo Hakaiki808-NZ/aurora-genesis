@@ -38,6 +38,8 @@ jobs:
         run: python -m tests.neural_backend
       - name: Neurol numerical and integration tests
         run: python -m tests.neurol
+      - name: Training regression-stop and checkpoint guard tests
+        run: python -m tests.neurol_validation_guard
       - name: Self-hosted OSS backend tests (mocked; no downloads)
         run: python -m tests.oss_backend
       - name: Validate private OSS Docker Compose syntax
