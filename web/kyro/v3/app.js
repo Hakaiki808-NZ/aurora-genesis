@@ -2,7 +2,7 @@
 // Browser PKCE. Tokens stay in RAM, never localStorage or shared cookies.
 // Reloading the tab intentionally requires a fresh authenticated Cognito redirect.
 const CONFIG=Object.freeze({api:'https://ces52hcf3e.execute-api.ap-southeast-2.amazonaws.com',client:'68i1h2nqhvsjruneo12k0u3ahm',auth:'https://kyro-v4-private-179502447662.auth.ap-southeast-2.amazoncognito.com',callback:'https://d3j65cc3p66kzr.cloudfront.net/v3/index.html'});
-const state={token:null,refreshToken:null,expiresAt:0,project:null,projects:[],file:null,etag:null,conversation:null,mode:'code'};
+const state={token:null,refreshToken:null,expiresAt:0,project:null,projects:[],file:null,etag:null,conversation:null,mode:'profile'};
 const $=id=>document.getElementById(id);
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=String(txt);if(cls)e.className=cls;return e;};
 const b64url=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -102,13 +102,19 @@ async function api(path,method='GET',body=null){
 }
 const safe=async fn=>{try{return await fn();}catch(e){notice(e.message||String(e));return null;}};
 function show(mode){state.mode=mode;for(const el of document.querySelectorAll('[data-mode]'))el.classList.toggle('active',el.dataset.mode===mode);
- for(const name of ['overview','code','collab','chat','connectors','school','capabilities'])$(name+'-panel').classList.toggle('hidden',name!==mode);
- const info={overview:['OVERVIEW','YOUR WORKSPACE','Welcome to Kyro.','Everything in one focused workspace.'],code:['CODE','CODE WORKSPACE','Build with intelligence.','Versioned source files. Approved and auditable changes.'],collab:['COLLABORATE','SHARED WORKSPACE','Better work, together.','Discuss work and share access by project role.'],chat:['CHAT ARCHIVE','PRIVATE CONVERSATIONS','Keep your thinking.','Conversation history and deterministic Genesis reference responses (experimental).'],connectors:['PLUGINS','CONNECTORS & APIs','Connect with control.','Adapters are registered; integrations are disabled until authorized.'],school:['REALIGNMENT SCHOOL','CONTROLLED LEARNING','Learn from mistakes.','Diagnosis, feedback and safe correction exercises.'],capabilities:['AI CAPABILITIES','SEVEN CAPABILITIES','Practical AI, under your control.','Task outcomes, consent, memory, evidence and clear decisions.']};
+ for(const name of ['profile','overview','code','collab','chat','connectors','school','capabilities'])$(name+'-panel').classList.toggle('hidden',name!==mode);
+ const info={profile:['PROFILE','YOUR ACCOUNT','Your personal Kyro space.','Manage your profile, projects and launch the app.'],overview:['OVERVIEW','YOUR WORKSPACE','Welcome to Kyro.','Everything in one focused workspace.'],code:['CODE','CODE WORKSPACE','Build with intelligence.','Versioned source files. Approved and auditable changes.'],collab:['COLLABORATE','SHARED WORKSPACE','Better work, together.','Discuss work and share access by project role.'],chat:['CHAT ARCHIVE','PRIVATE CONVERSATIONS','Keep your thinking.','Conversation history and deterministic Genesis reference responses (experimental).'],connectors:['PLUGINS','CONNECTORS & APIs','Connect with control.','Adapters are registered; integrations are disabled until authorized.'],school:['REALIGNMENT SCHOOL','CONTROLLED LEARNING','Learn from mistakes.','Diagnosis, feedback and safe correction exercises.'],capabilities:['AI CAPABILITIES','SEVEN CAPABILITIES','Practical AI, under your control.','Task outcomes, consent, memory, evidence and clear decisions.']};
  const [name,label,title,blurb]=info[mode];$('mode-title').textContent=name;$('section-label').textContent=label;$('section-title').textContent=title;$('section-blurb').textContent=blurb;
- if(mode==='school' && window.kyroSchoolLoad) safe(()=>window.kyroSchoolLoad());if(mode==='capabilities' && window.kyroCapabilityLoad) safe(()=>window.kyroCapabilityLoad());if(mode==='overview'){const m=$('metric-projects');if(m)m.textContent=String(state.projects.length);const p=state.projects.find(x=>x.id===state.project);const a=$('metric-active');if(a)a.textContent=p?p.name:'None selected';}if(mode==='collab')safe(loadPosts);if(mode==='chat')safe(loadConversations);if(mode==='connectors')safe(loadConnectors);if(mode==='code')safe(loadFiles);
+ if(mode==='school' && window.kyroSchoolLoad) safe(()=>window.kyroSchoolLoad());if(mode==='capabilities' && window.kyroCapabilityLoad) safe(()=>window.kyroCapabilityLoad());if(mode==='profile'){$('profile-project-count').textContent=String(state.projects.length);}if(mode==='overview'){const m=$('metric-projects');if(m)m.textContent=String(state.projects.length);const p=state.projects.find(x=>x.id===state.project);const a=$('metric-active');if(a)a.textContent=p?p.name:'None selected';}if(mode==='collab')safe(loadPosts);if(mode==='chat')safe(loadConversations);if(mode==='connectors')safe(loadConnectors);if(mode==='code')safe(loadFiles);
 }
 async function boot(){
+ const entryQuery=new URLSearchParams(location.search);
+ if(entryQuery.has('app'))sessionStorage.setItem('kyro-v3-entry-intent','app');
+ else if(entryQuery.has('profile'))sessionStorage.setItem('kyro-v3-entry-intent','profile');
  $('login').onclick=()=>safe(beginLogin);
+ $('launch-kyro-app').onclick=()=>{window.open('/v3/index.html?app=1','_blank','popup=yes,width=1440,height=900,noopener,noreferrer');};
+ document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{if(state.token)show(el.dataset.go);}));
+
  $('account-btn').onclick=()=>{if(!state.token){safe(beginLogin);return;}state.token=null;state.refreshToken=null;location.assign(CONFIG.auth+'/logout?'+new URLSearchParams({client_id:CONFIG.client,logout_uri:CONFIG.callback}));};
  document.querySelectorAll('[data-mode]').forEach(el=>el.onclick=()=>show(el.dataset.mode));
  $('new-project').onclick=()=>safe(newProject);$('new-file').onclick=()=>safe(newFile);$('save-file').onclick=()=>safe(saveFile);$('draft-job').onclick=()=>safe(draftJob);
@@ -120,12 +126,20 @@ async function boot(){
  $('chat-form').onsubmit=e=>{e.preventDefault();safe(saveMessage)};
  try{const r=await request(CONFIG.api+'/api/v3/health',{},9000);$('api-status').textContent=r.ok?'Cloud API online':'Cloud API unavailable';}catch{$('api-status').textContent='Cloud API unavailable';}
  const params=new URLSearchParams(location.search);
+ if(params.has('app')&&!params.has('code')&&!params.has('error')&&!state.token){await safe(beginLogin);return;}
  if(params.has('code')||params.has('error'))await safe(finishLogin);
  if(state.token){
   $('signin').classList.add('hidden');$('workspace').classList.remove('hidden');
   const me=await safe(()=>api('/me'));
   if(!me){showSignedOut('Could not verify your workspace account. Sign in again.');return;}$('account-name').textContent='Account · '+String(me.subject||'member').slice(0,10);
-  await safe(loadProjects);show('overview');notice('Private workspace connected.');
+  const claims=checkIdentity(state.token);
+  const displayName=typeof claims.name==='string'&&claims.name.trim()?claims.name.trim():typeof claims.given_name==='string'&&claims.given_name.trim()?claims.given_name.trim():'Kyro member';
+  $('profile-name').textContent=displayName.slice(0,80);
+  $('profile-email').textContent=claims.email_verified===true&&typeof claims.email==='string'?claims.email:'Verified private-alpha account';
+  await safe(loadProjects);
+  const intended=sessionStorage.getItem('kyro-v3-entry-intent')==='app'?'overview':'profile';
+  sessionStorage.removeItem('kyro-v3-entry-intent');
+  show(intended);notice('Private workspace connected.');
  } else if(!params.has('error')&&!params.has('code')){$('signin-error').classList.add('hidden');}
 }
 async function loadProjects(){
