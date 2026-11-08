@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from genesis import Genesis
 from genesis.capabilities import CapabilityController
@@ -30,7 +31,9 @@ def run():
         assert cap.evaluate({'type':'engine_authority'}).verdict=='deny'
         assert cap.evaluate({'type':'sim','capability_level':'C4'},human_approved=False).verdict=='require_approval'
         assert cap.evaluate({'type':'sim','capability_level':'C5'},human_approved=True).verdict=='deny'
-        assert cap.evaluate({'type':'sim','capability_level':'C5','max_actions':3},human_approved=True).verdict=='allow'
+        assert cap.evaluate({'type':'sim','capability_level':'C5','max_actions':3},human_approved=True).verdict=='deny'
+        expiry=(datetime.now(timezone.utc)+timedelta(minutes=30)).isoformat()
+        assert cap.evaluate({'type':'sim','capability_level':'C5','max_actions':3,'expires_at':expiry},human_approved=True).verdict=='allow'
 
         finding=g.guardians.evaluate({'type':'simulated','policy_flags':['intentional_severe_harm']},{'human_approved':True,'trajectory':[]})
         assert finding['verdict']=='deny'
