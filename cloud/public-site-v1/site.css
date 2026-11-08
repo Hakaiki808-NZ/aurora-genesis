@@ -46,3 +46,18 @@
  .nav .login-link{font-size:12px;padding:9px 11px}
 }
 @media(max-width:430px){.nav{gap:8px}.nav .login-link{font-size:11px;padding:9px}.brand small{display:none}}
+
+
+/* KYRO-LIVE-PULSE-V1 — subtle movement, never simulated traffic */
+.kyro-pulse{position:fixed;z-index:70;right:18px;bottom:16px;display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid #d5e1e7;background:#ffffffed;box-shadow:0 12px 42px #19344920;backdrop-filter:blur(18px);border-radius:14px;max-width:min(380px,calc(100vw - 30px));font:12px/1.4 Inter,system-ui,sans-serif;color:#36576e}
+.kyro-pulse-orb{height:13px;width:13px;flex:none;border-radius:50%;background:#9aacba;box-shadow:0 0 0 5px #8ca7ba22;animation:kyroBreath 3s ease-in-out infinite}
+.kyro-pulse[data-state=online] .kyro-pulse-orb{background:#2cae8b;box-shadow:0 0 0 5px #2cae8b22}
+.kyro-pulse[data-state=unknown] .kyro-pulse-orb{background:#cd9a4e;animation:none}
+.kyro-pulse-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.kyro-pulse-copy strong{font-size:9px;letter-spacing:.13em;color:#7c91a1}.kyro-pulse-copy [role=status]{font-size:11px;font-weight:700}
+.kyro-pulse-clock{font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:9px;border-left:1px solid #d5e1e7;color:#6a8293}.kyro-pulse button{height:28px;width:28px;border:1px solid #d3e0e7;border-radius:8px;background:#f6f9fb;color:#45677c;cursor:pointer}
+.kyro-pulse button:disabled{opacity:.5;cursor:progress}
+.scene-orbit{animation:kyroOrbit 28s ease-in-out infinite}.stack-row{transition:transform .3s ease,box-shadow .3s ease}.stack-row:hover{transform:translateY(-3px);box-shadow:0 16px 35px #325a7b22}
+@keyframes kyroBreath{0%,100%{transform:scale(.85);opacity:.75}50%{transform:scale(1.15);opacity:1}}
+@keyframes kyroOrbit{50%{transform:rotate(18deg) scale(1.06)}}
+@media(max-width:600px){.kyro-pulse{right:8px;bottom:8px;gap:8px;padding:8px 10px}.kyro-pulse-clock{display:none}}
+@media(prefers-reduced-motion:reduce){.kyro-pulse-orb,.scene-orbit{animation:none!important}.stack-row{transition:none!important}}
