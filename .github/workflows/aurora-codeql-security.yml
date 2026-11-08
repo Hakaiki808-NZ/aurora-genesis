@@ -1,0 +1,38 @@
+name: Aurora public security static analysis (CodeQL)
+
+on:
+  pull_request:
+    paths:
+      - 'tools/aurora_*'
+      - 'tests/test_aurora_*'
+      - '.github/workflows/aurora-codeql-security.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/aurora_*'
+      - '.github/workflows/aurora-codeql-security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-security-extended:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: python
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:python
