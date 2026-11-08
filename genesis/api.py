@@ -243,3 +243,51 @@ def review_task_evidence(task_id:str,evidence_id:str,req:TaskEvidenceReview):
 def complete_task(task_id:str,req:TaskCompletion):
     # Human-attested is not the same thing as independently machine-verified.
     return model.complete_task(task_id,req.reviewer,req.human_confirmed)
+
+
+# Realignment incident casework is a record-only Genesis control plane.
+# This API cannot confirm Aurora containment, approve releases, or restart
+# agents. Those decisions require private independently attested adapters.
+# The shared server credential MUST be confined to authenticated Kyro CC
+# backend use; this is not direct public operator authentication.
+class RealignmentIncidentCreate(BaseModel):
+    subject_type: str
+    subject_id: str = Field(min_length=1, max_length=200)
+    severity: str
+    signal: str = Field(min_length=1, max_length=2000)
+    reporter: str = Field(min_length=1, max_length=200)
+
+
+@app.post("/realignment/cases", dependencies=[Depends(require_task_control)])
+def create_realignment_case(req: RealignmentIncidentCreate):
+    from .realignment_cases import RealignmentCaseError
+    try:
+        return model.realignment_cases.open(**req.model_dump())
+    except RealignmentCaseError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/realignment/cases", dependencies=[Depends(require_task_control)])
+def list_realignment_cases(limit: int = Query(default=100, ge=1, le=500)):
+    return {"cases": model.realignment_cases.list(limit),
+            "engine_containment_capability": "not_connected",
+            "automatic_reinstatement": False}
+
+
+@app.get("/realignment/cases/{case_id}", dependencies=[Depends(require_task_control)])
+def get_realignment_case(case_id: str):
+    from .realignment_cases import RealignmentCaseError
+    try:
+        return model.realignment_cases.get(case_id)
+    except RealignmentCaseError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/realignment/cases/{case_id}/events", dependencies=[Depends(require_task_control)])
+def realignment_case_events(case_id: str):
+    from .realignment_cases import RealignmentCaseError
+    try:
+        return {"events": model.realignment_cases.events(case_id),
+                "hash_chain_valid": model.realignment_cases.audit_integrity(case_id)}
+    except RealignmentCaseError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
