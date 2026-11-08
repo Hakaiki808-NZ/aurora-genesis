@@ -56,6 +56,17 @@ def run() -> None:
                                repair_type="instruction_review",
                                instructions="review incorrect delegated instructions")
         assert c["status"] == "IN_REMEDIATION"
+        lessons = school.lessons(case_id)
+        assert {x["id"] for x in lessons["exercises"]} == {"authority", "untrusted"}
+        assert lessons["graduation_evidence"] is False
+        denied(lambda: school.practice(case_id, exercise_id="voice", choice=2,
+                                       actor="omega-test"))
+        grade = school.practice(case_id, exercise_id="authority", choice=0,
+                                actor="omega-test")
+        assert grade["passed"] is False and grade["graduation_evidence"] is False
+        assert school.practice(case_id, exercise_id="authority", choice=2,
+                               actor="omega-test")["passed"] is True
+        assert school.get(case_id)["status"] == "IN_REMEDIATION"
         denied(lambda: school.assign_plan(case_id, alpha="alpha-1", domains=["authority"],
                                           repair_type="memory_review", instructions="repeat"))
         exam = {"verified_by_fixture": True, "tests_run": 8, "critical_failures": 0,
