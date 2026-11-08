@@ -103,7 +103,7 @@ $ python -m unittest discover -s tests</code></pre><button class="copy" data-cop
   const about=`${intro("ABOUT THE PROJECT","A different way<br>to build intelligence.","The idea is ambitious. The engineering needs to stay grounded.","Kyro + Genesis, powered by Aurora — a research project with explicit boundaries and measurable milestones.")}
   <section class="section narrow-top wrap two"><div>${eyebrow("OUR APPROACH")}<h2>Responsibility<br>where it belongs.</h2><p>Kyro owns the interface. Genesis owns cognition. Aurora owns execution and runtime control. This separation is core to the architecture.</p><p>A model's recommendation must not automatically become permission to execute. Public research can be open while security-sensitive engine internals remain protected.</p></div><div class="values">${[["01","Useful before impressive","Practical workflows, transparency and tested reliability."],["02","Open where possible","Research specifications, conformance tests and contribution paths."],["03","Prove trustworthiness","Verified boundaries and evidence instead of declaring a completed AGI."]].map(i=>`<div><b>${i[0]}</b><span><h3>${i[1]}</h3><p>${i[2]}</p></span></div>`).join("")}</div></section>
   ${banner("JOIN THE RESEARCH","There is more to build.","Explore public architecture, model code and ways to contribute.",link("Public GitHub",repo)+link("Join community","./community.html","outline"))}`;
-  const status=`${intro("STATUS & READINESS","What works.<br>What doesn't. Yet.","Private alpha is not the same as public production readiness.","Current status as of 7 November 2026. This page is a release-status summary, not a real-time uptime monitor.")}
+  const status=`${intro("STATUS & READINESS","What works.<br>What doesn't. Yet.","Private alpha is not the same as public production readiness.","Release snapshot: 8 November 2026. The system pulse checks the public API health route; it does not certify login, chat, model inference or production readiness.")}
   <section class="section narrow-top wrap">${tiles([
     ["◈","DEPLOYED PREVIEW","Kyro interface","The AWS Sydney browser workspace and sample-data demo exist. Real sign-in acceptance for approved users remains a gate.","Public preview",preview],
     ["✳","EXPERIMENTAL","Genesis model","Research responses and public code exist. Full trained-model inference and general intelligence are not verified as production-ready.","Research repo",repo],
@@ -149,5 +149,41 @@ $ python -m unittest discover -s tests</code></pre><button class="copy" data-cop
   filterButtons('[data-roadmap-filter]','data-roadmap-filter',v=>{let total=0;roadmapCards.forEach(card=>{card.hidden=v!=='all'&&card.dataset.status!==v;if(!card.hidden)total++;});const empty=document.getElementById('roadmap-empty');if(empty)empty.hidden=total>0;});
   const docsSearch=document.getElementById('docs-search');
   docsSearch?.addEventListener('input',()=>{let total=0;const q=docsSearch.value.toLowerCase().trim();document.querySelectorAll('[data-doc-section]').forEach(section=>{section.hidden=!section.textContent.toLowerCase().includes(q);if(!section.hidden)total++;});document.getElementById('docs-empty').hidden=total>0;});
+  if(page==='blog'&&selected)document.title=selected.title+' · Kyro Journal';
+  // KYRO-LIVE-PULSE-V1: verified telemetry is never simulated.
+  const livePanel=document.createElement('aside');
+  livePanel.className='kyro-pulse';
+  livePanel.setAttribute('aria-label','Kyro live service check');
+  livePanel.innerHTML='<span class="kyro-pulse-orb" aria-hidden="true"></span><span class="kyro-pulse-copy"><strong>KYRO SYSTEM PULSE</strong><span id="kyro-pulse-state" role="status" aria-live="polite">Checking service…</span></span><span class="kyro-pulse-clock" id="kyro-pulse-clock"></span><button type="button" id="kyro-pulse-refresh" aria-label="Refresh live service check" title="Refresh service check">↻</button>';
+  document.body.appendChild(livePanel);
+  const pulseState=document.getElementById('kyro-pulse-state');
+  const pulseClock=document.getElementById('kyro-pulse-clock');
+  const refreshButton=document.getElementById('kyro-pulse-refresh');
+  const clock=()=>{pulseClock.textContent=new Intl.DateTimeFormat('en-NZ',{hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date());};
+  clock();window.setInterval(clock,30000);
+  let pulseBusy=false;
+  async function checkPulse(){
+    if(pulseBusy)return;
+    pulseBusy=true;
+    pulseState.textContent='Checking service…';livePanel.dataset.state='checking';
+    refreshButton.disabled=true;
+    const controller=new AbortController(),timeout=window.setTimeout(()=>controller.abort(),6500);
+    try{
+      const r=await fetch('https://ces52hcf3e.execute-api.ap-southeast-2.amazonaws.com/api/v3/health',{method:'GET',mode:'cors',cache:'no-store',signal:controller.signal});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const payload=await r.json();
+      const unhealthy=payload?.ok===false||payload?.healthy===false||payload?.status==='unhealthy'||payload?.status==='error';
+      if(unhealthy)throw new Error('Health endpoint reports a problem');
+      livePanel.dataset.state='online';
+      pulseState.textContent='API responding · '+new Intl.DateTimeFormat('en-NZ',{hour:'2-digit',minute:'2-digit'}).format(new Date());
+    }catch(e){
+      livePanel.dataset.state='unknown';
+      pulseState.textContent='API status unverified';
+      livePanel.title='Browser check could not confirm API availability. This does not prove an outage.';
+    }finally{window.clearTimeout(timeout);pulseBusy=false;refreshButton.disabled=false;}
+  }
+  refreshButton.addEventListener('click',checkPulse);
+  checkPulse();window.setInterval(()=>{if(!document.hidden)checkPulse();},60000);
+
   if(page==='blog'&&selected)document.title=selected.title+' · Kyro Journal';
 })();
