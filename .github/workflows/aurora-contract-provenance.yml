@@ -6,7 +6,6 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/aurora-contract-provenance.yml'
-      - 'docs/architecture/AURORA_ENGINE_FULL_DOCUMENTATION.md'
       - 'MODEL_API.md'
       - 'PUBLIC_PRIVATE_BOUNDARY.md'
       - 'VERSIONING.md'
@@ -44,8 +43,7 @@ jobs:
           export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
           tar --sort=name --mtime="@${SOURCE_DATE_EPOCH}" --owner=0 --group=0 --numeric-owner \
             -cf "dist/aurora-public-contracts-v${PUBLIC_VERSION}.tar" \
-            MODEL_API.md PUBLIC_PRIVATE_BOUNDARY.md VERSIONING.md \
-            docs/architecture/AURORA_ENGINE_FULL_DOCUMENTATION.md
+            MODEL_API.md PUBLIC_PRIVATE_BOUNDARY.md VERSIONING.md
           gzip -n -9 "dist/aurora-public-contracts-v${PUBLIC_VERSION}.tar"
           sha256sum "dist/aurora-public-contracts-v${PUBLIC_VERSION}.tar.gz" | tee dist/SHA256SUMS
       - name: Sign reproducible artifact provenance (Sigstore OIDC)
