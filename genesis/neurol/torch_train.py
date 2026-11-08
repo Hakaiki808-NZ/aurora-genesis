@@ -102,13 +102,9 @@ def train_torch(dataset, initialized_checkpoint, output, *, steps=600,
                             max_regression=max_validation_regression,
                             regression_patience=regression_patience)
     best_state = {k: v.detach().clone() for k, v in p.items()}
-    # Decay matrix weights; avoid shrinking bias vectors.
-    matrices = [value for name, value in p.items() if not name.startswith("b")]
-    biases = [value for name, value in p.items() if name.startswith("b")]
-    optimizer = torch.optim.AdamW([
-        {"params": matrices, "weight_decay": weight_decay},
-        {"params": biases, "weight_decay": 0.0},
-    ], lr=rate)
+    # Preserve the exact optimizer parameter grouping used by the
+    # measured validation-only ablation (including bias weight decay).
+    optimizer = torch.optim.AdamW(p.parameters(), lr=rate, weight_decay=weight_decay)
     scheduler = (torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="min", factor=0.5, patience=plateau_patience,
         min_lr=0.0001) if plateau_patience else None)
