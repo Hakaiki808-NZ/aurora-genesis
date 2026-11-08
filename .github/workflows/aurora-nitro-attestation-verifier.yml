@@ -30,6 +30,34 @@ jobs:
           python-version: '3.12'
       - name: Install reference-only dependencies
         run: python -m pip install 'cbor2>=5.6,<7' 'cryptography>=43,<50'
+      - name: Verify documented AWS Nitro trust-root SHA256 pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --location --max-time 30 \
+            https://aws-nitro-enclaves.amazonaws.com/AWS_NitroEnclaves_Root-G1.zip \
+            -o /tmp/aws-nitro-root.zip
+          python - <<'PY'
+          import hashlib, io, zipfile
+          from cryptography import x509
+          from cryptography.hazmat.primitives import serialization
+          from tools.aurora_nitro_attestation import AWS_NITRO_ROOT_SHA256
+          with zipfile.ZipFile('/tmp/aws-nitro-root.zip') as bundle:
+              certs = []
+              for name in bundle.namelist():
+                  value = bundle.read(name)
+                  try:
+                      cert = x509.load_pem_x509_certificate(value)
+                  except ValueError:
+                      try:
+                          cert = x509.load_der_x509_certificate(value)
+                      except ValueError:
+                          continue
+                  der = cert.public_bytes(serialization.Encoding.DER)
+                  certs.append(hashlib.sha256(der).hexdigest())
+          assert AWS_NITRO_ROOT_SHA256 in certs, 'AWS root SHA256 does not match pinned certificate'
+          print('PASS: AWS published Nitro Root G1 certificate matches pinned SHA256')
+          PY
       - name: Compile strict standalone verifier
         run: python -m py_compile tools/aurora_nitro_attestation.py tests/test_aurora_nitro_attestation.py
       - name: Verify synthetic COSE chain, stale nonce, signature, epoch and PCR rejection
