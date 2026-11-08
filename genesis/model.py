@@ -14,6 +14,7 @@ from .tools import ToolRegistry
 from .policy import PolicyEngine
 from .guardians import GuardianCouncil
 from .capabilities import CapabilityController
+from .standards import StandardsRegistry
 from .engine_boundary import EngineBoundary, EngineReceipt
 from .realignment import RealignmentSchool
 from .knowledge_modules import KnowledgeModuleStore
@@ -47,6 +48,7 @@ class Genesis:
         self.guardians=GuardianCouncil()
         self.realignment_school=RealignmentSchool()
         self.capabilities=CapabilityController(granted_level=os.environ.get("GENESIS_CAPABILITY_LEVEL","C4"))
+        self.standards=StandardsRegistry()
         self.engine_boundary=EngineBoundary(model_release=self.identity.get("full_name","Genesis v0.1"), minimum_engine=self.identity.get("minimum_engine","Aurora pre-v0.1"))
         generator_mode=os.environ.get("GENESIS_GENERATOR","auto").casefold()
         use_ollama = (enable_ollama is True) or (enable_ollama is None and generator_mode in {"auto","ollama"})
@@ -86,7 +88,7 @@ class Genesis:
         answer=self.respond(text); return {"answer":answer,"trace":self.last_trace}
 
     def state(self)->dict[str,Any]:
-        return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"knowledge_modules":self.knowledge_modules.list(),"addons":self.addons.list(),"realignment_school":{"version":self.realignment_school.VERSION,"cases":len(self.realignment_school.curriculum()),"autonomous_updates":False},"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"health":self.self_check()}
+        return {"version":self.VERSION,"identity":self.identity,"lineage":self.heritage.get("lineage"),"record_version":self.model_record.get("record_version"),"constitution":self.policy.summary(),"capability_level":self.capabilities.granted_level,"standards_framework":self.standards.summary(),"guardians":{"alpha":self.guardians.alpha.guardian_id,"omegas":[g.guardian_id for g in self.guardians.omegas],"challenge":self.guardians.challenge.guardian_id,"jury_size":len(self.guardians.omegas)},"engine_boundary":{"minimum_engine":self.engine_boundary.minimum_engine,"pending_requests":len(self.store.pending_engine_actions())},"stats":self.store.stats(),"tools":self.tools.specs(),"last_decision":self.store.last_decision(),"last_reflection":self.store.last_reflection(),"active_goals":self.store.active_goals(),"knowledge_modules":self.knowledge_modules.list(),"addons":self.addons.list(),"realignment_school":{"version":self.realignment_school.VERSION,"cases":len(self.realignment_school.curriculum()),"autonomous_updates":False},"backend":{"name":self.cognition.backend.name,"available":self.cognition.backend.available()},"health":self.self_check()}
 
     def self_check(self)->dict[str,Any]:
         checks={}
@@ -104,6 +106,7 @@ class Genesis:
         checks["constitutional_kernel"]=hasattr(self.cognition,"kernel")
         checks["intent_capsule_gate"]=hasattr(self.cognition,"_authorization_chain")
         checks["capability_ceiling"]=self.capabilities.granted_level in {"C0","C1","C2","C3","C4","C5"}
+        checks["standards_overlap"]=self.standards.equivalent("C5","B1") and self.standards.equivalent("B5","A1")
         checks["engine_separation"]=self.engine_boundary.minimum_engine.startswith("Aurora ")
         return {"ok":all(checks.values()),"checks":checks}
 
