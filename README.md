@@ -162,6 +162,24 @@ checkpoint provenance and independent NumPy verification. The experimental
 trillion-parameter capacity planner remains design-only; it has no trained
 trillion-parameter weights.
 
+A second, *separate* research pilot now implements and trains a real
+**four-expert, top-2 sparse MoE** (124,934 weights, SafeTensors checkpoint).
+It routes tokens to selected experts and never grants execution privileges.
+On the same tiny synthetic corpus, the selected candidate achieved validation
+loss **1.6560** and test loss **1.5305**; a second run produced an identical
+checkpoint digest. This tests *routing and learning*, not general language
+capability or a deployed trillion-parameter system. See the
+[MoE evaluation](docs/research/NEUROL_SPARSE_MOE_PILOT_2026_11_08.md).
+Run the optional training with:
+
+```bash
+python -m pip install torch safetensors
+python -m genesis.neurol.moe_pilot \
+  --dataset examples/neurol/corpus.json \
+  --output artifacts/neurol/moe-pilot.safetensors \
+  --report artifacts/neurol/moe-pilot-report.json --steps 300
+```
+
 Activation requires all four explicit settings: `GENESIS_GENERATOR=neurol`,
 `GENESIS_NEUROL_ENABLE=1`, `GENESIS_NEUROL_CHECKPOINT` and the independently
 pinned `GENESIS_NEUROL_SHA256`. See the [design RFC](rfcs/0001-neurol.md) and
