@@ -68,6 +68,9 @@ Authenticated *server-to-server* Genesis control token:
 - GET /realignment/cases — list recent cases.
 - GET /realignment/cases/{id} — inspect case.
 - GET /realignment/cases/{id}/events — inspect audit trail and hash check.
+- GET /realignment/cases/{id}/lessons — select practice exercises for affected domains.
+- POST /realignment/cases/{id}/practice — score a practice answer and retain feedback.
+  These exercises never count as independent certification evidence.
 
 Existing POST /realignment/assess and GET /realignment/curriculum remain the
 diagnostic-only public exercise endpoints. No web API permits promotion.
