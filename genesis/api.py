@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from .model import Genesis
 from .knowledge_modules import KnowledgeModuleError
 from .task_assurance import TaskError
+from .agents import AgentTeamError
 
 app=FastAPI(title="Genesis v0.1",version="v0.1")
 model=Genesis()
@@ -243,3 +244,23 @@ def review_task_evidence(task_id:str,evidence_id:str,req:TaskEvidenceReview):
 def complete_task(task_id:str,req:TaskCompletion):
     # Human-attested is not the same thing as independently machine-verified.
     return model.complete_task(task_id,req.reviewer,req.human_confirmed)
+
+
+# On-demand specialist drafting only. Authenticated via existing control-plane
+# gate: no agent tools, background jobs or Aurora Engine execution are exposed.
+class AgentRunRequest(BaseModel):
+    goal: str = Field(min_length=1, max_length=4000)
+    roles: list[str] | None = Field(default=None, max_length=4)
+
+
+@app.get("/agents/roles", dependencies=[Depends(require_task_control)])
+def agent_roles():
+    return {"roles": model.agents.roles(), "mode": "on_demand_text_only"}
+
+
+@app.post("/agents/run", dependencies=[Depends(require_task_control)])
+def agent_run(req: AgentRunRequest):
+    try:
+        return model.agents.run(req.goal, req.roles)
+    except AgentTeamError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
