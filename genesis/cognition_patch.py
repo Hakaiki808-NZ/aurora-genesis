@@ -104,6 +104,26 @@ def deliberate(self,text:str,learned:list[dict[str,Any]])->Decision:
         key=re.split(r"(?i)\s+(?:is|are|means|equals)\s+",key,maxsplit=1)[0].strip()
         c.append(Candidate("forget_fact","",126,f"explicitly forget persistent fact '{key}'",action={"type":"forget_fact","key":key,"source":text}))
 
+    # Narrow arithmetic questions must reach the bounded calculator before fuzzy
+    # memory retrieval or neural text generation. Never eval arbitrary user code.
+    arithmetic = re.fullmatch(
+        r"(?is)\s*what\s+is\s+(-?(?:\d+(?:\.\d*)?|\.\d+))\s*"
+        r"(\+|-|\*|/|plus|minus|times|multiplied by|divided by)\s*"
+        r"(-?(?:\d+(?:\.\d*)?|\.\d+))\s*\??"
+        r"(?:\s*(?:reply|respond)\s+with\s+(?:just\s+)?the\s+number\.?)?\s*",
+        text,
+    )
+    if arithmetic:
+        left, operator_word, right = arithmetic.groups()
+        operators = {"plus": "+", "minus": "-", "times": "*",
+                     "multiplied by": "*", "divided by": "/"}
+        symbol = operators.get(operator_word.casefold(), operator_word)
+        c.append(Candidate(
+            "calculate", "", 121, "bounded arithmetic request",
+            action={"type": "tool", "name": "calculate",
+                    "args": {"expression": f"{left} {symbol} {right}"}},
+        ))
+
     subject=self._recall_subject(text)
     if subject:
         exact=self.store.get_fact(subject)
