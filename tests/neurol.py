@@ -20,6 +20,29 @@ class NeurolTests(unittest.TestCase):
     def setUp(self):
         self.core = NeuralCore(Config(embedding=3, hidden=4, seed=9))
 
+    def test_million_profile_scaling_and_checkpoint_guard(self):
+        self.assertEqual(NeuralCore().parameter_count, 26_130)
+        scaled = NeuralCore(Config.million())
+        self.assertEqual(scaled.parameter_count, 1_026_126)
+        self.assertEqual(scaled.parameter_count - NeuralCore().parameter_count, 999_996)
+        with self.assertRaises(ValueError):
+            Config(embedding=256, hidden=512)
+        loss, gradients = scaled.loss_and_gradients(
+            np.array([[BOS, 65]], dtype=np.int64),
+            np.array([[65, 66]], dtype=np.int64))
+        self.assertTrue(np.isfinite(loss))
+        self.assertEqual(sum(g.size for g in gradients.values()), scaled.parameter_count)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "million.json"
+            digest = scaled.save(path, {"stage": "initialized_untrained",
+                                        "learning_check_passed": False})
+            loaded, metadata, restored_digest = NeuralCore.load(path, expected_sha256=digest)
+            self.assertEqual(restored_digest, digest)
+            self.assertEqual(loaded.parameter_count, scaled.parameter_count)
+            np.testing.assert_array_equal(loaded.weights["Un"], scaled.weights["Un"])
+            self.assertFalse(NeurolBackend(path, enabled=True, expected_sha256=digest).available())
+            self.assertEqual(metadata["stage"], "initialized_untrained")
+
     def test_utf8_tokenizer(self):
         text = 'Kia ora — 世界 🌱'
         self.assertEqual(bytes(encode(text)[1:-1]).decode('utf8'), text)
