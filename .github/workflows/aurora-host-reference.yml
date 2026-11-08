@@ -1,0 +1,32 @@
+name: Aurora C1 host-enforcement reference checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/aurora_host_c1_reference.py'
+      - 'tests/test_aurora_host_reference.py'
+      - '.github/workflows/aurora-host-reference.yml'
+  pull_request:
+    paths:
+      - 'tools/aurora_host_c1_reference.py'
+      - 'tests/test_aurora_host_reference.py'
+      - '.github/workflows/aurora-host-reference.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cgroup-admission-negative-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile read-only host reference
+        run: python -m py_compile tools/aurora_host_c1_reference.py tests/test_aurora_host_reference.py
+      - name: Exercise privileged-denial and resource-limit validation
+        run: python -m unittest tests.test_aurora_host_reference -v

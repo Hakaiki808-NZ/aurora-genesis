@@ -1,0 +1,51 @@
+name: Aurora signed public contract provenance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aurora-contract-provenance.yml'
+      - 'docs/architecture/AURORA_ENGINE_FULL_DOCUMENTATION.md'
+      - 'MODEL_API.md'
+      - 'PUBLIC_PRIVATE_BOUNDARY.md'
+      - 'VERSIONING.md'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build deterministic public contract archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          tar --sort=name --mtime="@${SOURCE_DATE_EPOCH}" --owner=0 --group=0 --numeric-owner \
+            -cf dist/aurora-public-contracts-v0.1.tar \
+            MODEL_API.md PUBLIC_PRIVATE_BOUNDARY.md VERSIONING.md \
+            docs/architecture/AURORA_ENGINE_FULL_DOCUMENTATION.md
+          gzip -n -9 dist/aurora-public-contracts-v0.1.tar
+          sha256sum dist/aurora-public-contracts-v0.1.tar.gz | tee dist/SHA256SUMS
+      - name: Sign reproducible artifact provenance (Sigstore OIDC)
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/aurora-public-contracts-v0.1.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aurora-public-contracts-and-digest
+          path: |
+            dist/aurora-public-contracts-v0.1.tar.gz
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 30
