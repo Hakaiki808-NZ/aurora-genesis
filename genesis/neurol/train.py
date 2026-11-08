@@ -143,6 +143,15 @@ def main():
     training.add_argument("--output", required=True)
     training.add_argument("--report", required=True)
     training.add_argument("--steps", type=int, default=600)
+    training.add_argument("--batch-size", type=int, default=8)
+    training.add_argument("--length", type=int, default=48)
+    training.add_argument("--rate", type=float, default=0.003)
+    training.add_argument("--seed", type=int, default=1907)
+    training.add_argument("--profile", choices=("prototype", "million"), default="prototype")
+    initialize = sub.add_parser("initialize", help="create an untrained, digest-pinned research checkpoint")
+    initialize.add_argument("--output", required=True)
+    initialize.add_argument("--seed", type=int, default=1907)
+    initialize.add_argument("--profile", choices=("prototype", "million"), default="million")
     generation = sub.add_parser("generate")
     generation.add_argument("--checkpoint", required=True)
     generation.add_argument("--sha256", required=True)
@@ -150,7 +159,24 @@ def main():
     generation.add_argument("--max-new-bytes", type=int, default=128)
     args = parser.parse_args()
     if args.command == "train":
-        print(json.dumps(train(args.dataset, args.output, steps=args.steps, report_path=args.report), indent=2))
+        config = Config.million(args.seed) if args.profile == "million" else Config(seed=args.seed)
+        report = train(args.dataset, args.output, steps=args.steps,
+                       batch_size=args.batch_size, length=args.length,
+                       rate=args.rate, config=config, report_path=args.report)
+        print(json.dumps(report, indent=2))
+    elif args.command == "initialize":
+        config = Config.million(args.seed) if args.profile == "million" else Config(seed=args.seed)
+        model = NeuralCore(config)
+        metadata = {"stage": "initialized_untrained", "learning_check_passed": False,
+                    "parameters": model.parameter_count, "pretrained_weights": False,
+                    "profile": args.profile, "seed": config.seed}
+        digest = model.save(args.output, metadata)
+        restored, restored_metadata, restored_digest = NeuralCore.load(args.output, expected_sha256=digest)
+        if restored_digest != digest or restored.parameter_count != model.parameter_count or restored_metadata != metadata:
+            raise RuntimeError("initialized checkpoint round-trip failed")
+        print(json.dumps({"stage": metadata["stage"], "parameters": model.parameter_count,
+                          "checkpoint_sha256": digest, "roundtrip_verified": True,
+                          "enabled_for_inference": False}, indent=2))
     else:
         model, _, _ = NeuralCore.load(args.checkpoint, expected_sha256=args.sha256)
         print(model.generate(args.prompt, max_new_bytes=args.max_new_bytes))
