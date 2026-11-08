@@ -23,6 +23,13 @@ Synthetic tests (no network, no AWS charges):
 
 The second command intentionally records BLOCKED unless the --live flag is set.
 
+Public ARC SDK guest-mode smoke test (non-competition; only if SDK/network are available):
+- Install Python 3.12 and arc-agi==0.9.9.
+- The official toolkit documents anonymous access to public games. Explicitly opt in using `--live --arc-anonymous` and record `arc_access_mode=anonymous_public`.
+- Guest SDK gameplay is not evidence of scored competition participation, private Kyro authentication, or Genesis neural capability. It still requires a functioning Genesis agent and action contract.
+- Private Kyro HTTPS always requires its own short-lived bearer token; `--arc-anonymous` does **not** bypass it.
+- Example: `python3 -m tools.benchmarks.arc_agi_3 --live --arc-anonymous --agent kyro-https --game ls20 --max-actions 8` (requires `KYRO_ARC_URL` and `KYRO_ARC_TOKEN`).
+
 Real ARC API test of Genesis symbolic reference (not AWS):
 - Install Python 3.12 and arc-agi==0.9.9.
 - Supply an ARC_API_KEY from the official ARC Prize service in your environment.
