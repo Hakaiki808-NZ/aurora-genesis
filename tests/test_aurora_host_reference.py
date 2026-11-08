@@ -84,6 +84,17 @@ class AuroraHostReferenceTests(unittest.TestCase):
         with self.assertRaises(AdmissionDenied):
             build_command(["relative-worker"], self.limits, capability="C1", binary_sha256=self.sha)
 
+    def test_success_receipt_identifies_transient_unit(self):
+        with patch("tools.aurora_host_c1_reference.host_preflight",
+                   return_value={"qualified": True}), patch(
+                       "tools.aurora_host_c1_reference.subprocess.run",
+                       return_value=subprocess.CompletedProcess([], 0, "", "")) as run:
+            receipt = execute_c1([str(self.bin)], self.limits, binary_sha256=self.sha)
+        self.assertEqual(receipt["status"], "EXITED")
+        self.assertTrue(receipt["unit"].startswith("aurora-c1-"))
+        self.assertEqual(run.call_args.kwargs["check"], False)
+        self.assertEqual(run.call_args.kwargs["timeout"], 20)
+
     def test_no_success_receipt_on_failure(self):
         with patch("tools.aurora_host_c1_reference.host_preflight",
                    return_value={"qualified": True}), patch(
