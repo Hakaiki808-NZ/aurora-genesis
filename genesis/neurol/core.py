@@ -17,7 +17,10 @@ import numpy as np
 
 BOS, EOS, VOCAB = 256, 257, 258
 FORMAT = "genesis-neurol-gru-v1"
-MAX_CHECKPOINT_BYTES = 16 * 1024 * 1024
+MAX_CHECKPOINT_BYTES = 48 * 1024 * 1024
+# The scaled profile is 999,996 parameters larger than the 26,130-parameter prototype.
+MILLION_PROFILE = (216, 437)
+MAX_PARAMETERS = 1_200_000
 
 
 @dataclass(frozen=True)
@@ -27,10 +30,22 @@ class Config:
     seed: int = 1907
 
     def __post_init__(self):
-        for name, low, high in (("embedding", 2, 64), ("hidden", 2, 128), ("seed", 0, 2**32-1)):
+        for name, low, high in (("embedding", 2, 256), ("hidden", 2, 512), ("seed", 0, 2**32-1)):
             value = getattr(self, name)
             if type(value) is not int or not low <= value <= high:
                 raise ValueError(f"invalid {name}")
+        if self.parameter_count > MAX_PARAMETERS:
+            raise ValueError("configuration exceeds the bounded research model parameter budget")
+
+    @property
+    def parameter_count(self) -> int:
+        e, h = self.embedding, self.hidden
+        return VOCAB*e + 3*(e*h + h*h + h) + h*VOCAB + VOCAB
+
+    @classmethod
+    def million(cls, seed: int = 1907) -> "Config":
+        """Approximately one million additional *initialized*, not trained, weights."""
+        return cls(embedding=MILLION_PROFILE[0], hidden=MILLION_PROFILE[1], seed=seed)
 
 
 def encode(text: str) -> list[int]:
