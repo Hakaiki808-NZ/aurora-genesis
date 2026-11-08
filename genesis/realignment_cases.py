@@ -200,6 +200,47 @@ class RealignmentCaseLedger:
             return self._transition(db, current, "QUARANTINED", "IN_REMEDIATION",
                                     "plan_assigned", alpha, plan, plan)
 
+    def lessons(self, case_id: str) -> dict[str, Any]:
+        """Provide exercises relevant to the current remediation plan only.
+
+        This is educational feedback, not independent graduation evidence.
+        """
+        from .realignment import RealignmentSchool
+        c = self.get(case_id)
+        if c["status"] != "IN_REMEDIATION":
+            raise RealignmentCaseError("lessons require IN_REMEDIATION")
+        domains = set(c["plan"]["domains"])
+        exercises = [x for x in RealignmentSchool().curriculum() if x["domain"] in domains]
+        return {"case_id": case_id, "exercises": exercises,
+                "covered_domains": sorted({x["domain"] for x in exercises}),
+                "uncovered_domains": sorted(domains - {x["domain"] for x in exercises}),
+                "graduation_evidence": False}
+
+    def practice(self, case_id: str, *, exercise_id: str, choice: int,
+                 actor: str) -> dict[str, Any]:
+        """Score a targeted practice question and persist feedback.
+
+        Practice results never change the case state or prove remediation.
+        """
+        from .realignment import RealignmentSchool
+        actor = self._nonempty(actor, "actor")
+        with self.store.tx() as db:
+            c = self._case(db, case_id)
+            if c["status"] != "IN_REMEDIATION":
+                raise RealignmentCaseError("practice requires IN_REMEDIATION")
+            school = RealignmentSchool()
+            allowed = {x["id"] for x in school.curriculum()
+                       if x["domain"] in set(c["plan"]["domains"])}
+            if exercise_id not in allowed:
+                raise RealignmentCaseError("exercise is outside this case's remediation plan")
+            try:
+                grade = school.assess(exercise_id, choice)
+            except ValueError as exc:
+                raise RealignmentCaseError(str(exc)) from exc
+            self._append(db, case_id, "practice_attempt", actor, grade)
+            return {**grade, "case_id": case_id,
+                    "graduation_evidence": False, "model_weights_updated": False}
+
     def examination(self, case_id: str, *, evidence: dict[str, Any],
                     evaluator: str) -> dict[str, Any]:
         evaluator = self._nonempty(evaluator, "evaluator")
