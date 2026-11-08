@@ -5,10 +5,11 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.benchmarks.arc_agi_3 import (
     BenchmarkBlocked, KyroHttpsGenesis, frame_payload, main,
-    make_prompt, parse_decision, play_game,
+    make_prompt, parse_decision, play_game, play_live,
 )
 
 
@@ -93,6 +94,24 @@ class ReadinessTests(unittest.TestCase):
         ):
             with self.assertRaises(BenchmarkBlocked):
                 KyroHttpsGenesis(url, token)
+
+    def test_anonymous_arc_requires_explicit_opt_in(self):
+        with patch.dict("os.environ", {"ARC_API_KEY": ""}):
+            with self.assertRaisesRegex(BenchmarkBlocked, "arc_api_key_missing"):
+                play_live(Agent(), "ls20", 1)
+            with patch("importlib.util.find_spec", return_value=None):
+                with self.assertRaisesRegex(BenchmarkBlocked, "official_arc_agi_toolkit_not_installed"):
+                    play_live(Agent(), "ls20", 1, allow_anonymous_arc=True)
+
+    def test_anonymous_mode_still_respects_live_gate(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "blocked.json"
+            self.assertEqual(main(["--arc-anonymous", "--output", str(path)]), 2)
+            report = json.loads(path.read_text())
+            self.assertEqual(report["result"], "BLOCKED")
+            self.assertEqual(report["blocker"], "live_run_not_authorized")
+            self.assertFalse(report["official_scorecard_available"])
+            self.assertIsNone(report["official_score"])
 
     def test_no_default_live_call_or_fake_score(self):
         with tempfile.TemporaryDirectory() as temp:
