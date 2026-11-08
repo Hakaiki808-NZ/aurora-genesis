@@ -107,20 +107,20 @@ def deliberate(self,text:str,learned:list[dict[str,Any]])->Decision:
     # A numerical question is not a knowledge lookup. Route bounded arithmetic
     # to the existing safe calculator before fuzzy memory can hijack the answer.
     arithmetic=re.fullmatch(
-        r"(?is)\\s*what\\s+is\\s+(.+?)\\?\\s*(?:reply\\s+with\\s+just\\s+the\\s+number\\.?)?\\s*",
+        r"(?is)\s*what\s+is\s+(.+?)\?\s*(?:reply\s+with\s+just\s+the\s+number\.?)?\s*",
         text,
     )
     if arithmetic:
         expression=arithmetic.group(1).strip()
         for pattern,operator in (
-            (r"\\bmultiplied\\s+by\\b","*"),
-            (r"\\bdivided\\s+by\\b","/"),
-            (r"\\btimes\\b","*"),
-            (r"\\bplus\\b","+"),
-            (r"\\bminus\\b","-"),
+            (r"\bmultiplied\s+by\b","*"),
+            (r"\bdivided\s+by\b","/"),
+            (r"\btimes\b","*"),
+            (r"\bplus\b","+"),
+            (r"\bminus\b","-"),
         ):
             expression=re.sub(pattern,lambda _m, op=operator: op,expression,flags=re.I)
-        if re.fullmatch(r"[0-9\\s().+*/%\\-]+",expression) and re.search(r"\\d",expression):
+        if re.fullmatch(r"[0-9\s().+*/%\-]+",expression) and re.search(r"\d",expression):
             c.append(Candidate(
                 "calculate","",135,"unambiguous arithmetic routed to bounded calculator",
                 action={"type":"tool","name":"calculate","args":{"expression":expression}},
