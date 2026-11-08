@@ -15,22 +15,44 @@
 <script defer src="/v3/ux.js"></script>
 <script defer src="/v3/school-voice.js"></script>
 <script defer src="/v3/capabilities.js"></script>
+<style>
+.profile-panel{display:grid;gap:24px;max-width:1100px}
+.profile-head{display:flex;align-items:center;gap:21px;margin:6px 0}
+.profile-head h2{font-size:clamp(1.7rem,3vw,2.5rem);margin:8px 0}
+.profile-avatar{width:74px;height:74px;border-radius:22px;background:linear-gradient(145deg,#547b99,#28485c);color:#fff;display:grid;place-items:center;font-size:2.2rem;font-weight:750;flex-shrink:0}
+.profile-intro{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:30px;background:#fff;border:1px solid #d5e3eb;border-radius:19px}
+.profile-intro h3{font-size:1.5rem;margin:0 0 8px}
+.profile-intro p{max-width:570px;margin:7px 0;color:#597184}
+.profile-actions{display:flex;flex-direction:column;align-items:stretch;gap:12px;min-width:210px}
+.profile-actions button{padding:15px 20px}
+.profile-fallback{font-size:12px;text-align:center;text-decoration:underline}
+.profile-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.profile-shortcuts .action-card{text-align:left}
+.back-to-site{display:block;color:#7993a7;font-size:12px;padding:12px 24px;text-decoration:none}
+.back-to-site:hover,.back-to-site:focus-visible{color:#325c79}
+@media(max-width:760px){.profile-intro{flex-direction:column;align-items:stretch;padding:22px}.profile-shortcuts{grid-template-columns:1fr}.profile-head{align-items:flex-start}.profile-head h2{font-size:1.65rem}}
+</style>
 </head>
 <body>
 <a class="skip-link" href="#signin">Skip to workspace access</a>
 <div class="shell">
 <aside class="side">
  <div class="logo"><div class="mark">K<span>·</span></div><div><strong>KYRO</strong><small>INTELLIGENCE WORKSPACE</small></div></div>
- <div class="section">WORKSPACE</div>
+ <div class="section">YOUR SPACE</div>
  <nav aria-label="Kyro modes">
-  <button class="nav active" data-mode="overview">◈ <span>Overview</span></button>
+  <button class="nav active" data-mode="profile">◉ <span>My profile</span></button>
+  <button class="nav" data-mode="overview">◈ <span>Overview</span></button>
   <button class="nav" data-mode="code">⌘ <span>Code</span></button>
   <button class="nav" data-mode="collab">◎ <span>Collaborate</span></button>
-  <button class="nav" data-mode="chat">◫ <span>Chat archive</span></button>
+  <button class="nav" data-mode="chat">◫ <span>Conversations</span></button>
+ </nav>
+ <div class="section">RESEARCH &amp; TOOLS</div>
+ <nav aria-label="Kyro research tools">
   <button class="nav" data-mode="school">✧ <span>Realignment School</span></button>
   <button class="nav" data-mode="connectors">◇ <span>Plugins &amp; integrations</span></button>
   <button class="nav" data-mode="capabilities">✧ <span>AI Capabilities</span></button>
  </nav>
+ <a class="back-to-site" href="/site/index.html">← Public website</a>
  <div class="section project-header">PROJECTS <button id="new-project" aria-label="Create new project">＋</button></div>
  <div id="project-list" class="projects" aria-label="Projects"></div>
  <div class="spacer"></div>
@@ -45,9 +67,16 @@
  <div class="platform-card"><span class="platform-orb orb-lab" aria-hidden="true"></span><span class="platform-name">GENESIS · MODEL</span><strong>Research reference</strong><span class="platform-detail">Experimental responses only</span><span class="platform-state state-lab">RESEARCH MODE</span></div>
  <div class="platform-card"><span class="platform-orb orb-pending" aria-hidden="true"></span><span class="platform-name">AURORA · ENGINE</span><strong>Execution restricted</strong><span class="platform-detail">Protected engine not attached</span><span class="platform-state state-pending">NOT CONNECTED</span></div>
 </div>
-<div class="auth-cta"><button class="primary" id="login">Continue with secure sign-in</button><a class="ghost-link" href="/v3/preview.html">Preview workspace without an account</a><a class="ghost-link" href="/v3/realignment-preview.html">Try Realignment School preview</a><span>Administrator invitation required · no public self-registration</span></div><p id="signin-error" class="signin-error hidden" role="alert" aria-live="assertive"></p><p class="micro">Development preview only. No autonomous engine execution or production AGI claim. <a href="https://github.com/Hakaiki808-NZ/aurora-genesis" rel="noreferrer noopener" target="_blank">Explore the public research project</a>.</p></div>
+<div class="auth-cta"><button class="primary" id="login">Sign in to your profile</button><a class="ghost-link" href="/v3/preview.html">Preview workspace without an account</a><a class="ghost-link" href="/v3/realignment-preview.html">Try Realignment School preview</a><span>Administrator invitation required · no public self-registration</span></div><p id="signin-error" class="signin-error hidden" role="alert" aria-live="assertive"></p><p class="micro">Development preview only. No autonomous engine execution or production AGI claim. <a href="https://github.com/Hakaiki808-NZ/aurora-genesis" rel="noreferrer noopener" target="_blank">Explore the public research project</a>.</p></div>
  <section id="workspace" class="workspace hidden" aria-live="polite">
   <div class="header"><div><div class="eyebrow">KYRO / <span id="section-label">CODE WORKSPACE</span></div><h1 id="section-title">Build with intelligence.</h1><p id="section-blurb">Safe editing and collaborative projects, backed by AWS.</p></div><div id="section-actions"></div></div>
+  <div id="profile-panel" class="profile-panel hidden" aria-labelledby="profile-title">
+   <div class="profile-head"><div class="profile-avatar" aria-hidden="true">K</div><div><div class="eyebrow">PERSONAL KYRO SPACE</div><h2 id="profile-title">Welcome, <span id="profile-name">member</span>.</h2><p id="profile-email" class="micro">Verified account</p></div></div>
+   <div class="profile-intro"><div><h3>Your profile is ready.</h3><p>Use this space to manage your projects, or launch the full Kyro workspace in its own application-style browser window.</p><p class="micro">Only invited accounts have access. The app window may ask you to complete Cognito sign-in again until browser SSO is fully verified.</p></div>
+   <div class="profile-actions"><button type="button" class="primary" id="launch-kyro-app">Launch Kyro app ↗</button><a href="/v3/index.html?app=1" target="_blank" rel="noopener noreferrer" class="profile-fallback">Open in a new tab instead</a></div></div>
+   <div class="overview-metrics"><div class="metric"><span>YOUR PROJECTS</span><strong id="profile-project-count">—</strong><small>Accessible workspaces</small></div><div class="metric"><span>ACCOUNT ACCESS</span><strong>Private alpha</strong><small>Protected by AWS Cognito</small></div><div class="metric"><span>ENGINE PERMISSIONS</span><strong>Restricted</strong><small>Separate Aurora authorization required</small></div></div>
+   <div class="profile-shortcuts"><button type="button" class="action-card" data-go="overview"><strong>Workspace overview</strong><small>Projects, tools and work in progress</small><span class="action-arrow">→</span></button><button type="button" class="action-card" data-go="chat"><strong>Conversations</strong><small>Experimental Genesis research archive</small><span class="action-arrow">→</span></button><button type="button" class="action-card" data-go="code"><strong>My projects</strong><small>Versioned files and collaboration</small><span class="action-arrow">→</span></button></div>
+  </div>
   <div id="overview-panel" class="overview-panel hidden">
   <div class="overview-hero"><div><div class="eyebrow">YOUR WORKSPACE</div><h2>One place to make progress.</h2><p>Manage projects, write code, collaborate and explore Genesis experiments — all from a single private workspace.</p></div><div class="overview-orb" aria-hidden="true">✳</div></div>
   <div class="overview-metrics"><div class="metric"><span>YOUR PROJECTS</span><strong id="metric-projects">—</strong><small>Accessible workspaces</small></div><div class="metric"><span>ACTIVE PROJECT</span><strong id="metric-active">None selected</strong><small>Choose from the sidebar</small></div><div class="metric"><span>ENGINE AUTHORITY</span><strong class="metric-pending">Restricted</strong><small>Aurora execution not attached</small></div></div>
