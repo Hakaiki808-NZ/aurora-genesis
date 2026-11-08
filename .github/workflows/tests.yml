@@ -16,4 +16,6 @@ jobs:
       - run: pip install -r requirements.txt
       - run: python verify.py
       - run: node --check web/kyro/v3/app.js
+      - run: node --check web/kyro/v3/neural.js
+      - run: node tests/kyro-neural-live-static.cjs
       - run: node --check web/kyro/v3/capabilities.js
