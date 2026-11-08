@@ -162,7 +162,7 @@ def _verify(
         if isinstance(cose, cbor2.CBORTag):
             _require(cose.tag == 18, "unexpected COSE tag")
             cose = cose.value
-        _require(type(cose) is list and len(cose) == 4, "COSE Sign1 shape")
+        _require(isinstance(cose, (list, tuple)) and len(cose) == 4, "COSE Sign1 shape")
         protected, unprotected, payload, signature = cose
         _require(type(protected) is bytes and type(unprotected) is dict
                  and type(payload) is bytes and type(signature) is bytes
