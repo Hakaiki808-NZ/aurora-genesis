@@ -16,6 +16,7 @@ import numpy as np
 
 from .core import encode
 from .train import load_dataset, unigram_loss
+from .validation_guard import ValidationGuard
 
 
 def _torch_modules():
@@ -116,7 +117,8 @@ def train_moe(dataset, output, report, *, steps=300, length=40, batch_size=8,
     train_tokens = np.asarray([t for text in splits["train"] for t in encode(text)], dtype=np.int64)
     if len(train_tokens) <= length: raise ValueError("corpus too small for sequence length")
     first_val, _ = eval_split(splits["validation"])
-    best_val, best_step, stalled = first_val, 0, 0
+    guard = ValidationGuard(initial=first_val, patience=patience,
+                            max_regression=0.05, regression_patience=2)
     best = {k: v.detach().clone() for k,v in model.state_dict().items()}
     opt = torch.optim.AdamW(model.parameters(),lr=rate,weight_decay=0.01)
     history = []
@@ -135,16 +137,14 @@ def train_moe(dataset, output, report, *, steps=300, length=40, batch_size=8,
             val, assignments = eval_split(splits["validation"])
             history.append({"step":step,"train_loss":float(loss.detach()),"validation_loss":val,
                             "expert_assignments":assignments})
-            if val < best_val-1e-4:
-                best_val, best_step, stalled = val, step, 0
+            if guard.observe(step, val):
                 best = {k:v.detach().clone() for k,v in model.state_dict().items()}
-            else:
-                stalled += 1
-                if stalled >= patience: break
+            if guard.stop_reason is not None:
+                break
     model.load_state_dict(best)
     test_loss, assignments = eval_split(splits["test"])
     baseline = unigram_loss(splits["train"],splits["test"])
-    passed = bool(best_step>0 and best_val < first_val*0.95 and test_loss < baseline
+    passed = bool(guard.best_step>0 and guard.best < first_val*0.95 and test_loss < baseline
                   and all(x > 0 for x in assignments))
     path = Path(output)
     path.parent.mkdir(parents=True,exist_ok=True)
@@ -157,9 +157,12 @@ def train_moe(dataset, output, report, *, steps=300, length=40, batch_size=8,
     result = {
         "stage": "sparse_moe_research_only", "learning_gate_passed": passed,
         "parameters":parameters,"expert_count":4,"experts_per_token":2,
-        "initial_validation_loss":first_val,"best_validation_loss":best_val,
+        "initial_validation_loss":first_val,"best_validation_loss":guard.best,
         "test_loss":test_loss,"unigram_test_baseline":baseline,
-        "best_step":best_step,"steps_executed":step,"test_expert_assignments":assignments,
+        "best_step":guard.best_step,"steps_executed":step,"test_expert_assignments":assignments,
+        "stop_reason":guard.stop_reason or "training_budget_exhausted",
+        "best_checkpoint_restored":True,
+        "test_set_reused_for_exploratory_research":True,
         "checkpoint_sha256":digest,"dataset_sha256":dataset_hash,
         "checkpoint_roundtrip_verified":True,"elapsed_seconds":round(time.monotonic()-started,3),
         "deployed":False,"training_during_chat":False,
