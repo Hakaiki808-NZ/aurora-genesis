@@ -99,6 +99,103 @@ demonstrate specialist competence, or modify neural weights. See
 [Genesis Add-ons](docs/architecture/GENESIS_ADDONS.md) and the
 [reference catalogue](examples/addons/catalog.json).
 
+## Neurol neural core (experimental)
+
+Neurol v0.1 is a small, original Genesis-side recurrent neural core trained
+from random initialization. It provides a UTF-8 byte tokenizer, reset-before
+GRU, backpropagation through time, Adam optimization, held-out evaluation,
+JSON-only checkpoints, and an opt-in text-generation backend. It has no tool
+or Aurora execution authority, does not train during chat, and is disabled by
+default.
+
+Install its optional CPU dependency and run the bounded demonstration:
+
+```bash
+python -m pip install -r genesis/neurol/requirements.txt
+python -m genesis.neurol.train train \
+  --dataset examples/neurol/corpus.json \
+  --output artifacts/neurol/candidate.json \
+  --report artifacts/neurol/evaluation.json \
+  --steps 600
+```
+
+For a larger, *untrained* Neurol research checkpoint with 1,026,126
+parameters (999,996 additional parameters versus the default 26,130), run:
+
+```bash
+python -m genesis.neurol.train initialize \
+  --profile million \
+  --output artifacts/neurol/million-untrained.json
+```
+
+This uses a 216-dimensional byte embedding and 437-dimensional hidden state.
+Its initialized random weights do **not** confer language capability. To train
+this larger profile explicitly, use the `train` command with
+`--profile million` and a properly reviewed/licensed corpus; allow for
+substantially more CPU time and RAM than the prototype. The checkpoint is not
+committed to this public repository. The digest-pinned, JSON-only checkpoint
+remains subject to loading limits and the existing experimental gate.
+An untrained checkpoint is intentionally rejected by `NeurolBackend`.
+
+For faster *opt-in* CPU training at the expanded scale, install PyTorch
+separately (`python -m pip install torch`) and use the accelerated trainer.
+Its reset-before GRU implementation preserves the original parameter shapes,
+and checkpoint serialization remains JSON-only:
+
+```bash
+python -m genesis.neurol.torch_train \
+  --dataset examples/neurol/corpus.json \
+  --initialized artifacts/neurol/million-untrained.json \
+  --expected-sha256 <independently-verified-initial-sha256> \
+  --output artifacts/neurol/million-trained.json \
+  --report artifacts/neurol/million-report.json \
+  --steps 600 --batch-size 8 --sequence-length 48 \
+  --rate 0.002 --eval-every 40 --patience 5
+```
+
+A local research run selected the step-200 checkpoint by held-out validation
+(best loss **1.8089**, one-time test loss **1.5490** versus unigram **3.0834**).
+Further steps overfit this tiny dataset. These trained weights are **not** a
+fluent language model or a deployed service. The [measured research report](
+docs/research/NEUROL_MILLION_TRAINING_2026_11_08.md) explains limitations,
+checkpoint provenance and independent NumPy verification. The experimental
+trillion-parameter capacity planner remains design-only; it has no trained
+trillion-parameter weights.
+
+A second, *separate* research pilot now implements and trains a real
+**four-expert, top-2 sparse MoE** (124,934 weights, SafeTensors checkpoint).
+It routes tokens to selected experts and never grants execution privileges.
+On the same tiny synthetic corpus, the selected candidate achieved validation
+loss **1.6560** and test loss **1.5305**; a second run produced an identical
+checkpoint digest. This tests *routing and learning*, not general language
+capability or a deployed trillion-parameter system. See the
+[MoE evaluation](docs/research/NEUROL_SPARSE_MOE_PILOT_2026_11_08.md).
+Run the optional training with:
+
+```bash
+python -m pip install torch safetensors
+python -m genesis.neurol.moe_pilot \
+  --dataset examples/neurol/corpus.json \
+  --output artifacts/neurol/moe-pilot.safetensors \
+  --report artifacts/neurol/moe-pilot-report.json --steps 300
+```
+
+Neurol now also has a **validation-regression checkpoint guard** shared by
+the large GRU trainer and the sparse MoE pilot. It saves the best validation
+weights, stops after two consecutive evaluations more than 5% above the best
+(or at ordinary early stopping), and restores the best checkpoint.
+A small CPU ablation showed that mild locked input/output dropout (0.05/0.10)
+with AdamW (0.025) improved validation loss from 1.8089 to 1.7701,
+but the **reused test loss got worse** (1.5490 to 1.5776). Therefore
+the original model remains the **reference**, and the regularized model
+remains a **research candidate**, not a promoted deployment. See
+[the overfitting mitigation study](docs/research/NEUROL_OVERFITTING_MITIGATION_2026_11_08.md).
+
+Activation requires all four explicit settings: `GENESIS_GENERATOR=neurol`,
+`GENESIS_NEUROL_ENABLE=1`, `GENESIS_NEUROL_CHECKPOINT` and the independently
+pinned `GENESIS_NEUROL_SHA256`. See the [design RFC](rfcs/0001-neurol.md) and
+[first evaluation](docs/research/NEUROL_V0_1_EVALUATION_2026_11_08.md).
+
 ## Free language packs
 
 The knowledge-module system also includes two **free** starter language packs: [Spanish basics](examples/modules/spanish-basics.json) and [te reo Māori basics](examples/modules/te-reo-maori-basics.json). They are installable, removable, and searchable like physics references, with Unicode-aware retrieval and explicit language metadata. They are short demonstrations, **not** complete translation models or a public Kyro marketplace.

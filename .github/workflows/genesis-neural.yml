@@ -31,11 +31,15 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install API test dependencies
-        run: python -m pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt -r genesis/neurol/requirements.txt
       - name: Python syntax and compile
         run: python -m compileall -q genesis tests/neural_backend.py
       - name: Bounded neural backend tests (stubbed, no external calls)
         run: python -m tests.neural_backend
+      - name: Neurol numerical and integration tests
+        run: python -m tests.neurol
+      - name: Training regression-stop and checkpoint guard tests
+        run: python -m tests.neurol_validation_guard
       - name: Self-hosted OSS backend tests (mocked; no downloads)
         run: python -m tests.oss_backend
       - name: Validate private OSS Docker Compose syntax

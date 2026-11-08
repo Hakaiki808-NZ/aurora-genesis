@@ -50,6 +50,14 @@ class Genesis:
         self.engine_boundary=EngineBoundary(model_release=self.identity.get("full_name","Genesis v0.1"), minimum_engine=self.identity.get("minimum_engine","Aurora pre-v0.1"))
         generator_mode=os.environ.get("GENESIS_GENERATOR","auto").casefold()
         use_ollama = (enable_ollama is True) or (enable_ollama is None and generator_mode in {"auto","ollama"})
+        if backend is None and generator_mode == "neurol":
+            from .neurol.backend import NeurolBackend
+            backend=NeurolBackend(
+                checkpoint=os.environ.get("GENESIS_NEUROL_CHECKPOINT", ""),
+                enabled=os.environ.get("GENESIS_NEUROL_ENABLE", "").lower() in {"1", "true", "yes"},
+                expected_sha256=os.environ.get("GENESIS_NEUROL_SHA256", ""),
+                max_new_bytes=int(os.environ.get("GENESIS_NEUROL_MAX_BYTES", "128")),
+            )
         if backend is None and generator_mode == "bedrock":
             # Explicit two-switch opt-in. No implicit AWS usage in auto mode.
             backend=BedrockBackend(

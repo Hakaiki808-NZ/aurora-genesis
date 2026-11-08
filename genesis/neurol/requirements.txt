@@ -1,0 +1,2 @@
+# Optional research dependency; the default Genesis runtime does not require it.
+numpy>=2.0,<3

@@ -13,8 +13,9 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
-      - run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt -r genesis/neurol/requirements.txt
       - run: python verify.py
+      - run: python -m tests.neurol_validation_guard
       - run: python -m unittest tests.test_aurora_c2_workspace
       - run: node --check web/kyro/v3/app.js
       - run: node --check web/kyro/v3/neural.js

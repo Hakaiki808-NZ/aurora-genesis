@@ -9,6 +9,8 @@ venv/
 dist/
 build/
 *.egg-info/
+artifacts/neurol/
+verification.json
 
 # Local identity, credentials and operational state (never publish)
 .env

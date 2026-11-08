@@ -1,0 +1,509 @@
+{
+  "format": "genesis-neurol-corpus-v1",
+  "documents": [
+    {
+      "split": "train",
+      "group": "train-000",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Genesis is the model. It handles cognition, inference and planning."
+    },
+    {
+      "split": "train",
+      "group": "train-001",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Aurora is the engine. It controls execution and runtime resources."
+    },
+    {
+      "split": "train",
+      "group": "train-002",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Kyro is the interface. It connects the user with the model."
+    },
+    {
+      "split": "train",
+      "group": "train-003",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A neural suggestion is text. A suggestion does not grant execution permission."
+    },
+    {
+      "split": "train",
+      "group": "train-004",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Training changes weights. Retrieval reads stored information without changing weights."
+    },
+    {
+      "split": "train",
+      "group": "train-005",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A checkpoint stores learned weights so the model can be loaded again."
+    },
+    {
+      "split": "train",
+      "group": "train-006",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The training set changes weights. The validation set helps choose a checkpoint."
+    },
+    {
+      "split": "train",
+      "group": "train-007",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The test set measures a selected model on examples held apart from training."
+    },
+    {
+      "split": "train",
+      "group": "train-008",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A measurement records what happened. A prediction states what might happen."
+    },
+    {
+      "split": "train",
+      "group": "train-009",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Uncertainty should be described when evidence is incomplete."
+    },
+    {
+      "split": "train",
+      "group": "train-010",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The user controls whether private examples may be used for training."
+    },
+    {
+      "split": "train",
+      "group": "train-011",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "An original synthetic example is a small demonstration, not proof of broad intelligence."
+    },
+    {
+      "split": "train",
+      "group": "train-012",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The recurrent hidden state carries information from earlier tokens in a sequence."
+    },
+    {
+      "split": "train",
+      "group": "train-013",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The hidden state starts empty for each independent conversation request."
+    },
+    {
+      "split": "train",
+      "group": "train-014",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A reset gate controls which earlier hidden features affect the candidate state."
+    },
+    {
+      "split": "train",
+      "group": "train-015",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "An update gate combines the previous state with new candidate information."
+    },
+    {
+      "split": "train",
+      "group": "train-016",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The output layer assigns scores to possible next bytes."
+    },
+    {
+      "split": "train",
+      "group": "train-017",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The softmax converts scores into a probability distribution."
+    },
+    {
+      "split": "train",
+      "group": "train-018",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The optimizer adjusts parameters using gradients of the training loss."
+    },
+    {
+      "split": "train",
+      "group": "train-019",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Gradient clipping limits the size of a training update."
+    },
+    {
+      "split": "train",
+      "group": "train-020",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A lower held-out loss indicates improved prediction on that specific dataset."
+    },
+    {
+      "split": "train",
+      "group": "train-021",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A checksum detects changes when compared with an independently pinned value."
+    },
+    {
+      "split": "train",
+      "group": "train-022",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A checksum is not a digital signature or proof of trust."
+    },
+    {
+      "split": "train",
+      "group": "train-023",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A model must not authorize its own access to tools."
+    },
+    {
+      "split": "train",
+      "group": "train-024",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Aurora admission remains independent of the model output."
+    },
+    {
+      "split": "train",
+      "group": "train-025",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Kyro displays the state of the selected neural backend."
+    },
+    {
+      "split": "train",
+      "group": "train-026",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A failed model load leaves neural generation unavailable."
+    },
+    {
+      "split": "train",
+      "group": "train-027",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "An empty generation falls back to the existing Genesis response path."
+    },
+    {
+      "split": "train",
+      "group": "train-028",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The architecture separates the interface, the model and the engine."
+    },
+    {
+      "split": "train",
+      "group": "train-029",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Synthetic tests are useful for checking implementation behavior."
+    },
+    {
+      "split": "train",
+      "group": "train-030",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A production system needs evaluations beyond a small synthetic corpus."
+    },
+    {
+      "split": "train",
+      "group": "train-031",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Weights trained from scratch begin from a seeded random initialization."
+    },
+    {
+      "split": "train",
+      "group": "train-032",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "No cloud provider is required for this small CPU training experiment."
+    },
+    {
+      "split": "train",
+      "group": "train-033",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The byte tokenizer represents text as UTF-8 bytes with boundary tokens."
+    },
+    {
+      "split": "train",
+      "group": "train-034",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The neural subsystem cannot create an Aurora execution receipt."
+    },
+    {
+      "split": "train",
+      "group": "train-035",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Reviewed examples carry source, license and training permission metadata."
+    },
+    {
+      "split": "train",
+      "group": "train-036",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Training is an explicit offline operation and does not run during chat."
+    },
+    {
+      "split": "train",
+      "group": "train-037",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The model can be disabled while the symbolic Genesis path remains available."
+    },
+    {
+      "split": "train",
+      "group": "train-038",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A saved candidate can be selected explicitly by its path and digest."
+    },
+    {
+      "split": "train",
+      "group": "train-039",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Learning a short text pattern does not prove instruction following."
+    },
+    {
+      "split": "validation",
+      "group": "validation-000",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Genesis owns model inference while Aurora owns execution."
+    },
+    {
+      "split": "validation",
+      "group": "validation-001",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Kyro presents neural status to the user through the interface."
+    },
+    {
+      "split": "validation",
+      "group": "validation-002",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The validation loss is measured without updating model weights."
+    },
+    {
+      "split": "validation",
+      "group": "validation-003",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The recurrent state is temporary and belongs to one request."
+    },
+    {
+      "split": "validation",
+      "group": "validation-004",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A candidate checkpoint needs evaluation before broader use."
+    },
+    {
+      "split": "validation",
+      "group": "validation-005",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The neural model learns next-byte predictions from reviewed text."
+    },
+    {
+      "split": "validation",
+      "group": "validation-006",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A source record explains where each training example came from."
+    },
+    {
+      "split": "validation",
+      "group": "validation-007",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The engine must decide whether an action is permitted."
+    },
+    {
+      "split": "test",
+      "group": "test-000",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The Genesis neural subsystem produces text suggestions."
+    },
+    {
+      "split": "test",
+      "group": "test-001",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Aurora remains responsible for execution authority."
+    },
+    {
+      "split": "test",
+      "group": "test-002",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Kyro gives the user an interface to the model."
+    },
+    {
+      "split": "test",
+      "group": "test-003",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "A test example must not be used to fit the weights."
+    },
+    {
+      "split": "test",
+      "group": "test-004",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The checkpoint contains parameters learned during training."
+    },
+    {
+      "split": "test",
+      "group": "test-005",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "The hidden state carries earlier information through a sequence."
+    },
+    {
+      "split": "test",
+      "group": "test-006",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "An evaluation reports measured results and known limitations."
+    },
+    {
+      "split": "test",
+      "group": "test-007",
+      "source": "original-synthetic-neurol-v0.1",
+      "license": "Apache-2.0",
+      "training_allowed": true,
+      "reviewed": true,
+      "text": "Private conversation data requires explicit permission for training."
+    }
+  ]
+}
