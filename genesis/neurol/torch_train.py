@@ -108,7 +108,6 @@ def train_torch(dataset, initialized_checkpoint, output, *, steps=600,
     for name, param in p.items():
         base.weights[name] = best_state[name].cpu().numpy().astype(np.float64)
     # The baseline and test set are consumed only after validation selection.
-    test_loss = sum([0.])  # Replaced by exact reference evaluator below.
     from .train import evaluate
     test_loss = evaluate(base, splits["test"])
     baseline = unigram_loss(splits["train"], splits["test"])
