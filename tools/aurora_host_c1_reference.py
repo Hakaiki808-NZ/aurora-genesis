@@ -133,7 +133,7 @@ def execute_c1(
         raise AdmissionDenied("systemd enforcement failed or timed out") from exc
     if result.returncode:
         raise AdmissionDenied("bounded C1 task failed; no successful receipt issued")
-    return {"status": "EXITED", "returncode": 0, "unit": command[6].removeprefix("--unit=")}
+    return {"status": "EXITED", "returncode": 0, "unit": command[7].removeprefix("--unit=")}
 
 
 def main() -> int:
