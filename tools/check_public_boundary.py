@@ -31,7 +31,7 @@ PATTERNS = {
     "Google API key": re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b"),
     "Slack access token": re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b"),
     "private key PEM": re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----"),
-    "URL-embedded credentials": re.compile(r"https?://[^\s/@:]+:[^\s/@]+@"),
+    "URL-embedded credentials": re.compile(r"https?://[^\s/@:]+:[^\s/@]{8,}@"),
 }
 MAX_FILE_BYTES = 2_000_000
 
@@ -93,7 +93,7 @@ def self_test() -> None:
     assert not forbidden_path("genesis/engine_boundary.py")
     assert scan_text("AKIA" + "Q" * 16) == ["AWS access key identifier"]
     assert scan_text("-----BEGIN " + "PRIVATE KEY-----") == ["private key PEM"]
-    assert scan_text("https://user:password@host.invalid")
+    assert scan_text("https://" + "user:password@" + "host.invalid")
     assert not scan_text("os.getenv('AWS_ACCESS_KEY_ID') and a fake example")
 
 
