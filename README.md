@@ -119,6 +119,24 @@ python -m genesis.neurol.train train \
   --steps 600
 ```
 
+For a larger, *untrained* Neurol research checkpoint with 1,026,126
+parameters (999,996 additional parameters versus the default 26,130), run:
+
+```bash
+python -m genesis.neurol.train initialize \
+  --profile million \
+  --output artifacts/neurol/million-untrained.json
+```
+
+This uses a 216-dimensional byte embedding and 437-dimensional hidden state.
+Its initialized random weights do **not** confer language capability. To train
+this larger profile explicitly, use the `train` command with
+`--profile million` and a properly reviewed/licensed corpus; allow for
+substantially more CPU time and RAM than the prototype. The checkpoint is not
+committed to this public repository. The digest-pinned, JSON-only checkpoint
+remains subject to loading limits and the existing experimental gate.
+An untrained checkpoint is intentionally rejected by `NeurolBackend`.
+
 Activation requires all four explicit settings: `GENESIS_GENERATOR=neurol`,
 `GENESIS_NEUROL_ENABLE=1`, `GENESIS_NEUROL_CHECKPOINT` and the independently
 pinned `GENESIS_NEUROL_SHA256`. See the [design RFC](rfcs/0001-neurol.md) and
