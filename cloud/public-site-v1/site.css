@@ -20,3 +20,44 @@
 
 /* V3 developer API and planned federation controls, 2026-11-07 */
 .federation{padding-top:16px;padding-bottom:8px}.federation strong{font-size:14px}.federation p{font-size:12px;color:var(--muted);margin:7px 0 12px}.federation-actions{display:flex;flex-wrap:wrap;gap:9px;margin:13px 0}.federation-actions button{border:1px solid #cbd7de;border-radius:9px;background:#f1f5f8;color:#607482;font-size:12px;font-weight:700;padding:12px 15px;cursor:not-allowed;opacity:.83}.api-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}.api-layout .login-card{padding:30px}.api-layout .login-card h2{font-size:30px}.api-result{font-size:13px;font-weight:750;min-height:24px;color:#31576f;margin-top:12px}.api-muted{margin:24px 0 0;font-size:13px}.api-tablewrap{overflow-x:auto;background:white;border-radius:14px;border:1px solid var(--border);margin:24px 0}.api-table{width:100%;border-collapse:collapse;text-align:left;min-width:600px}.api-table th{font-size:11px;letter-spacing:.1em;color:#63798a;background:#edf3f6;text-transform:uppercase}.api-table th,.api-table td{padding:15px 18px;border-bottom:1px solid var(--border)}.api-table td{font-size:13px}.api-table code{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.api-table tr:last-child td{border-bottom:0}@media(max-width:780px){.api-layout{grid-template-columns:1fr}.api-layout .login-card{padding:20px}.api-layout .login-card h2{font-size:25px}.api-table th,.api-table td{padding:12px}.federation-actions button{width:100%}}
+
+/* Simplified public navigation and readable marketing landing. */
+.nav-main{min-width:0}
+.nav-main .nav-group{position:relative}
+.nav-main .nav-group>summary{list-style:none;cursor:pointer;white-space:nowrap;color:#596e80;font-size:12px;font-weight:750;padding:12px 6px}
+.nav-main .nav-group>summary::-webkit-details-marker{display:none}
+.nav-main .nav-group>summary::after{content:"⌄";display:inline-block;margin-left:6px;transition:transform .15s ease}
+.nav-main .nav-group[open]>summary::after{transform:rotate(180deg)}
+.nav-main .nav-group>summary:focus-visible{outline:3px solid #75a4c7;outline-offset:3px}
+.nav-main .nav-dropdown{position:absolute;right:0;top:calc(100% + 10px);min-width:225px;display:flex;flex-direction:column;gap:2px;padding:10px;background:#fff;border:1px solid #d6e3eb;border-radius:12px;box-shadow:0 22px 44px #1d405322;z-index:60}
+.nav-main .nav-dropdown a{display:block;padding:10px 12px;border-radius:7px;white-space:nowrap;font-size:13px}
+.nav-main .nav-dropdown a:hover,.nav-main .nav-dropdown a:focus-visible{background:#edf3f6}
+.nav .login-link{background:#244f70;color:#fff;border-color:#244f70;padding:11px 16px}
+.nav .login-link:hover{background:#193c57;color:#fff}
+.hero-simple .scene{min-height:400px}
+.hero-simple .stack{margin:35px 5px}
+.hero-simple .stack-row{padding:13px}
+.simple-steps{padding-top:78px}
+@media(max-width:870px){
+ .nav-main .nav-group{width:100%}
+ .nav-main .nav-group>summary{padding:10px 8px;font-size:14px}
+ .nav-main .nav-dropdown{position:static;min-width:0;border:0;box-shadow:none;background:#edf3f6;padding:6px;margin-bottom:8px}
+ .nav-main .nav-dropdown a{white-space:normal}
+ .nav .login-link{font-size:12px;padding:9px 11px}
+}
+@media(max-width:430px){.nav{gap:8px}.nav .login-link{font-size:11px;padding:9px}.brand small{display:none}}
+
+
+/* KYRO-LIVE-PULSE-V1 — subtle movement, never simulated traffic */
+.kyro-pulse{position:fixed;z-index:70;right:18px;bottom:16px;display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid #d5e1e7;background:#ffffffed;box-shadow:0 12px 42px #19344920;backdrop-filter:blur(18px);border-radius:14px;max-width:min(380px,calc(100vw - 30px));font:12px/1.4 Inter,system-ui,sans-serif;color:#36576e}
+.kyro-pulse-orb{height:13px;width:13px;flex:none;border-radius:50%;background:#9aacba;box-shadow:0 0 0 5px #8ca7ba22;animation:kyroBreath 3s ease-in-out infinite}
+.kyro-pulse[data-state=online] .kyro-pulse-orb{background:#2cae8b;box-shadow:0 0 0 5px #2cae8b22}
+.kyro-pulse[data-state=unknown] .kyro-pulse-orb{background:#cd9a4e;animation:none}
+.kyro-pulse-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.kyro-pulse-copy strong{font-size:9px;letter-spacing:.13em;color:#7c91a1}.kyro-pulse-copy [role=status]{font-size:11px;font-weight:700}
+.kyro-pulse-clock{font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:9px;border-left:1px solid #d5e1e7;color:#6a8293}.kyro-pulse button{height:28px;width:28px;border:1px solid #d3e0e7;border-radius:8px;background:#f6f9fb;color:#45677c;cursor:pointer}
+.kyro-pulse button:disabled{opacity:.5;cursor:progress}
+.scene-orbit{animation:kyroOrbit 28s ease-in-out infinite}.stack-row{transition:transform .3s ease,box-shadow .3s ease}.stack-row:hover{transform:translateY(-3px);box-shadow:0 16px 35px #325a7b22}
+@keyframes kyroBreath{0%,100%{transform:scale(.85);opacity:.75}50%{transform:scale(1.15);opacity:1}}
+@keyframes kyroOrbit{50%{transform:rotate(18deg) scale(1.06)}}
+@media(max-width:600px){.kyro-pulse{right:8px;bottom:8px;gap:8px;padding:8px 10px}.kyro-pulse-clock{display:none}}
+@media(prefers-reduced-motion:reduce){.kyro-pulse-orb,.scene-orbit{animation:none!important}.stack-row{transition:none!important}}
