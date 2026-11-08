@@ -23,4 +23,4 @@ See [version crosswalk](docs/releases/VERSION_CROSSWALK.md) and [project status]
 
 A beta or production designation requires **evidence**, not a changed version string: authenticated real-browser Kyro acceptance, verified neural-model quality, tenant privacy controls, incident/rollback exercises, scoped Aurora security qualification, reproducible CI and a deliberate release approval. Until these gates pass, **public beta and privileged Aurora release remain HOLD**.
 
-Review [8 November source and exposure audit](docs/releases/PUBLIC_REPOSITORY_AUDIT_2026_11_08.md) and [public beta gate](docs/releases/PUBLIC_BETA_GATE_2026_11_07.md).
+Security-sensitive qualification evidence and release assessments are retained outside the public repository.
