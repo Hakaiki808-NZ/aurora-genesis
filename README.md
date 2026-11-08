@@ -180,6 +180,17 @@ python -m genesis.neurol.moe_pilot \
   --report artifacts/neurol/moe-pilot-report.json --steps 300
 ```
 
+Neurol now also has a **validation-regression checkpoint guard** shared by
+the large GRU trainer and the sparse MoE pilot. It saves the best validation
+weights, stops after two consecutive evaluations more than 5% above the best
+(or at ordinary early stopping), and restores the best checkpoint.
+A small CPU ablation showed that mild locked input/output dropout (0.05/0.10)
+with AdamW (0.025) improved validation loss from 1.8089 to 1.7701,
+but the **reused test loss got worse** (1.5490 to 1.5776). Therefore
+the original model remains the **reference**, and the regularized model
+remains a **research candidate**, not a promoted deployment. See
+[the overfitting mitigation study](docs/research/NEUROL_OVERFITTING_MITIGATION_2026_11_08.md).
+
 Activation requires all four explicit settings: `GENESIS_GENERATOR=neurol`,
 `GENESIS_NEUROL_ENABLE=1`, `GENESIS_NEUROL_CHECKPOINT` and the independently
 pinned `GENESIS_NEUROL_SHA256`. See the [design RFC](rfcs/0001-neurol.md) and
