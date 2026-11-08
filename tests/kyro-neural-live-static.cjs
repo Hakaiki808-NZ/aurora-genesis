@@ -15,6 +15,12 @@ for (const id of ['neural-form', 'neural-input', 'neural-check', 'neural-status'
   assert.ok(html.includes('id="' + id + '"'), 'missing neural field: ' + id);
 }
 assert.match(app, /async function api\(path,method='GET',body=null\)/);
+for (const source of [app, fs.readFileSync(path.join(root, '../../../cloud/public-beta-web/v3/app.js'), 'utf8')]) {
+  assert.doesNotMatch(source, /await request\(CONFIG\.api\+'\/api\/v3\/health'/, 'health check must not block login');
+  assert.match(source, /request\(CONFIG\.api\+'\/api\/v3\/health',\{\},9000\)/);
+  assert.match(source, /await Promise\.all\(pending\)/, 'independent project loads should be parallel');
+  assert.match(source, /await request\(CONFIG\.auth\+'\/oauth2\/token'/, 'refresh must have a timeout');
+}
 assert.match(app, /Authorization:'Bearer '\+state\.token/);
 assert.match(app, /\/api\/v3/);
 assert.match(neural, /window\.api\('\/neural\/status'\)/);
