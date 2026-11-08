@@ -1,0 +1,36 @@
+name: Aurora hardware-attestation verifier negative vectors
+
+on:
+  pull_request:
+    paths:
+      - 'tools/aurora_nitro_attestation.py'
+      - 'tests/test_aurora_nitro_attestation.py'
+      - '.github/workflows/aurora-nitro-attestation-verifier.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/aurora_nitro_attestation.py'
+      - 'tests/test_aurora_nitro_attestation.py'
+      - '.github/workflows/aurora-nitro-attestation-verifier.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-nitro-verifier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reference-only dependencies
+        run: python -m pip install 'cbor2>=5.6,<7' 'cryptography>=43,<50'
+      - name: Compile strict standalone verifier
+        run: python -m py_compile tools/aurora_nitro_attestation.py tests/test_aurora_nitro_attestation.py
+      - name: Verify synthetic COSE chain, stale nonce, signature, epoch and PCR rejection
+        run: python -m unittest tests.test_aurora_nitro_attestation -v
