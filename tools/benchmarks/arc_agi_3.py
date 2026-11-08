@@ -183,8 +183,8 @@ def play_game(arcade, agent, game, max_actions):
     return {"status": status, "actions": actions_taken}
 
 
-def play_live(agent, game, max_actions):
-    if not os.environ.get("ARC_API_KEY"):
+def play_live(agent, game, max_actions, *, allow_anonymous_arc=False):
+    if not os.environ.get("ARC_API_KEY") and not allow_anonymous_arc:
         raise BenchmarkBlocked("arc_api_key_missing")
     if importlib.util.find_spec("arc_agi") is None:
         raise BenchmarkBlocked("official_arc_agi_toolkit_not_installed")
@@ -208,6 +208,10 @@ def main(argv=None):
     parser.add_argument("--max-actions", type=int, default=8)
     parser.add_argument("--agent", choices=("local-reference", "kyro-https"), default="local-reference")
     parser.add_argument("--live", action="store_true", help="Explicit opt-in to the ARC service")
+    parser.add_argument(
+        "--arc-anonymous", action="store_true",
+        help="Explicitly allow the official ARC SDK anonymous public-game mode (not competition scoring)",
+    )
     parser.add_argument("--output", default="arc_agi_3_result.json")
     args = parser.parse_args(argv)
     record = {
@@ -218,6 +222,8 @@ def main(argv=None):
         "result": "NOT_RUN",
         "official_score": None,
         "official_scorecard_available": False,
+        "arc_access_mode": ("keyed" if os.environ.get("ARC_API_KEY") else
+                            "anonymous_public" if args.arc_anonymous else "unavailable"),
     }
     start = time.monotonic()
     agent = None
@@ -234,7 +240,8 @@ def main(argv=None):
             agent = LocalReferenceGenesis()
         record["model_identity"] = agent.identity
         record["provenance"] = agent.provenance
-        outcome = play_live(agent, args.game, args.max_actions)
+        outcome = play_live(agent, args.game, args.max_actions,
+                            allow_anonymous_arc=args.arc_anonymous)
         record.update(outcome)
         record["result"] = "COMPLETED"
     except BenchmarkBlocked as exc:
