@@ -19,6 +19,7 @@ from .realignment import RealignmentSchool
 from .knowledge_modules import KnowledgeModuleStore
 from .addons import AddonManager
 from .task_assurance import TaskLedger
+from .agents import AgentTeam
 from .user_capabilities import UserCapabilityServices
 
 ROOT=Path(__file__).resolve().parent.parent
@@ -69,6 +70,7 @@ class Genesis:
             )
         self.cognition=CognitionEngine(self.store,self.identity,self.heritage,self.model_record,self.tools,backend,self.policy,self.guardians,self.capabilities,self.engine_boundary)
         self.cognition.knowledge_modules=self.knowledge_modules
+        self.agents=AgentTeam(self.cognition.backend)
         self.last_trace:dict[str,Any]|None=None
         self._turn_lock=threading.RLock()
 
