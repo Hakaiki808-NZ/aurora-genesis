@@ -13,6 +13,12 @@
 
 ## Tests and verification (link actual CI results)
 
+## Stabilization gate (active since 2026-11-09)
+- [ ] This change preserves the Kyro feature freeze, or is necessary maintenance for the Aurora/Genesis/E2E release gate.
+- [ ] For Kyro UI changes: maintenance-class title, reviewed scope and the exact exception line below.
+
+For a genuine approved maintenance change, explicitly add the exact one-line marker documented in the stabilization gate to the completed PR description (do not copy it into feature PRs).
+
 ## Release impact
 - [ ] This PR does **not** silently promote source-preview work to general beta or qualified Aurora production.
 - [ ] If versioning changed, CHANGELOG and release/qualification evidence explain why.
