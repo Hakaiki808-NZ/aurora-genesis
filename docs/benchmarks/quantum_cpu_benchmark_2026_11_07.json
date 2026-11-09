@@ -1,0 +1,37 @@
+{
+  "type": "reference-cpu-only",
+  "backend": "Python statevector (no QPU)",
+  "date_utc": "2026-11-07T09:26:25.495620+00:00",
+  "quantum_advantage_demonstrated": false,
+  "cost_usd": 0,
+  "graphs": [
+    {
+      "name": "triangle3", "qubits": 3, "edges": 3,
+      "classical_optimum": 4.0, "classical_greedy": 4.0,
+      "uniform_random_expectation": 2.5, "qaoa_expected": 3.78033,
+      "qaoa_p_optimum": 0.890165, "classical_exact_evaluations": 8,
+      "qaoa_grid_evaluations": 289, "elapsed_seconds": 0.002557
+    },
+    {
+      "name": "square4", "qubits": 4, "edges": 4,
+      "classical_optimum": 4.0, "classical_greedy": 4.0,
+      "uniform_random_expectation": 2.0, "qaoa_expected": 3.0,
+      "qaoa_p_optimum": 0.53125, "classical_exact_evaluations": 16,
+      "qaoa_grid_evaluations": 289, "elapsed_seconds": 0.004962
+    },
+    {
+      "name": "ring5_chords", "qubits": 5, "edges": 7,
+      "classical_optimum": 5.0, "classical_greedy": 5.0,
+      "uniform_random_expectation": 3.0, "qaoa_expected": 4.030274,
+      "qaoa_p_optimum": 0.228138, "classical_exact_evaluations": 32,
+      "qaoa_grid_evaluations": 289, "elapsed_seconds": 0.011948
+    },
+    {
+      "name": "bipartite6", "qubits": 6, "edges": 9,
+      "classical_optimum": 9.0, "classical_greedy": 9.0,
+      "uniform_random_expectation": 4.5, "qaoa_expected": 6.09099,
+      "qaoa_p_optimum": 0.330363, "classical_exact_evaluations": 64,
+      "qaoa_grid_evaluations": 289, "elapsed_seconds": 0.025983
+    }
+  ]
+}
