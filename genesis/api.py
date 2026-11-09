@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from .model import Genesis
+from .reliability import readiness_status
 from .knowledge_modules import KnowledgeModuleError
 from .task_assurance import TaskError
 
@@ -23,6 +24,22 @@ class ChatRequest(BaseModel):
 
 @app.get("/health")
 def health(): return {"status":"ok","model":model.identity["model_name"],"version":model.VERSION}
+@app.get("/health/live")
+def health_live():
+    # Liveness only: never wait on model state or remote neural providers.
+    return {"component": "genesis", "status": "alive"}
+
+
+@app.get("/health/ready")
+def health_ready():
+    # Read-only eligibility signal, not an Aurora control endpoint.
+    report = readiness_status(model)
+    return JSONResponse(
+        status_code=200 if report["status"] == "ready" else 503,
+        content=report,
+    )
+
+
 @app.get("/state")
 def state(): return model.state()
 @app.get("/diagnostics")
