@@ -33,6 +33,19 @@ Use `rfcs/0000-template.md` for architecture-affecting proposals.
 
 Bug fixes, tests, documentation, evaluation and compatible implementation improvements are preferred over reopening settled architecture without evidence of a concrete flaw.
 
+## Temporary foundation stabilization freeze (since 2026-11-09)
+
+Major Kyro feature expansion is on hold until Aurora, Genesis, and
+end-to-end qualification satisfy the completion gates in
+[Foundation stabilization gate](docs/governance/FOUNDATION_STABILIZATION_GATE.md).
+Existing Kyro feature branches remain drafts; integration, identity, reliability,
+regression and security maintenance may continue.
+
+For any permitted UI maintenance PR use a maintenance-class title and put
+`Kyro-freeze-exception: stabilization` on a separate line in the PR description.
+The GitHub workflow checks that rule on pull requests, but it does not inspect
+the full semantics of the change or control direct pushes and cloud deployments.
+
 ## Developer Certificate of Origin
 
 Contributions use a DCO-style sign-off. Contributors should certify that they have the right to submit their contribution by adding a `Signed-off-by:` line to commits, for example:
