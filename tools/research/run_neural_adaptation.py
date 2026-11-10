@@ -22,6 +22,7 @@ from statistics import mean
 from genesis import Genesis
 from genesis.backends import OllamaBackend
 from genesis.bedrock_backend import BedrockBackend
+from genesis.hypothesis_check import hypothesis_coverage
 
 TASKS = {
     "xor3": lambda b: b[0] ^ b[1] ^ b[2],
@@ -82,10 +83,14 @@ def summarize(rows: list[dict]) -> dict:
     if not rows:
         return {"n": 0, "accuracy": None, "parse_rate": None, "brier": None}
     valid = [r for r in rows if r["answer"] is not None]
+    hypotheses = [r["hypothesis_holdout_accuracy"] for r in rows
+                  if r.get("hypothesis_holdout_accuracy") is not None]
     return {
         "n": len(rows),
         "accuracy": round(mean(int(r["answer"] == r["truth"]) for r in rows), 4),
         "parse_rate": round(len(valid) / len(rows), 4),
+        "hypothesis_report_rate": round(len(hypotheses) / len(rows), 4),
+        "explanation_heldout_accuracy": round(mean(hypotheses), 4) if hypotheses else None,
         "brier": (round(mean(
             (r["confidence"] - int(r["answer"] == r["truth"])) ** 2
             for r in valid
@@ -123,7 +128,17 @@ def evaluate_protocol(protocol: list[dict], backend, *, max_context: int = 10) -
                             evidence_id=f"grade_{index}",
                             trainable=not event["holdout"],
                         )
+                        explanation = None
+                        if proposal.hypothesis is not None:
+                            family = scenario["private_hidden_family_order"][event["regime"]]
+                            coverage = hypothesis_coverage(
+                                proposal.hypothesis,
+                                [bits(v) for v in HOLDOUT], TASKS[family],
+                            )
+                            if coverage["valid"] == len(HOLDOUT):
+                                explanation = coverage["accuracy"]
                         observations.append({
+                            "hypothesis_holdout_accuracy": explanation,
                             "regime": event["regime"],
                             "holdout": event["holdout"],
                             "truth": event["true_label"],
@@ -150,6 +165,8 @@ def evaluate_protocol(protocol: list[dict], backend, *, max_context: int = 10) -
                 new["heldout"]["accuracy"] - old["heldout"]["accuracy"], 4),
             "post_shift_accuracy_gain": round(
                 new["post_shift"]["accuracy"] - old["post_shift"]["accuracy"], 4),
+            "feedback_explanation_accuracy": new["heldout"]["explanation_heldout_accuracy"],
+            "baseline_explanation_accuracy": old["heldout"]["explanation_heldout_accuracy"],
         })
     return {"arms": results, "paired_differences": compare}
 
