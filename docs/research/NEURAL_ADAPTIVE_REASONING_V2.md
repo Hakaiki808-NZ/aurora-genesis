@@ -73,6 +73,7 @@ Explicit Bedrock (paid) requires ALL of the following, plus live usable quota:
 - GENESIS_NEURAL_RESEARCH_ENABLE=1
 - GENESIS_BEDROCK_ENABLE=1
 - --execute --backend bedrock --approve-paid-inference
+- No more than 25 calls per paid Bedrock run (existing BedrockBackend hard cap; use --train-per-regime 4 --heldout-per-regime 2 with the default single two-regime task to limit the run to 24 calls)
 - A model identifier with actually available account quota
 - Appropriate AWS identity permission and a preapproved spending budget
 
