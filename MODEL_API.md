@@ -28,6 +28,7 @@ model = Genesis(state_path="state.db", workspace="workspace", enable_ollama=Fals
 - `close()`
 - `feedback_status() -> dict` (read-only operational metacognition)
 - `feedback_tick(max_events=32, budget_ms=50) -> dict` (bounded explicit health reflection)
+- `neural_adaptation_lab(experiment_id, feedback_enabled=True, choices=2, max_calls=32, max_context=10, backend=None) -> NeuralAdaptationSession` (private, disabled unless `GENESIS_NEURAL_RESEARCH_ENABLE=1`, no public endpoint)
 - `adaptive_research_lab(experiment_id) -> AdaptiveRuleLearner` (private Python-only simulated reasoning experiment; never exposed as a public chat or Engine action)
 
 ## Installable knowledge modules (v0.1 reference)
@@ -86,3 +87,7 @@ The HTTP adapter is a Model interface only. It is not the Aurora Engine Contract
 ## Experimental cognitive feedback
 
 Turn-driven scoped event aggregation and conservative next-turn text-only reflection are described in [Genesis Cognitive Feedback](docs/architecture/GENESIS_COGNITIVE_FEEDBACK.md). Private `GET /feedback/status` and `POST /feedback/tick` require the strong `X-Genesis-Control-Token` header. They do not grant model tools, change weights, or control Aurora. Continuous independent Engine scheduling is not yet established.
+
+## Experimental neural reasoning evaluation v2
+
+The real-backend A/B benchmark, independent synthetic oracle, sealed held-out contexts, unannounced rule changes, optional safe explanation checking, zero-cost dry-run, and provider cost gates are documented in [Neural Adaptive Reasoning V2](docs/research/NEURAL_ADAPTIVE_REASONING_V2.md). Passes from scripted CI backends are integration checks, **not** proof of neural reasoning. AWS Bedrock and live private Kyro inference routing remain unchanged.
