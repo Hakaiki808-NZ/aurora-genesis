@@ -32,7 +32,7 @@ class LocalAssets(HTMLParser):
 
 def test_snapshot() -> None:
     manifest = json.loads((ROOT / "asset-manifest.json").read_text(encoding="utf-8"))
-    assert manifest["snapshot_date_nz"] == "2026-11-07"
+    assert manifest["snapshot_date_nz"] == "2026-11-10"
     assert len(manifest["assets"]) >= 16
     seen: set[str] = set()
     for entry in manifest["assets"]:
@@ -71,7 +71,20 @@ def test_snapshot() -> None:
     assert "code_challenge_method" in app and "S256" in app
     assert "textContent" in app
 
-    print(f"PASS: {len(seen)} recorded web assets, local references, PKCE and beta disclosures")
+    workspace = (ROOT / "v3/index.html").read_text(encoding="utf-8")
+    neural = (ROOT / "v3/neural.js").read_text(encoding="utf-8")
+    assert '<script defer src="/v3/neural.js"></script>' in workspace
+    assert all('id="' + name + '"' in workspace for name in (
+        "neural-form", "neural-input", "neural-status", "neural-answer", "neural-detail"
+    ))
+    assert "window.api('/neural/chat', 'POST', { message })" in neural
+    assert "window.api('/neural/status')" in neural
+    assert "answer.textContent = data.answer" in neural
+    assert ".innerHTML" not in neural, "Neural output must be plain text"
+    assert "d397hqqvk3qah2.cloudfront.net/v3/index.html" in (
+        ROOT / "v3/app.js"
+    ).read_text(encoding="utf-8")
+    print(f"PASS: {len(seen)} recorded web assets, local references, PKCE, neural-only scope and beta disclosures")
 
 
 if __name__ == "__main__":
