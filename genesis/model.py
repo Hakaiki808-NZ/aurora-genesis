@@ -22,6 +22,7 @@ from .task_assurance import TaskLedger
 from .user_capabilities import UserCapabilityServices
 from .feedback_loop import CognitiveFeedbackLoop
 from .adaptive_reasoning import AdaptiveRuleLearner
+from .neural_adaptation import NeuralAdaptationSession
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -129,6 +130,24 @@ class Genesis:
         """
         return AdaptiveRuleLearner(self.store,profile_id=self._research_profile_id,
                                    experiment_id=experiment_id)
+
+    def neural_adaptation_lab(self, experiment_id: str, *, feedback_enabled: bool = True,
+                              choices: int = 2, max_calls: int = 32, max_context: int = 10,
+                              backend: GeneratorBackend | None = None) -> NeuralAdaptationSession:
+        """Explicit opt-in private neural study, never a user-chat action.
+
+        Only numerical synthetic inputs are accepted. Kyro must authenticate
+        the profile independently before any server-side usage. Nothing here
+        dispatches tools or changes Aurora authorizations.
+        """
+        if os.environ.get("GENESIS_NEURAL_RESEARCH_ENABLE") != "1":
+            raise PermissionError("neural adaptation research is disabled")
+        return NeuralAdaptationSession(
+            self.store, backend if backend is not None else self.cognition.backend,
+            profile_id=self._research_profile_id, experiment_id=experiment_id,
+            choices=choices, max_calls=max_calls, max_context=max_context,
+            feedback_enabled=feedback_enabled,
+        )
 
     def feedback_status(self)->dict[str,Any]:
         report=self.feedback.status()
