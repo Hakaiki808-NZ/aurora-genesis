@@ -72,6 +72,7 @@ class Genesis:
             )
         self.cognition=CognitionEngine(self.store,self.identity,self.heritage,self.model_record,self.tools,backend,self.policy,self.guardians,self.capabilities,self.engine_boundary)
         self.cognition.knowledge_modules=self.knowledge_modules
+        self.cognition.feedback=self.feedback
         self.last_trace:dict[str,Any]|None=None
         self._turn_lock=threading.RLock()
 
