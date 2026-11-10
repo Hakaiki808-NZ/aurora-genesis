@@ -53,6 +53,10 @@ def main() -> int:
             status, content = request(url)
             if status != 200 or not content:
                 failures.append(f"{label}: expected non-empty HTTP 200, got {status}")
+            elif label == "Kyro workspace" and (
+                b'id="neural-form"' not in content or b'/v3/neural.js' not in content
+            ):
+                failures.append("Kyro workspace: live neural research panel/script missing")
             else:
                 print(f"PASS {label}: HTTP 200")
         except (URLError, TimeoutError, OSError) as exc:
@@ -60,7 +64,7 @@ def main() -> int:
 
     # Verify the critical actual browser assets, not merely an HTML landing.
     for asset in ("/site.css", "/site.js", "/v3/app.js",
-                  "/v3/styles.css", "/v3/preview.html"):
+                  "/v3/styles.css", "/v3/preview.html", "/v3/neural.js"):
         try:
             status, content = request(SITE + asset)
             if status != 200 or not content:
