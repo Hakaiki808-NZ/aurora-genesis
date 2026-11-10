@@ -7,7 +7,7 @@ import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-SITE = os.getenv("KYRO_SITE_URL", "https://d3j65cc3p66kzr.cloudfront.net").rstrip("/")
+SITE = os.getenv("KYRO_SITE_URL", "https://d397hqqvk3qah2.cloudfront.net").rstrip("/")
 RESEARCH_API = os.getenv("KYRO_RESEARCH_API", "https://mex7yuj2j2.execute-api.ap-southeast-2.amazonaws.com").rstrip("/")
 
 
@@ -25,7 +25,8 @@ def fetch(url: str, method: str = "GET", data: bytes | None = None):
 
 def main() -> int:
     failed: list[str] = []
-    assets = ("/", "/config.json", "/v3/index.html", "/v3/preview.html",
+    assets = ("/", "/site.css", "/site.js", "/v3/index.html",
+              "/v3/app.js", "/v3/preview.html",
               "/v3/realignment-preview.html", "/v3/school-voice.js")
     for name in assets:
         try:
