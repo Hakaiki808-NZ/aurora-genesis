@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 
 from genesis import Genesis
+from genesis.backends import GeneratorBackend
 from genesis.engine_boundary import EngineReceipt
 from genesis.feedback_loop import CognitiveFeedbackLoop
 
@@ -101,6 +102,27 @@ def run() -> None:
         assert report["status"]["cycles"] > before["cycles"]
         assert report["status"]["mode"] == "turn_driven_with_external_tick"
         model.close()
+
+        class CaptureBackend(GeneratorBackend):
+            name = "capture"
+            def __init__(self):
+                self.prompts = []
+            def available(self):
+                return True
+            def generate(self, prompt):
+                self.prompts.append(prompt)
+                return "TEXT_ONLY_TEST_OUTPUT"
+
+        capture = CaptureBackend()
+        with Genesis(state_path=Path(td) / "capture.sqlite3",
+                     workspace=workspace, backend=capture,
+                     enable_ollama=False, profile_id="capture") as active:
+            active.respond("Explain a hypothetical astronomy concept.")
+            active.respond("Explain another hypothetical astronomy concept.")
+            assert len(capture.prompts) >= 2
+            assert "Runtime operational feedback" in capture.prompts[-1]
+            assert "Previous observed turns: 1" in capture.prompts[-1]
+            assert "not factual authority" in capture.prompts[-1]
 
         reopened = Genesis(state_path=db_path, workspace=workspace,
                            enable_ollama=False, profile_id="alpha")
