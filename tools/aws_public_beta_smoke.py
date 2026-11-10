@@ -27,12 +27,17 @@ def main() -> int:
     failed: list[str] = []
     assets = ("/", "/site.css", "/site.js", "/v3/index.html",
               "/v3/app.js", "/v3/preview.html",
-              "/v3/realignment-preview.html", "/v3/school-voice.js")
+              "/v3/realignment-preview.html", "/v3/school-voice.js",
+              "/v3/neural.js")
     for name in assets:
         try:
             status, headers, content = fetch(SITE + name)
             if status != 200 or not content:
                 failed.append(f"{name} expected nonempty 200, got {status}")
+            if name == "/v3/index.html" and b'id="neural-form"' not in content:
+                failed.append("Recovered workspace does not expose the neural test panel")
+            if name == "/v3/neural.js" and b"window.api('/neural/chat'" not in content:
+                failed.append("Neural asset is missing its authenticated API client")
             if name == "/":
                 for h in ("strict-transport-security", "content-security-policy", "x-content-type-options"):
                     if not headers.get(h):
