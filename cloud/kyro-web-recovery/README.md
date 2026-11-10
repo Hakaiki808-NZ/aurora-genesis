@@ -24,7 +24,7 @@ public self-registration launch or production-grade Genesis/Aurora release.
 - CloudFront security response headers, including HSTS, CSP, frame
   restrictions, no-referrer and nosniff. CSP explicitly allows only the
   pre-existing Kyro API origin and Cognito hosted domain for browser fetch.
-- 31 existing static website and /v3 workspace assets. No application
+- 33 static website and /v3 workspace assets, including the scoped neural test panel. No application
   state or identity records were migrated.
 - Existing invite-only Cognito private-browser app client's callback and
   logout allowlists now **include** the new /v3/index.html URL. Older
@@ -78,6 +78,17 @@ a complete authenticated create-conversation / generate / retrieve
 round-trip, per-user isolation, private Cerebro access, or neural
 model quality. Those require authorized invited test identities and
 repeatable end-to-end acceptance before larger beta rollout.
+
+## Neural research panel — 10 November 2026
+
+The existing JWT-gated Genesis Qwen neural research client is now linked from
+the authenticated Kyro Conversation screen. This is **not** a replacement for
+the separately persisted deterministic reference chat. Neural responses are
+plain-text, rate-limited and deliberately not saved in the chat archive.
+The live-edge smoke checks cover its JavaScript/HTML and anonymous-denial boundary.
+Full invited-user browser PKCE, authenticated neural reply, multi-turn quality and
+cross-account isolation remain separate HOLD gates. No Aurora Engine execution
+rights were added. The previous HTML version remains in versioned S3 for rollback.
 
 ## Current inference and security posture
 
