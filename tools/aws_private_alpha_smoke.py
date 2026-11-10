@@ -107,6 +107,8 @@ def main() -> int:
         ("private readiness", "GET", "/api/v3/readiness", None),
         ("private projects", "GET", "/api/v3/projects", None),
         ("private conversation mutation", "POST", "/api/v3/conversations", b'{"title":"unauthorized-probe"}'),
+        ("private neural status", "GET", "/api/v3/neural/status", None),
+        ("private neural generation", "POST", "/api/v3/neural/chat", b'{"message":"anonymous-probe"}'),
         ("private Aurora health", "GET", "/api/v3/aurora/health", None),
         ("private Aurora execute", "POST", "/api/v3/aurora/execute", b'{}'),
         ("private Aurora audit", "GET", "/api/v3/aurora/audit/00000000-0000-0000-0000-000000000000/verify", None),
