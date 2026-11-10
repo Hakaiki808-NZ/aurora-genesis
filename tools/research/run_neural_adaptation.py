@@ -183,6 +183,11 @@ def _backend(args, total_calls: int):
         return active
     if not args.approve_paid_inference or os.environ.get("GENESIS_BEDROCK_ENABLE") != "1":
         raise PermissionError("paid inference requires explicit flag AND environment opt-in")
+    if total_calls > 25:
+        raise ValueError(
+            "BedrockBackend allows at most 25 process-local calls; "
+            "reduce train/heldout/tasks/regimes before using paid inference"
+        )
     # Per-request token and number-of-calls caps; costs can still be nonzero.
     active = BedrockBackend(
         model=args.model, region=args.region,
