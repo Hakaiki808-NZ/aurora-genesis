@@ -12,7 +12,7 @@ import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-SITE = os.getenv("KYRO_SITE_URL", "https://d3j65cc3p66kzr.cloudfront.net").rstrip("/")
+SITE = os.getenv("KYRO_SITE_URL", "https://d397hqqvk3qah2.cloudfront.net").rstrip("/")
 API = os.getenv("KYRO_API_URL", "https://ces52hcf3e.execute-api.ap-southeast-2.amazonaws.com").rstrip("/")
 TIMEOUT = 12
 
@@ -41,6 +41,21 @@ def main() -> int:
                 print(f"PASS {label}: HTTP 200")
         except (URLError, TimeoutError, OSError) as exc:
             failures.append(f"{label}: network error ({type(exc).__name__})")
+
+    # Verify the critical actual browser assets, not merely an HTML landing.
+    for asset in ("/site.css", "/site.js", "/v3/app.js",
+                  "/v3/styles.css", "/v3/preview.html"):
+        try:
+            status, content = request(SITE + asset)
+            if status != 200 or not content:
+                failures.append(f"Public asset {asset}: expected HTTP 200 with bytes, got {status}")
+            elif asset == "/v3/app.js" and (
+                    b"d397hqqvk3qah2.cloudfront.net/v3/index.html" not in content):
+                failures.append("Workspace JS: wrong Cognito PKCE callback")
+            else:
+                print(f"PASS public asset {asset}: HTTP 200")
+        except (URLError, TimeoutError, OSError) as exc:
+            failures.append(f"Public asset {asset}: network error ({type(exc).__name__})")
 
     try:
         status, raw = request(API + "/api/v3/health")
