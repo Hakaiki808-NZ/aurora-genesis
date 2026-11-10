@@ -7,11 +7,12 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from tests.neural_adaptation_contract import EvidenceBackend
 from tools.research.run_neural_adaptation import (
-    HOLDOUT, TRAIN, evaluate_protocol, make_protocol, main, bits,
+    HOLDOUT, TRAIN, evaluate_protocol, make_protocol, main, bits, _backend,
 )
 
 
@@ -68,6 +69,18 @@ def run() -> None:
         pass
     else:
         raise AssertionError("unbounded model-call protocol accepted")
+
+    # Paid-model hard budget must be checked before an SDK call or provider
+    # construction. Existing BedrockBackend has a 25-call maximum.
+    paid = SimpleNamespace(backend="bedrock", approve_paid_inference=True,
+                           model="openai.gpt-oss-120b-1:0", region="ap-southeast-2")
+    with patch.dict(os.environ, {"GENESIS_BEDROCK_ENABLE": "1"}):
+        try:
+            _backend(paid, 26)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("paid model-call cap was bypassed")
 
     with tempfile.TemporaryDirectory() as temp:
         outfile = Path(temp) / "report.json"
