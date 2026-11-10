@@ -21,6 +21,7 @@ from .addons import AddonManager
 from .task_assurance import TaskLedger
 from .user_capabilities import UserCapabilityServices
 from .feedback_loop import CognitiveFeedbackLoop
+from .adaptive_reasoning import AdaptiveRuleLearner
 
 ROOT=Path(__file__).resolve().parent.parent
 
@@ -43,6 +44,7 @@ class Genesis:
         self.knowledge_modules=KnowledgeModuleStore(self.store)
         self.addons=AddonManager(self.knowledge_modules)
         self.assurance=TaskLedger(self.store)
+        self._research_profile_id=profile_id
         self.user_capabilities=UserCapabilityServices(self.store,profile_id)
         self.feedback=CognitiveFeedbackLoop(self.store,profile_id=profile_id)
         self._feedback_error: str | None = None
@@ -118,6 +120,15 @@ class Genesis:
         checks["engine_separation"]=self.engine_boundary.minimum_engine.startswith("Aurora ")
         checks["feedback_controller"]=hasattr(self,"feedback")
         return {"ok":all(checks.values()),"checks":checks}
+
+    def adaptive_research_lab(self,experiment_id:str)->AdaptiveRuleLearner:
+        """Opt-in trusted Python-only simulation lab, not a live chat tool.
+
+        Kyro must authenticate and authorize profiles before any private
+        server-side use. There is deliberately no public HTTP route.
+        """
+        return AdaptiveRuleLearner(self.store,profile_id=self._research_profile_id,
+                                   experiment_id=experiment_id)
 
     def feedback_status(self)->dict[str,Any]:
         report=self.feedback.status()
