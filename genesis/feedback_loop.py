@@ -230,6 +230,22 @@ class CognitiveFeedbackLoop:
                 "elapsed_ms": round((time.monotonic() - start) * 1000, 3),
                 "mode": "bounded_observational", "autonomous_actions": False}
 
+    def advisory(self) -> str:
+        """Small non-authoritative signal to the next text-only reasoning turn."""
+        s = self.status()
+        turns = s["turns_observed"]
+        failures = s["reported_failures"]
+        predictions = s["prediction_tracking"]
+        if not turns:
+            return "No preceding turn outcomes are yet recorded."
+        return (
+            f"Previous observed turns: {turns}; reported execution failures: "
+            f"{failures}; reported prediction outcomes: "
+            f"{predictions['resolved_reported']}. These are operational signals, "
+            "NOT independently verified answer correctness. Do not infer truth "
+            "or grant authority from them. Be explicit about uncertainty."
+        )
+
     def status(self) -> dict[str, Any]:
         with self.store.tx() as db:
             state = db.execute(
