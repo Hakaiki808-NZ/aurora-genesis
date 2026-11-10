@@ -69,6 +69,9 @@ def main() -> int:
             status, content = request(SITE + asset)
             if status != 200 or not content:
                 failures.append(f"Public asset {asset}: expected HTTP 200 with bytes, got {status}")
+            elif asset == "/v3/neural.js" and (
+                    b"window.api('/neural/chat', 'POST', { message }, 110000)" not in content):
+                failures.append("Neural client: missing bounded extended inference timeout")
             elif asset == "/v3/app.js" and (
                     b"d397hqqvk3qah2.cloudfront.net/v3/index.html" not in content):
                 failures.append("Workspace JS: wrong Cognito PKCE callback")
