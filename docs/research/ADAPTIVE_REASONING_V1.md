@@ -88,3 +88,27 @@ independently verified correctness labels, unannounced rule changes, negative
 feedback, ambiguous observations, and safety-interlock challenges. Compare
 against non-adaptive checkpoints and costs/latencies before connecting the
 learning mechanism to ordinary chat.
+
+
+## Secondary predeclared out-of-family stress
+
+A separate diagnostic suite (\`python -m tests.adaptive_reasoning_stress\`)
+runs 12 new seeds, 160 observations per case, and compares:
+- In-family pair XOR and single-feature rules.
+- Out-of-family 3-feature XOR, 4-feature XOR, AND, majority.
+- In-family pair XOR with 20% reported-outcome noise.
+
+The learner now tracks exponentially weighted mismatches between its leading
+hypothesis and the observed reward. After 40 observations, a mismatch EMA of
+0.27 or higher raises a **review suggestion** (not execution permission).
+
+The stress suite is considered successful only if:
+- Both in-family controls exceed 85% last-60 accuracy.
+- High-noise in-family accuracy exceeds 75%.
+- No more than 3/12 normally in-family trials still signal review at the end.
+- At least 14 of 24 out-of-family parity trials signal review at the end.
+- 3/4-feature XOR cases do not appear falsely to have >85% accuracy.
+
+This alarm is heuristic; lack of an alarm does not certify correctness.
+The unseen rules are intentionally **outside** the supported hypothesis
+family. Low accuracy is an expected limitation and must be reported.
