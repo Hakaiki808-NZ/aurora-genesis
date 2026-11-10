@@ -18,6 +18,7 @@ from itertools import combinations
 from pathlib import Path
 
 from genesis.adaptive_reasoning import AdaptiveRuleLearner, _label
+from genesis import Genesis
 from genesis.storage import Store
 
 SEEDS = tuple(range(20261110, 20261126))  # Predeclared 16 independent trials
@@ -198,6 +199,25 @@ def bootstrap_ci(values: list[float], seed: int = 9081) -> tuple[float, float]:
 
 
 def run() -> dict:
+    # Integration smoke: the research lab is accessible only through trusted
+    # Python, without mutating ordinary chat or the Aurora Engine boundary.
+    with tempfile.TemporaryDirectory() as directory:
+        state = Path(directory) / "integration.sqlite"
+        with Genesis(state_path=state, workspace=Path(directory) / "workspace",
+                     enable_ollama=False, profile_id="private_A") as model:
+            lab = model.adaptive_research_lab("isolated")
+            assert lab.observe(bits(6), 1, 1, event_id="probe_1")
+            assert lab.observations == 1
+            assert model.feedback_status()["turns_observed"] == 0
+            assert model.self_check()["checks"]["engine_separation"]
+            assert not model.pending_engine_actions()
+        with Genesis(state_path=state, workspace=Path(directory) / "workspace",
+                     enable_ollama=False, profile_id="private_A") as model:
+            assert model.adaptive_research_lab("isolated").observations == 1
+            assert model.adaptive_research_lab("other").observations == 0
+        with Genesis(state_path=state, workspace=Path(directory) / "workspace",
+                     enable_ollama=False, profile_id="private_B") as model:
+            assert model.adaptive_research_lab("isolated").observations == 0
     trials = [one_trial(seed) for seed in SEEDS]
     models = ("adaptive", "frozen", "no_feedback", "memorize")
     def mean_metric(group: str, model: str, field: str) -> float:
