@@ -77,8 +77,12 @@ def test_snapshot() -> None:
     assert all('id="' + name + '"' in workspace for name in (
         "neural-form", "neural-input", "neural-status", "neural-answer", "neural-detail"
     ))
-    assert "window.api('/neural/chat', 'POST', { message })" in neural
+    assert "window.api('/neural/chat', 'POST', { message }, 110000)" in neural
     assert "window.api('/neural/status')" in neural
+    app = (ROOT / "v3/app.js").read_text(encoding="utf-8")
+    assert "async function api(path,method='GET',body=null,timeout=45000)" in app
+    assert "await request(CONFIG.auth+'/oauth2/token'" in app
+    assert "await fetch(CONFIG.auth+'/oauth2/token'" not in app
     assert "answer.textContent = data.answer" in neural
     assert ".innerHTML" not in neural, "Neural output must be plain text"
     assert "d397hqqvk3qah2.cloudfront.net/v3/index.html" in (
