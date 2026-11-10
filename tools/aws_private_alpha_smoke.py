@@ -29,6 +29,22 @@ def request(url: str, method: str = "GET", body: bytes | None = None) -> tuple[i
         return error.code, error.read(64 * 1024)
 
 
+def cors_preflight(url: str, origin: str) -> tuple[int, str | None]:
+    """Exercise the actual browser CORS preflight, without a JWT."""
+    headers = {
+        "User-Agent": "Aurora-Genesis-private-alpha-smoke/1.0",
+        "Origin": origin,
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization,content-type",
+    }
+    req = Request(url, method="OPTIONS", headers=headers)
+    try:
+        with urlopen(req, timeout=TIMEOUT) as resp:
+            return resp.status, resp.headers.get("Access-Control-Allow-Origin")
+    except HTTPError as error:
+        return error.code, error.headers.get("Access-Control-Allow-Origin")
+
+
 def main() -> int:
     failures: list[str] = []
 
@@ -72,6 +88,20 @@ def main() -> int:
             print("PASS Kyro public health (no inference invocation)")
     except (URLError, TimeoutError, OSError, ValueError) as exc:
         failures.append(f"Kyro health: request/JSON error ({type(exc).__name__})")
+
+    # The recovered website is cross-origin from the authenticated Kyro API.
+    # Verify that browsers can pass authorization+JSON CORS preflights.
+    try:
+        status, allowed_origin = cors_preflight(API + "/api/v3/conversations", SITE)
+        if status not in (200, 204) or allowed_origin != SITE:
+            failures.append(
+                f"Kyro CORS preflight: expected 200/204 and origin {SITE}, "
+                f"got {status} and {allowed_origin!r}"
+            )
+        else:
+            print("PASS Kyro browser CORS preflight: HTTPS origin allowed")
+    except (URLError, TimeoutError, OSError) as exc:
+        failures.append(f"Kyro CORS preflight: network error ({type(exc).__name__})")
 
     cases = [
         ("private readiness", "GET", "/api/v3/readiness", None),
