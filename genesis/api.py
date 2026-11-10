@@ -173,6 +173,19 @@ def require_task_control(x_genesis_control_token: str | None = Header(default=No
     return True
 
 
+# Private observability. Kyro/Cerebro must proxy through its own authenticated
+# backend; this control token never belongs in browser JavaScript.
+@app.get("/feedback/status", dependencies=[Depends(require_task_control)])
+def feedback_status():
+    return model.feedback_status()
+
+
+@app.post("/feedback/tick", dependencies=[Depends(require_task_control)])
+def feedback_tick(max_events: int = Query(default=32, ge=1, le=32),
+                  budget_ms: int = Query(default=50, ge=1, le=50)):
+    return model.feedback_tick(max_events=max_events, budget_ms=budget_ms)
+
+
 @app.exception_handler(TaskError)
 async def task_error_handler(request,exc:TaskError):
     return JSONResponse(status_code=404 if "not found" in str(exc) else 400,
