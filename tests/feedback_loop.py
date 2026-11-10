@@ -35,7 +35,12 @@ def run() -> None:
         assert all("rationale" not in e["payload_json"] for e in events)
 
         pred_id = model.feedback.predict("test_event", 0.75)
-        assert not model.feedback.resolve_prediction(pred_id, False, "")
+        try:
+            model.feedback.resolve_prediction(pred_id, False, "")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("missing evidence reference accepted")
         # Not independently authenticated: results remain explicitly reported.
         assert model.feedback.resolve_prediction(pred_id, False, "fixture:outcome")
         assert not model.feedback.resolve_prediction(pred_id, True, "fixture:duplicate")
