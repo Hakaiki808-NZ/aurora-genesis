@@ -26,6 +26,8 @@ model = Genesis(state_path="state.db", workspace="workspace", enable_ollama=Fals
 - `export_state(path) -> Path`
 - `backup_state(path) -> Path`
 - `close()`
+- `feedback_status() -> dict` (read-only operational metacognition)
+- `feedback_tick(max_events=32, budget_ms=50) -> dict` (bounded explicit health reflection)
 
 ## Installable knowledge modules (v0.1 reference)
 
@@ -79,3 +81,7 @@ The HTTP adapter is a Model interface only. It is not the Aurora Engine Contract
 ## Guardian hardening notes (v0.1)
 
 `state()` now reports the Challenge Omega and Guardian jury size. Consequential external actions are prepared only after Intent Capsule, Constitution, Kernel, capability and Guardian checks produce a complete Model authorization and a valid Model Authorization Proof. The public API still exposes no Supreme or Engine-handler control surface.
+
+## Experimental cognitive feedback
+
+Turn-driven scoped event aggregation and conservative next-turn text-only reflection are described in [Genesis Cognitive Feedback](docs/architecture/GENESIS_COGNITIVE_FEEDBACK.md). Private `GET /feedback/status` and `POST /feedback/tick` require the strong `X-Genesis-Control-Token` header. They do not grant model tools, change weights, or control Aurora. Continuous independent Engine scheduling is not yet established.
