@@ -112,3 +112,49 @@ The stress suite is considered successful only if:
 This alarm is heuristic; lack of an alarm does not certify correctness.
 The unseen rules are intentionally **outside** the supported hypothesis
 family. Low accuracy is an expected limitation and must be reported.
+
+
+## Observed reference CI results — 10 Nov 2026 (UTC)
+
+The following outputs came from GitHub Actions on the research branch.
+All preregistered gates in both suites passed.
+
+| Measure | Result |
+| --- | --- |
+| Dynamic rule trials | 16 seeded trials, 4 regimes each |
+| Hidden shifts recovered | 48/48 within 60 observations |
+| Adaptive late-after-shift accuracy | 100.0% |
+| Frozen model late-after-shift accuracy | 47.1% |
+| Feedback-disabled accuracy | 49.9% |
+| Context memorizer accuracy | 95.8% |
+| Adaptive accuracy on never-seen input patterns | 100.0% |
+| Context memorizer on never-seen input patterns | 51.6% |
+| Adaptive improvement over frozen (paired 95% bootstrap CI) | +48.2 to +58.3 percentage points |
+| Adaptive improvement over no-feedback (paired 95% bootstrap CI) | +47.3 to +53.0 percentage points |
+
+**Out-of-family challenge (12 trials per task):**
+
+| Hidden rule | Last-60 accuracy | Average confidence | End-of-trial review warnings |
+| --- | ---: | ---: | ---: |
+| Supported pair XOR | 100.0% | 100.0% | 0/12 |
+| Supported single feature | 100.0% | 100.0% | 0/12 |
+| Supported pair XOR, 20% noisy feedback | 97.5% | 91.4% | 3/12 |
+| Unsupported three-feature XOR | 48.3% | 86.0% | 12/12 |
+| Unsupported four-feature XOR | 47.4% | 84.7% | 12/12 |
+| Unsupported AND | 73.5% | 92.7% | 7/12 |
+| Unsupported majority | 66.9% | 89.4% | 8/12 |
+
+**Interpretation:** The learner does perform narrow, outcome-driven adaptation
+and evidence-guided revision within its hypothesis family. The unknown-rule
+challenge reveals severe overconfidence in some unsupported tasks: even when
+accuracy is near chance, the learner may assign high action confidence.
+A review warning helps but is not a reliable universal detector. No
+production autonomy should be based on these confidence scores.
+
+**Proven vs unproven:** Demonstrated in this sandbox: rule inference,
+adaptation to known-type regime changes, replay-safe and persistent lab state,
+simulation-only generalization. Not demonstrated: general-purpose Genesis
+neural reasoning, open-ended rule invention, reliable OOD awareness,
+real-world outcome verification, or Aurora-controlled continuous operation.
+
+No consciousness percentage is inferred.
