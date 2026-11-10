@@ -158,3 +158,7 @@ neural reasoning, open-ended rule invention, reliable OOD awareness,
 real-world outcome verification, or Aurora-controlled continuous operation.
 
 No consciousness percentage is inferred.
+
+## Private model integration
+
+`Genesis.adaptive_research_lab(experiment_id)` now creates a profile-scoped research learner using Genesis's existing persistent Store. No public HTTP endpoint or new Kyro tool is exposed; the live conversation, execution authorization and Aurora scheduler remain unchanged. CI includes a restart/profile-isolation integration check through the Genesis Python entry point.
