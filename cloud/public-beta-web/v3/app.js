@@ -40,7 +40,7 @@ function checkIdentity(token,nonce=null){
 async function renewSession(){
  if(!state.refreshToken)throw new Error('Your session has expired. Please sign in again.');
  const body=new URLSearchParams({grant_type:'refresh_token',client_id:CONFIG.client,refresh_token:state.refreshToken});
- const res=await fetch(CONFIG.auth+'/oauth2/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body});
+ const res=await request(CONFIG.auth+'/oauth2/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body},12000);
  if(!res.ok)throw new Error('Your session could not be renewed. Sign in again.');
  const result=await res.json();
  if(!result.id_token)throw new Error('Cognito did not issue a renewed identity token.');
@@ -84,13 +84,13 @@ async function finishLogin(){
  const payload=checkIdentity(result.id_token,data.nonce);
  state.token=result.id_token;state.refreshToken=result.refresh_token||null;state.expiresAt=payload.exp*1000;clearSigninError();notice('Signed in. Loading your private workspace…');return true;
 }
-async function api(path,method='GET',body=null){
+async function api(path,method='GET',body=null,timeout=45000){
  if(!state.token)throw new Error('Sign in required');
  if(state.expiresAt && Date.now()+60000>=state.expiresAt){
   try{await renewSession();}catch(e){showSignedOut(e.message);throw e;}
  }
  const opts={method,headers:{Authorization:'Bearer '+state.token,...(body!==null?{'content-type':'application/json'}:{})},...(body!==null?{body:JSON.stringify(body)}:{})};
- let res=await request(CONFIG.api+'/api/v3'+path,opts,45000);
+ let res=await request(CONFIG.api+'/api/v3'+path,opts,timeout);
  if(res.status===401){
   // A failed JWT must never be retried with the same credentials.
   showSignedOut('Your login is no longer valid. Sign in again.');
