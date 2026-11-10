@@ -1,7 +1,7 @@
 'use strict';
 // Browser PKCE. Tokens stay in RAM, never localStorage or shared cookies.
 // Reloading the tab intentionally requires a fresh authenticated Cognito redirect.
-const CONFIG=Object.freeze({api:'https://ces52hcf3e.execute-api.ap-southeast-2.amazonaws.com',client:'68i1h2nqhvsjruneo12k0u3ahm',auth:'https://kyro-v4-private-179502447662.auth.ap-southeast-2.amazoncognito.com',callback:'https://d3j65cc3p66kzr.cloudfront.net/v3/index.html'});
+const CONFIG=Object.freeze({api:'https://ces52hcf3e.execute-api.ap-southeast-2.amazonaws.com',client:'68i1h2nqhvsjruneo12k0u3ahm',auth:'https://kyro-v4-private-179502447662.auth.ap-southeast-2.amazoncognito.com',callback:'https://d397hqqvk3qah2.cloudfront.net/v3/index.html'});
 const state={token:null,refreshToken:null,expiresAt:0,project:null,projects:[],file:null,etag:null,conversation:null,mode:'code'};
 const $=id=>document.getElementById(id);
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined)e.textContent=String(txt);if(cls)e.className=cls;return e;};
