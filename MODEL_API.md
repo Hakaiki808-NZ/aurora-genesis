@@ -28,6 +28,7 @@ model = Genesis(state_path="state.db", workspace="workspace", enable_ollama=Fals
 - `close()`
 - `feedback_status() -> dict` (read-only operational metacognition)
 - `feedback_tick(max_events=32, budget_ms=50) -> dict` (bounded explicit health reflection)
+- `adaptive_research_lab(experiment_id) -> AdaptiveRuleLearner` (private Python-only simulated reasoning experiment; never exposed as a public chat or Engine action)
 
 ## Installable knowledge modules (v0.1 reference)
 
