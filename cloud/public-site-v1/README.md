@@ -19,8 +19,7 @@ A separate public information site for the existing Kyro private-alpha workspace
 
 ## Release
 
-**AWS alignment verified 7 November 2026:** a CloudFront-backed S3 prefix `site/` already contains all 14 original website files. For incremental publication, upload only the changed objects, preserve `/v3/` and `/discover/`, and invalidate the specific updated `/site/*` paths. Test at
-https://d3j65cc3p66kzr.cloudfront.net/site/index.html
+**Recovered deployment 10 November 2026:** the former `d3j65cc3p66kzr.cloudfront.net` distribution is not present in the connected AWS account. A new HTTPS CloudFront distribution and privately accessed S3 origin have been created: `https://d397hqqvk3qah2.cloudfront.net/` for the public landing pages and `/v3/index.html` for invite-only Kyro workspace. Cognito PKCE callbacks and Kyro API Gateway CORS were extended to include the recovered site; the old allowed callbacks were not removed. The site is intentionally `noindex,nofollow`. Run `tools/aws_private_alpha_smoke.py` to check public pages and anonymous API boundaries. Actual signed-in browser flows still require user-identity acceptance testing.
 
 Never overwrite the existing root research beta or private `/v3/` workspace as part of this public-site rollout.
 
