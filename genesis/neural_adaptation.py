@@ -114,6 +114,7 @@ class NeuralAdaptationSession:
                     status TEXT NOT NULL,
                     expected INTEGER,
                     evidence_id TEXT,
+                    trainable INTEGER NOT NULL DEFAULT 1,
                     UNIQUE(profile_id,experiment_id,step),
                     UNIQUE(profile_id,experiment_id,evidence_id)
                 )
@@ -168,7 +169,10 @@ class NeuralAdaptationSession:
             "with confidence in [0,1], without markdown or commentary.\n"
         )
         if self.feedback_enabled:
-            known = [r for r in history if r["expected"] is not None][-self.max_context:]
+            known = [
+                r for r in history
+                if r["expected"] is not None and r["trainable"] == 1
+            ][-self.max_context:]
             if known:
                 examples = [
                     f"Input {r['features_json']} -> reported correct label {r['expected']}."
@@ -218,8 +222,10 @@ class NeuralAdaptationSession:
             )
 
     def record_outcome(self, attempt_id: str, expected: int,
-                       *, evidence_id: str) -> bool:
+                       *, evidence_id: str, trainable: bool = True) -> bool:
         """Reported grader outcome, consumed once; never a command or training label."""
+        if type(trainable) is not bool:
+            raise ValueError("trainable must be a boolean")
         if not isinstance(attempt_id, str) or not re.fullmatch(r"[0-9a-f]{32}", attempt_id):
             raise ValueError("invalid attempt id")
         if type(expected) is not int or not 0 <= expected < self.choices:
@@ -238,8 +244,8 @@ class NeuralAdaptationSession:
                 try:
                     db.execute(
                         "UPDATE neural_adaptation_attempts_v1 "
-                        "SET expected=?,evidence_id=? WHERE attempt_id=?",
-                        (expected, evidence_id, attempt_id),
+                        "SET expected=?,evidence_id=?,trainable=? WHERE attempt_id=?",
+                        (expected, evidence_id, int(trainable), attempt_id),
                     )
                 except Exception as exc:
                     # Fail closed for duplicate evidence keys; never rewrite
