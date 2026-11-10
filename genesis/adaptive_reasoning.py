@@ -74,6 +74,14 @@ class AdaptiveRuleLearner:
                     PRIMARY KEY(profile_id, experiment_id)
                 )
             """)
+            db.execute("""
+                CREATE TABLE IF NOT EXISTS adaptive_rule_lab_evidence_v1 (
+                    profile_id TEXT NOT NULL,
+                    experiment_id TEXT NOT NULL,
+                    event_id TEXT NOT NULL,
+                    PRIMARY KEY(profile_id, experiment_id, event_id)
+                )
+            """)
             db.execute(
                 "INSERT OR IGNORE INTO adaptive_rule_lab_v1 "
                 "(profile_id,experiment_id,observations,log_scores_json) "
@@ -116,8 +124,10 @@ class AdaptiveRuleLearner:
         }
 
     def observe(self, context: tuple[int, ...] | list[int],
-                action: int, reported_success: int) -> None:
+                action: int, reported_success: int, *, event_id: str) -> bool:
         features = _features(context)
+        if not isinstance(event_id, str) or not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", event_id):
+            raise ValueError("invalid evidence identifier")
         if type(action) is not int or action not in (0, 1):
             raise ValueError("action must be binary")
         if type(reported_success) is not int or reported_success not in (0, 1):
@@ -133,6 +143,13 @@ class AdaptiveRuleLearner:
         ]
         # CAS-style transaction: handle multiple processes sharing SQLite state.
         with self.store.tx() as db:
+            inserted = db.execute(
+                "INSERT OR IGNORE INTO adaptive_rule_lab_evidence_v1 "
+                "(profile_id,experiment_id,event_id) VALUES (?,?,?)",
+                (self.profile_id, self.experiment_id, event_id),
+            )
+            if not inserted.rowcount:
+                return False
             row = db.execute(
                 "SELECT observations,log_scores_json FROM adaptive_rule_lab_v1 "
                 "WHERE profile_id=? AND experiment_id=?",
@@ -149,6 +166,7 @@ class AdaptiveRuleLearner:
             )
         self.scores = scores
         self.observations = int(row["observations"]) + 1
+        return True
 
     def explanation(self) -> dict[str, Any]:
         """Transparent hypothesis and uncertainty; does not claim truth."""
