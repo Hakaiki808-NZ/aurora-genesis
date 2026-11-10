@@ -29,8 +29,8 @@
     },
     {
       "path": "v3/app.js",
-      "bytes": 17822,
-      "etag": "\"49da3c9e73bb08988eaa7f9b68718a22\""
+      "bytes": 17846,
+      "etag": "\"484856c0af14ef51ab0dd1f67f09e8ab\""
     },
     {
       "path": "v3/index.html",
@@ -39,8 +39,8 @@
     },
     {
       "path": "v3/neural.js",
-      "bytes": 2168,
-      "etag": "\"9f9ea8e661b8f4a576cc8bd6b7a754da\""
+      "bytes": 2176,
+      "etag": "\"ffec244a35c5fec8a7c8bfd0b311612d\""
     },
     {
       "path": "v3/preview.css",
