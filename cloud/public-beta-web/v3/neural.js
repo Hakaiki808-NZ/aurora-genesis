@@ -29,7 +29,7 @@
       answer.textContent = 'Genesis is generating a response…';
       detail.textContent = 'Neural model · research only · no tools or Engine execution';
       try {
-        const data = await window.api('/neural/chat', 'POST', { message });
+        const data = await window.api('/neural/chat', 'POST', { message }, 110000);
         if (data.service !== 'genesis-neural-research' || typeof data.answer !== 'string') {
           throw new Error('Unexpected neural model response');
         }
