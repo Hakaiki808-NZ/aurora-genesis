@@ -29,6 +29,21 @@ def request(url: str, method: str = "GET", body: bytes | None = None) -> tuple[i
         return error.code, error.read(64 * 1024)
 
 
+def origin_get(url: str, origin: str) -> tuple[int, str | None]:
+    """Exercise an actual browser Origin on a GET, not just OPTIONS preflight."""
+    req = Request(url, method="GET", headers={
+        "User-Agent": "Aurora-Genesis-private-alpha-smoke/1.1",
+        "Origin": origin,
+    })
+    try:
+        with urlopen(req, timeout=TIMEOUT) as resp:
+            resp.read(4096)
+            return resp.status, resp.headers.get("Access-Control-Allow-Origin")
+    except HTTPError as error:
+        error.read(4096)
+        return error.code, error.headers.get("Access-Control-Allow-Origin")
+
+
 def cors_preflight(url: str, origin: str) -> tuple[int, str | None]:
     """Exercise the actual browser CORS preflight, without a JWT."""
     headers = {
@@ -95,6 +110,30 @@ def main() -> int:
             print("PASS Kyro public health (no inference invocation)")
     except (URLError, TimeoutError, OSError, ValueError) as exc:
         failures.append(f"Kyro health: request/JSON error ({type(exc).__name__})")
+
+    # A successful OPTIONS preflight does not prove the Lambda accepts the
+    # browser's Origin on the subsequent GET. This caught an RC1 login outage.
+    try:
+        status, allowed_origin = origin_get(API + "/api/v3/health", SITE)
+        if status != 200 or allowed_origin != SITE:
+            failures.append(
+                f"Kyro live browser-origin GET health: expected 200 and exact origin {SITE}, "
+                f"got {status} and {allowed_origin!r}"
+            )
+        else:
+            print("PASS Kyro actual browser-origin GET health")
+        bad_status, bad_allow = origin_get(
+            API + "/api/v3/health", "https://unauthorized-origin.invalid"
+        )
+        if bad_status != 403 or bad_allow is not None:
+            failures.append(
+                f"Kyro unknown Origin: expected 403 with no CORS grant, "
+                f"got {bad_status} and {bad_allow!r}"
+            )
+        else:
+            print("PASS unknown browser Origin denied")
+    except (URLError, TimeoutError, OSError) as exc:
+        failures.append(f"Kyro browser-origin GET: network error ({type(exc).__name__})")
 
     # The recovered website is cross-origin from the authenticated Kyro API.
     # Verify that browsers can pass authorization+JSON CORS preflights.
