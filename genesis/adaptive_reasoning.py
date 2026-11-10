@@ -71,9 +71,16 @@ class AdaptiveRuleLearner:
                     experiment_id TEXT NOT NULL,
                     observations INTEGER NOT NULL DEFAULT 0,
                     log_scores_json TEXT NOT NULL,
+                    mismatch_ema REAL NOT NULL DEFAULT 0,
                     PRIMARY KEY(profile_id, experiment_id)
                 )
             """)
+            columns = {r[1] for r in db.execute("PRAGMA table_info(adaptive_rule_lab_v1)")}
+            if "mismatch_ema" not in columns:
+                db.execute(
+                    "ALTER TABLE adaptive_rule_lab_v1 "
+                    "ADD COLUMN mismatch_ema REAL NOT NULL DEFAULT 0"
+                )
             db.execute("""
                 CREATE TABLE IF NOT EXISTS adaptive_rule_lab_evidence_v1 (
                     profile_id TEXT NOT NULL,
@@ -93,7 +100,7 @@ class AdaptiveRuleLearner:
     def _reload(self) -> None:
         with self.store.tx() as db:
             record = db.execute(
-                "SELECT observations, log_scores_json FROM adaptive_rule_lab_v1 "
+                "SELECT observations, log_scores_json, mismatch_ema FROM adaptive_rule_lab_v1 "
                 "WHERE profile_id=? AND experiment_id=?",
                 (self.profile_id, self.experiment_id),
             ).fetchone()
@@ -106,6 +113,7 @@ class AdaptiveRuleLearner:
             raise ValueError("invalid model evidence state")
         self.scores = [float(x) for x in scores]
         self.observations = int(record["observations"])
+        self.mismatch_ema = float(record["mismatch_ema"])
 
     def predict(self, context: tuple[int, ...] | list[int]) -> dict[str, Any]:
         features = _features(context)
@@ -120,6 +128,8 @@ class AdaptiveRuleLearner:
             "p_action_one": p,
             "confidence": max(p, 1 - p),
             "observations": self.observations,
+            "mismatch_ema": round(self.mismatch_ema, 4),
+            "requires_review": self.observations >= 40 and self.mismatch_ema >= 0.27,
             "scope": "simulation_only",
         }
 
@@ -151,21 +161,25 @@ class AdaptiveRuleLearner:
             if not inserted.rowcount:
                 return False
             row = db.execute(
-                "SELECT observations,log_scores_json FROM adaptive_rule_lab_v1 "
+                "SELECT observations,log_scores_json,mismatch_ema FROM adaptive_rule_lab_v1 "
                 "WHERE profile_id=? AND experiment_id=?",
                 (self.profile_id, self.experiment_id),
             ).fetchone()
             existing = json.loads(row["log_scores_json"])
             scores = [self.discount * float(s) + d for s, d in zip(existing, delta)]
+            top = max(range(len(existing)), key=lambda i: float(existing[i]))
+            mismatch = float(_label(features, HYPOTHESES[top]) != inferred_target)
+            mismatch_ema = 0.92 * float(row["mismatch_ema"]) + 0.08 * mismatch
             db.execute(
                 "UPDATE adaptive_rule_lab_v1 "
-                "SET observations=?,log_scores_json=? "
+                "SET observations=?,log_scores_json=?,mismatch_ema=? "
                 "WHERE profile_id=? AND experiment_id=?",
                 (int(row["observations"]) + 1, json.dumps(scores),
-                 self.profile_id, self.experiment_id),
+                 mismatch_ema, self.profile_id, self.experiment_id),
             )
         self.scores = scores
         self.observations = int(row["observations"]) + 1
+        self.mismatch_ema = mismatch_ema
         return True
 
     def explanation(self) -> dict[str, Any]:
@@ -177,6 +191,8 @@ class AdaptiveRuleLearner:
             "leading_features": list(indexes),
             "inverted": bool(inverted),
             "observations": self.observations,
+            "mismatch_ema": round(self.mismatch_ema, 4),
+            "requires_review": self.observations >= 40 and self.mismatch_ema >= 0.27,
             "interpretation": "best_supported_hypothesis_not_established_truth",
             "tool_execution": False,
             "weight_training": False,
