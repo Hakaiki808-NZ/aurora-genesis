@@ -214,7 +214,11 @@ class NeuralAdaptationSession:
             ][-self.max_context:]
             if known:
                 examples = [
-                    f"Input {r['features_json']} -> reported correct label {r['expected']}."
+                    (
+                        f"Input {r['features_json']} -> reported correct label {r['expected']}. "
+                        f"Prior answer: {r['answer'] if r['answer'] is not None else 'invalid'}; "
+                        f"outcome: {'correct' if r['answer'] == r['expected'] else 'incorrect'}."
+                    )
                     for r in known
                 ]
                 preamble += "Observed examples (oldest to newest):\n" + "\n".join(examples) + "\n"
