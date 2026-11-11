@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Kyro temporary chat interface for the private Aurora, Genesis and Kyro research workspace.">
+  <title>Kyro Chat — Temporary Workspace</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/temp-chat/styles.css">
+  <script defer src="/temp-chat/app.js"></script>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar" aria-label="Conversation navigation">
+      <div class="side-top">
+        <div class="brand"><span class="brandmark" aria-hidden="true">✳</span><span>Kyro</span><span class="brand-tag">TEMP</span></div>
+        <button type="button" class="icon-button close-mobile" id="closeSidebar" aria-label="Close sidebar">✕</button>
+      </div>
+      <div class="side-actions">
+        <button type="button" class="side-action" id="newChat"><span class="action-icon" aria-hidden="true">✎</span>New chat <kbd>⇧⌘O</kbd></button>
+        <button type="button" class="side-action" id="searchToggle"><span class="action-icon" aria-hidden="true">⌕</span>Search chats <kbd>⌘K</kbd></button>
+        <input id="searchInput" class="search-input hidden" type="search" placeholder="Search chat titles" aria-label="Search chat titles">
+      </div>
+      <div class="history-label">Your chats</div>
+      <nav id="conversationList" class="conversation-list" aria-label="Conversations">
+        <p class="sidebar-empty">Sign in to load your conversations.</p>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="status-stack"><span class="status-dot" id="healthDot"></span><span id="healthLabel">Checking Kyro API</span><button type="button" id="checkHealth" class="tiny-action" aria-label="Check API connection" title="Check connection">↻</button></div>
+        <div class="model-footnote">Genesis · experimental research reference</div>
+        <button type="button" id="accountButton" class="account-button">
+          <span class="avatar" id="accountAvatar">K</span>
+          <span class="account-copy"><strong id="accountName">Private workspace</strong><small id="accountState">Sign in required</small></span>
+          <span aria-hidden="true">⋯</span>
+        </button>
+        <div class="account-menu hidden" id="accountMenu">
+          <button type="button" id="themeButton">Switch appearance</button>
+          <button type="button" id="signOutButton">Sign out</button>
+        </div>
+      </div>
+    </aside>
+    <div class="mobile-scrim hidden" id="mobileScrim"></div>
+    <div class="main-column">
+      <header class="topbar">
+        <div class="top-left">
+          <button type="button" class="icon-button" id="sidebarToggle" aria-label="Toggle sidebar" title="Toggle sidebar">☰</button>
+          <button type="button" class="model-select" id="modelInfo" aria-label="Model details">Kyro <span class="soft-text">/ Genesis Research</span><span class="chevron">⌄</span></button>
+        </div>
+        <div class="top-right">
+          <span class="session-pill" id="sessionPill">Private preview</span>
+          <button type="button" class="icon-button" id="exportButton" aria-label="Export current chat" title="Export current chat">⇩</button>
+          <button type="button" class="icon-button" id="newChatTop" aria-label="Start new chat" title="New chat">✎</button>
+        </div>
+      </header>
+      <main class="chat-main" id="chatMain">
+        <section class="empty-state" id="emptyState" aria-label="Start a conversation">
+          <div class="empty-mark" aria-hidden="true">✳</div>
+          <h1>What can I help you explore?</h1>
+          <p>Talk to Genesis through your private Kyro workspace.</p>
+          <div class="suggestions">
+            <button type="button" class="suggestion" data-prompt="Explain the difference between Aurora, Genesis and Kyro.">Explore the architecture <span>↗</span></button>
+            <button type="button" class="suggestion" data-prompt="What can Genesis currently do, and which capabilities are still research-stage?">Review Genesis capabilities <span>↗</span></button>
+            <button type="button" class="suggestion" data-prompt="Help me design a controlled test of the Genesis research reference.">Design a model test <span>↗</span></button>
+            <button type="button" class="suggestion" data-prompt="Help plan the next development milestone for the Kyro interface.">Plan the next milestone <span>↗</span></button>
+          </div>
+        </section>
+        <section id="chatFeed" class="chat-feed hidden" role="log" aria-live="polite" aria-label="Conversation messages"></section>
+      </main>
+      <div class="composer-zone">
+        <div class="composer" id="composerWrap">
+          <label class="sr-only" for="messageInput">Message Genesis</label>
+          <textarea id="messageInput" rows="1" maxlength="3000" placeholder="Message Genesis…" aria-label="Message Genesis"></textarea>
+          <div class="composer-toolbar">
+            <div class="left-tools"><button type="button" id="dictateButton" class="composer-icon" title="Dictate in supported browsers" aria-label="Dictate message">♩</button><span class="model-mini">Genesis research</span></div>
+            <button type="button" id="sendButton" class="send-button" aria-label="Send message" disabled>↑</button>
+          </div>
+        </div>
+        <p class="under-composer">Experimental reference responses. Neural model execution and Aurora engine control are not implied.</p>
+      </div>
+    </div>
+  </div>
+  <div class="auth-overlay" id="authOverlay" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-card">
+      <div class="auth-logo" aria-hidden="true">✳</div>
+      <div class="eyebrow">AURORA + GENESIS + KYRO</div>
+      <h2 id="authTitle">Welcome to Kyro Chat</h2>
+      <p>A temporary, ChatGPT-style interface connected to your existing private Kyro conversation API.</p>
+      <button type="button" id="authSignIn" class="auth-primary">Continue with secure sign-in <span>→</span></button>
+      <p class="auth-note">Invite-only access · AWS Cognito sign-in · Conversations saved to Kyro</p>
+      <p id="authError" class="auth-error hidden" role="alert"></p>
+      <button type="button" class="diagnostic-button" id="runDiagnostics">Check login and API connections</button>
+      <div class="diagnostic-results hidden" id="diagnosticResults" role="status" aria-live="polite"></div>
+      <button type="button" class="diagnostic-copy hidden" id="copyDiagnostics">Copy diagnostic report</button>
+      <div class="auth-footer"><a href="/v3/index.html">Open full Kyro workspace</a><span>Temporary interface · Private research preview</span></div>
+    </div>
+  </div>
+  <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
